@@ -5,16 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#23695c">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <title>Online Study</title>
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>數學</title>
   <style>
     :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
     * { box-sizing: border-box; }
     html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
     main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
-    h1 { margin: 0; font-size: 1.8rem; }
+    h1 { margin: 0 0 4px; font-size: 1.8rem; }
+    .back { display: inline-block; padding: 8px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    .back:hover { color: var(--green); }
     ul { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
     a.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
     a.item:hover { border-color: var(--green); }
@@ -26,25 +28,20 @@
 </head>
 <body>
   <main>
-    <h1>Online Study</h1>
+    <a class="back" href="../index.html">← 回首頁</a>
+    <h1>數學</h1>
     <ul>
       <li>
-        <a class="item" href="japanese-basics/index.html">
-          <div class="title">日文基礎<span class="tag">離線</span></div>
-          <div class="meta">日本語の基礎 · 2 篇</div>
-        </a>
-      </li>
-      <li>
-        <a class="item" href="math/index.html">
-          <div class="title">數學<span class="tag">離線</span></div>
-          <div class="meta">Curvelab 公式圖形 · 1 個</div>
+        <a class="item" href="curvelab/index.html">
+          <div class="title">Curvelab<span class="tag">離線</span></div>
+          <div class="meta">公式圖形</div>
         </a>
       </li>
     </ul>
     <p class="note">標有「離線」的頁面，在有網路時開啟過一次後，沒有網路也能閱讀。</p>
   </main>
   <script>
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
   </script>
 </body>
 </html>
