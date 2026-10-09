@@ -22,9 +22,8 @@
     h1 { margin: 0; font-size: clamp(30px, 4vw, 46px); letter-spacing: .04em; line-height: 1.3; }
     .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
 
-    /* 頂部播放列：捲動時固定在畫面上方，隨時可以停止。 */
-    .player { position: sticky; top: 0; z-index: 5; margin: 18px -12px 0; padding: 12px; background: #f5f3ebf2; backdrop-filter: blur(6px); border-bottom: 1px solid transparent; }
-    .player.stuck { border-bottom-color: var(--line); }
+    /* 播放設定只在頁首，捲動時不跟著走，學習時畫面留給單字。 */
+    .player { margin-top: 18px; }
     .player-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
     #play-all { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px; padding: 12px 26px 12px 20px; background: var(--green); color: #fff; font-size: 18px; font-weight: 700; box-shadow: 0 6px 18px #23695c33; }
     /* 文字固定 4 字寬，「全部播放」↔「停止」切換時按鈕不會變寬變窄。 */
@@ -37,10 +36,18 @@
     #voice { max-width: 220px; }
     .toggle { font-size: 14px; }
     .toggle[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
-    .now { margin: 8px 2px 0; font-size: 14px; color: var(--muted); min-height: 1.7em; }
+    /* 底部播放條：只在連續播放時出現，隨時可以停止。 */
+    .mini { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px max(16px, calc((100% - 1160px) / 2)); background: #f5f3ebf2; backdrop-filter: blur(6px); border-top: 1px solid var(--line); box-shadow: 0 -4px 16px #344e3b14; }
+    .mini[hidden] { display: none; }
+    #mini-stop { flex: none; min-height: 40px; border: 0; border-radius: 999px; padding: 6px 16px; background: #b3402f; color: #fff; font-size: 15px; font-weight: 700; }
+    .mini-info { flex: 1; min-width: 0; }
+    .now { margin: 0; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .now strong { color: var(--ink); }
     .bar { height: 3px; border-radius: 3px; background: #e2e7dc; overflow: hidden; margin-top: 4px; }
     .bar > i { display: block; height: 100%; width: 0; background: #74a984; transition: width .3s; }
+    /* 播放中自動捲到的卡片不要被底部播放條蓋住。 */
+    html { scroll-padding-bottom: 80px; }
+    body.playing main { margin-bottom: 96px; }
 
 
     nav.cats { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
@@ -50,7 +57,7 @@
     nav.cats button[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
     nav.cats button[aria-pressed="true"] small { color: #ffffffc0; }
 
-    section { margin-top: 30px; scroll-margin-top: 130px; }
+    section { margin-top: 30px; scroll-margin-top: 16px; }
     .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 2px solid var(--line); padding-bottom: 6px; margin-bottom: 14px; }
     h2 { margin: 0; font-size: 22px; letter-spacing: .03em; }
     .sec-head p { margin: 0; color: var(--muted); font-size: 14px; flex: 1 1 260px; }
@@ -79,8 +86,7 @@
 
     @media (max-width: 650px) {
       main { width: calc(100% - 32px); margin: 24px auto; }
-      /* 播放列固定在上方，手機上壓成兩行，少佔一點畫面。 */
-      .player { margin: 14px -16px 0; padding: 8px 16px; }
+      .player { margin-top: 14px; }
       .player-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; }
       #play-all { justify-self: start; font-size: 16px; padding: 8px 18px 8px 10px; }
       .toggles { grid-row: 1; grid-column: 2; gap: 6px; flex-wrap: nowrap; }
@@ -91,8 +97,7 @@
       /* iOS Safari 在字級小於 16px 的選單取得焦點時會自動放大畫面。 */
       select { font-size: 16px; width: 100%; min-width: 0; padding: 5px 8px; }
       #voice { max-width: none; }
-      .now { margin-top: 4px; font-size: 13px; }
-      section { scroll-margin-top: 170px; }
+      .now { font-size: 13px; }
       nav.cats button { padding: 6px 13px; }
       .play-cat { padding: 6px 14px; }
       .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
@@ -107,7 +112,7 @@
     @media print {
       body { background: #fff; }
       main { width: 100%; margin: 0; }
-      .player, nav.cats, .play-cat, .status, footer { display: none !important; }
+      .player, .mini, nav.cats, .play-cat, .status, footer { display: none !important; }
       body.no-rt rt, body.no-kata rt.k, body.no-zh .zh, body.no-zh .note { visibility: visible; }
       .card { break-inside: avoid; min-height: 0; }
     }
@@ -134,9 +139,14 @@
           <button type="button" class="toggle" id="t-zh" aria-pressed="true">中文</button>
         </div>
       </div>
-      <p class="now" id="now" aria-live="polite"></p>
-      <div class="bar" aria-hidden="true"><i id="bar"></i></div>
       <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+    <div class="mini" id="mini" hidden>
+      <button type="button" id="mini-stop">■ 停止</button>
+      <div class="mini-info">
+        <p class="now" id="now" aria-live="polite"></p>
+        <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+      </div>
     </div>
 
     <nav class="cats" id="cats" aria-label="只顯示這個分類"></nav>
@@ -630,13 +640,11 @@
       el.addEventListener('change', () => { settings[id] = el.value; saveSettings(); });
     }
 
-    const player = document.getElementById('player');
-    new IntersectionObserver(([e]) => player.classList.toggle('stuck', e.intersectionRatio < 1), { threshold: [1], rootMargin: '-1px 0px 0px 0px' }).observe(player);
-
     // ---------- 語音 ----------
     const statusEl = document.getElementById('status');
     const nowEl = document.getElementById('now');
     const barEl = document.getElementById('bar');
+    const miniEl = document.getElementById('mini');
     const voiceSelect = document.getElementById('voice');
     const playAllBtn = document.getElementById('play-all');
     const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
@@ -728,6 +736,8 @@
       }
     }
     function showProgress() {
+      miniEl.hidden = !queue;
+      document.body.classList.toggle('playing', !!queue);
       if (!queue) {
         nowEl.textContent = '';
         barEl.style.width = '0';
@@ -776,6 +786,7 @@
       if (queue && queue.button === playAllBtn) { stopQueue(); return; }
       playQueue(visibleItems(), playAllBtn, '全部播放');
     });
+    document.getElementById('mini-stop').addEventListener('click', stopQueue);
     voiceSelect.addEventListener('change', () => { settings.voice = voiceSelect.value; saveSettings(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') stopQueue(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopQueue(); });
