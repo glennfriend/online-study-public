@@ -100,11 +100,12 @@
       .now { font-size: 13px; }
       nav.cats button { padding: 6px 13px; }
       .play-cat { padding: 6px 14px; }
-      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
-      .card { padding: 12px 10px; min-height: 0; }
+      /* 手機一行一張卡，長的詞也不會擠出方格。 */
+      .grid { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+      .card { padding: 12px 16px; min-height: 0; }
       .card.wide { grid-column: 1 / -1; }
-      .jp { font-size: 24px; }
-      .card.long .jp { font-size: 19px; }
+      .jp { font-size: 30px; }
+      .card.long .jp { font-size: 24px; }
       .zh { font-size: 16px; }
       .note { font-size: 13.5px; }
     }
