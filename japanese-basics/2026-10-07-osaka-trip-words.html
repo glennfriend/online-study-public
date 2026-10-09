@@ -39,7 +39,9 @@
     /* 底部播放條：只在連續播放時出現，隨時可以停止。 */
     .mini { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; display: flex; align-items: center; gap: 12px; padding: 10px max(16px, calc((100% - 1160px) / 2)); background: #f5f3ebf2; backdrop-filter: blur(6px); border-top: 1px solid var(--line); box-shadow: 0 -4px 16px #344e3b14; }
     .mini[hidden] { display: none; }
-    #mini-stop { flex: none; min-height: 40px; border: 0; border-radius: 999px; padding: 6px 16px; background: #b3402f; color: #fff; font-size: 15px; font-weight: 700; }
+    /* 左邊大按鈕是暫停／繼續（拇指最好按），右邊小按鈕才是結束播放。 */
+    #mini-pause { flex: none; min-width: 6.5em; min-height: 40px; border: 0; border-radius: 999px; padding: 6px 16px; background: var(--green); color: #fff; font-size: 15px; font-weight: 700; }
+    #mini-stop { flex: none; min-height: 40px; border: 1px solid #d9b3ab; border-radius: 999px; padding: 6px 14px; background: var(--paper); color: #b3402f; font-size: 14px; font-weight: 600; }
     .mini-info { flex: 1; min-width: 0; }
     .now { margin: 0; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .now strong { color: var(--ink); }
@@ -143,11 +145,12 @@
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
     <div class="mini" id="mini" hidden>
-      <button type="button" id="mini-stop">■ 停止</button>
+      <button type="button" id="mini-pause" aria-pressed="false">❚❚ 暫停</button>
       <div class="mini-info">
         <p class="now" id="now" aria-live="polite"></p>
         <div class="bar" aria-hidden="true"><i id="bar"></i></div>
       </div>
+      <button type="button" id="mini-stop">■ 停止</button>
     </div>
 
     <nav class="cats" id="cats" aria-label="只顯示這個分類"></nav>
@@ -646,6 +649,7 @@
     const nowEl = document.getElementById('now');
     const barEl = document.getElementById('bar');
     const miniEl = document.getElementById('mini');
+    const pauseBtn = document.getElementById('mini-pause');
     const voiceSelect = document.getElementById('voice');
     const playAllBtn = document.getElementById('play-all');
     const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
@@ -653,7 +657,7 @@
     let voices = [];
     let current = null;      // 目前的 utterance，保留參照避免被回收而不觸發 onend
     let watchdog = null;
-    let queue = null;        // { list, index, rep, button, label, timer }
+    let queue = null;        // { list, index, rep, paused, button, label, timer }
     const REPEAT = 3;        // 連續播放時每個詞念幾次
 
     function loadVoices() {
@@ -748,22 +752,24 @@
       const it = queue.list[queue.index];
       const doneCount = queue.index + 1;
       const total = queue.list.length;
+      // 詞放最前面：手機上這行放不下時，被截掉的是後面的分類與進度。
       nowEl.textContent = '';
-      nowEl.append(it.cat.title + '　' + doneCount + ' / ' + total + '　');
       const b = document.createElement('strong');
       b.lang = 'ja';
       b.textContent = it.plain;
-      nowEl.append(b, '　' + (queue.rep + 1) + '/' + REPEAT);
+      nowEl.append(b, '　' + (queue.rep + 1) + '/' + REPEAT + '　· ' + it.cat.title + ' ' + doneCount + ' / ' + total);
+      pauseBtn.textContent = queue.paused ? '▶ 繼續' : '❚❚ 暫停';
+      pauseBtn.setAttribute('aria-pressed', String(queue.paused));
       barEl.style.width = (doneCount / total * 100) + '%';
     }
     function playQueue(list, button, label) {
       stopQueue();
-      queue = { list, index: 0, rep: 0, button, label, timer: null };
+      queue = { list, index: 0, rep: 0, paused: false, button, label, timer: null };
       setPressed(button, true, label);
       step();
     }
     function step() {
-      if (!queue) return;
+      if (!queue || queue.paused) return;
       if (queue.index >= queue.list.length) { stopQueue(); return; }
       const it = queue.list[queue.index];
       showProgress();
@@ -788,6 +794,21 @@
       const delta = Math.min(target.bottom - bottom, cur.top - top);
       window.scrollBy({ top: delta, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     }
+    // 暫停：停在目前這個詞（和第幾次），繼續時從這裡重念。
+    function pauseQueue() {
+      if (!queue || queue.paused) return;
+      queue.paused = true;
+      clearTimeout(queue.timer);
+      cancelSpeech();
+      // 暫停時仍標出停在哪一張。
+      queue.list[queue.index].card.classList.add('speaking');
+      showProgress();
+    }
+    function resumeQueue() {
+      if (!queue || !queue.paused) return;
+      queue.paused = false;
+      step();
+    }
     function stopQueue() {
       if (queue) {
         clearTimeout(queue.timer);
@@ -802,10 +823,12 @@
       if (queue && queue.button === playAllBtn) { stopQueue(); return; }
       playQueue(visibleItems(), playAllBtn, '全部播放');
     });
+    pauseBtn.addEventListener('click', () => { if (queue && queue.paused) resumeQueue(); else pauseQueue(); });
     document.getElementById('mini-stop').addEventListener('click', stopQueue);
     voiceSelect.addEventListener('change', () => { settings.voice = voiceSelect.value; saveSettings(); });
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') stopQueue(); });
-    document.addEventListener('visibilitychange', () => { if (document.hidden) stopQueue(); });
+    // 鎖螢幕或切到別的 App 時只暫停，回來可以按「繼續」接著念。
+    document.addEventListener('visibilitychange', () => { if (document.hidden) pauseQueue(); });
     window.addEventListener('pagehide', stopQueue);
 
     loadVoices();
