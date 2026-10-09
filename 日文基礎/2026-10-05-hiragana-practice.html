@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>五十音小學堂 · 旅行單字練習</title>
+  <style>
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
+    button, select { font: inherit; }
+    button, select, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, .table-wrap:focus-visible { outline: 3px solid #d48b38; outline-offset: 4px; }
+    main { width: min(1160px, calc(100% - 48px)); margin: 32px auto 48px; }
+    h1 { margin: 0; font-size: clamp(30px, 4vw, 46px); letter-spacing: .04em; line-height: 1.3; }
+    .instructions { display: flex; flex-wrap: wrap; gap: 12px 24px; padding: 16px 20px; background: #e9efe5; border-radius: 14px; margin: 16px 0 18px; font-size: 14px; }
+    .instructions span { display: flex; align-items: center; gap: 8px; }
+    .step { display: inline-grid; place-items: center; border: 1px solid #c1d2bf; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; font-style: normal; }
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+    .audio-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px; }
+    select, .toggle { border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 8px; padding: 8px 12px; }
+    #voice { max-width: 240px; }
+    .toggle { font-size: 14px; }
+    .toggle[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: white; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); box-shadow: 0 8px 28px #344e3b06; }
+    table { width: 100%; min-width: 960px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    th, td { border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+    tr > :last-child { border-right: 0; }
+    tbody tr:last-child > * { border-bottom: 0; }
+    thead th { padding: 12px 8px; font-weight: 500; background: #f0f3e9; }
+    thead th:first-child { width: 65px; font-size: 12px; }
+    thead .column-kana { font-size: 20px; font-weight: 700; }
+    thead small { color: var(--muted); margin-left: 5px; }
+    tbody th { background: #fafaf3; text-align: center; font-size: 15px; font-weight: 500; }
+    /* height: 1px 讓格子內容能撐滿整格，同一行的底色才會一樣高。 */
+    td { padding: 0; vertical-align: top; height: 1px; }
+    /* 主字在左，單字與中文在右。 */
+    .tile { height: 100%; display: grid; grid-template-columns: auto 1fr; align-content: center; align-items: center; column-gap: 8px; padding: 10px; text-align: left; position: relative; transition: background .2s; }
+    .tile.waiting, .tile.revealed { background: #f0f6ed; }
+    .kana { grid-row: span 2; color: var(--green); font-size: 30px; line-height: 1.2; font-weight: 700; }
+    .word { margin: 0; padding: 0 4px; text-align: left; display: block; width: 100%; border: 0; background: transparent; color: var(--ink); font-size: 18px; line-height: 1.6; white-space: nowrap; border-radius: 5px; }
+    .word.long { font-size: 14px; line-height: 28.8px; }
+    .word:hover { background: #e6efdf; }
+    .tile.speaking .word { background: #d7e8d3; }
+    .word strong { color: var(--green); font-weight: 800; }
+    [data-char] { border-radius: 4px; transition: background .2s, color .2s; }
+    [data-char].flash { background: #ffd978; color: #8a4b00; }
+    /* 進度條和中文共用同一行：等待時顯示進度條，揭曉後換成中文。 */
+    .translation { display: grid; align-items: center; justify-items: start; min-height: 22px; padding: 0 4px; font-size: 14px; line-height: 1.5; }
+    .translation > * { grid-area: 1 / 1; }
+    .answer { font-weight: 600; color: #365b45; }
+    [hidden] { display: none !important; }
+    .progress { height: 2px; width: 100%; border-radius: 2px; background: #e6eadf; overflow: hidden; }
+    .progress::after { content: ""; display: block; height: 100%; width: 100%; background: #74a984; transform: scaleX(0); transform-origin: left; }
+    .waiting .progress::after { animation: countdown 2.5s linear forwards; }
+    @keyframes countdown { to { transform: scaleX(1); } }
+    .empty { text-align: center; vertical-align: middle; color: #c0c9bc; background: #f9f9f2; }
+    .table-note, .status { margin: 12px 4px 0; font-size: 13px; color: var(--muted); }
+    .status:empty { display: none; }
+    .notes { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 28px; padding: 0 4px; font-size: 14px; color: var(--muted); }
+    .notes ul { margin: 0; padding-left: 1.2em; }
+    .notes li + li { margin-top: 4px; }
+    .notes strong { color: var(--ink); display: block; margin-bottom: 5px; }
+    footer { margin-top: 28px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 12px; color: var(--muted); }
+    @media (max-width: 650px) {
+      main { width: calc(100% - 28px); margin: 28px auto; }
+      .instructions { gap: 10px; padding: 14px; }
+      .toolbar { align-items: flex-start; }
+      #voice { max-width: 180px; }
+      .notes { grid-template-columns: 1fr; gap: 16px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+    @media print {
+      main { width: 100%; margin: 0; }
+      body { background: white; }
+      .toolbar, .instructions, .progress, .table-note, .status, footer { display: none !important; }
+      .answer[hidden] { display: inline !important; }
+      .table-wrap { overflow: visible; box-shadow: none; }
+      table { min-width: 0; }
+      .tile { padding: 8px 4px; break-inside: avoid; }
+      .kana { font-size: 24px; }
+      .word { font-size: 16px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>五十音小學堂</h1>
+    <div class="instructions" id="instructions">
+      <span><i class="step">1</i>先念念看日文</span>
+      <span><i class="step">2</i>滑鼠停留 2.5 秒，看中文</span>
+      <span><i class="step">3</i>點日文單字聽發音，跟著念</span>
+      <span><i class="step">4</i>點單字裡的假名，所有單字中相同的字會亮 2.5 秒</span>
+    </div>
+    <div class="toolbar">
+      <div class="audio-controls">
+        <label for="rate">播放速度</label>
+        <select id="rate"><option value="0.75">慢慢念</option><option value="1">一般速度</option></select>
+        <label for="voice">日語聲音</label>
+        <select id="voice" disabled><option>正在尋找日語語音…</option></select>
+      </div>
+      <button type="button" class="toggle" id="show-all" aria-pressed="false">顯示全部中文</button>
+    </div>
+    <noscript><p>請啟用 JavaScript，才能顯示單字、延遲揭曉中文與播放發音。</p></noscript>
+    <div class="table-wrap" tabindex="0" role="region" aria-label="可左右捲動的五十音練習表" aria-describedby="instructions">
+      <table>
+        <thead><tr><th scope="col">行</th><th scope="col"><span class="column-kana" lang="ja">あ</span><small>段</small></th><th scope="col"><span class="column-kana" lang="ja">い</span><small>段</small></th><th scope="col"><span class="column-kana" lang="ja">う</span><small>段</small></th><th scope="col"><span class="column-kana" lang="ja">え</span><small>段</small></th><th scope="col"><span class="column-kana" lang="ja">お</span><small>段</small></th></tr></thead>
+        <tbody id="kana-table"></tbody>
+      </table>
+    </div>
+    <p class="table-note">粗體標出這格要練的假名。手機：點一下日文會播放發音，等待 2.5 秒看中文；表格可左右滑動。鍵盤：Tab 移到單字，按 Enter 播放，等待 2.5 秒看中文。</p>
+    <!-- 只在語音有問題時顯示訊息，正常時保持空白。 -->
+    <p class="status" id="audio-status" role="status" aria-live="polite"></p>
+    <div class="notes">
+      <div>
+        <strong>「五十音」的小祕密</strong>
+        <ul>
+          <li>現代常用的基本假名共有 46 個，包含「を」和「ん」。</li>
+          <li>「を」通常當助詞，讀音同「お」，這裡用「きっぷをかう」（買車票）練習。</li>
+          <li>「ん」用「おんせん」（溫泉）練習。</li>
+          <li>「こんにちは」最後的「は」是助詞，要念成「わ」。</li>
+        </ul>
+      </div>
+      <div>
+        <strong>到日本馬上用得到</strong>
+        <ul>
+          <li>「すみません」「これ」「いくら」「けっこうです」幾乎每天都會說。</li>
+          <li>小「っ」要停頓一拍，例如「きっぷ」「まっちゃ」。</li>
+          <li>小「ゃ、ゅ、ょ」和前一個假名合成一拍，例如「りょかん」「ぎゅうにく」。</li>
+          <li>有些單字含濁音，例如「ぎゅうにく」的「ぎ」，先練粗體標出的假名就好。</li>
+        </ul>
+      </div>
+    </div>
+    <footer>發音使用裝置提供的日語語音；聲音與可用性依瀏覽器、系統而異。沒有日語語音時，仍可練習表格與中文。列印時會顯示全部中文。</footer>
+  </main>
+  <script>
+    'use strict';
+    // [目標假名, 平假名讀法, 中文, 朗讀用文字]：用漢字避免同音字被讀成另一個意思。
+    const rows = [
+      ['あ', [['あ', 'あさごはん', '早餐', '朝ごはん'], ['い', 'いくら', '多少錢？', 'いくら'], ['う', 'うどん', '烏龍麵', 'うどん'], ['え', 'えき', '車站', '駅'], ['お', 'おみやげ', '伴手禮', 'お土産']]],
+      ['か', [['か', 'おかいけい', '結帳', 'お会計'], ['き', 'きっぷ', '車票', '切符'], ['く', 'くうこう', '機場', '空港'], ['け', 'けっこうです', '不用了，謝謝', '結構です'], ['こ', 'こんにちは', '你好', 'こんにちは']]],
+      ['さ', [['さ', 'さしみ', '生魚片', '刺身'], ['し', 'しんかんせん', '新幹線', '新幹線'], ['す', 'すみません', '不好意思', 'すみません'], ['せ', 'せき', '座位', '席'], ['そ', 'そば', '蕎麥麵', '蕎麦']]],
+      ['た', [['た', 'たべほうだい', '吃到飽', '食べ放題'], ['ち', 'ちかてつ', '地下鐵', '地下鉄'], ['つ', 'つぎ', '下一站', 'つぎ'], ['て', 'てんぷら', '天婦羅', '天ぷら'], ['と', 'とうきょう', '東京', '東京']]],
+      ['な', [['な', 'なんめいさま', '請問幾位？', 'なんめいさま'], ['に', 'ぎゅうにく', '牛肉', '牛肉'], ['ぬ', 'わさびぬき', '不加芥末', 'わさび抜き'], ['ね', 'ねだん', '價格', '値段'], ['の', 'のみもの', '飲料', '飲み物']]],
+      ['は', [['は', 'はし', '筷子', '箸'], ['ひ', 'ひこうき', '飛機', '飛行機'], ['ふ', 'ふたり', '兩個人', 'ふたり'], ['へ', 'へや', '房間', '部屋'], ['ほ', 'ほうじちゃ', '焙茶', 'ほうじ茶']]],
+      ['ま', [['ま', 'まっちゃ', '抹茶', '抹茶'], ['み', 'みず', '水', 'みず'], ['む', 'むりょう', '免費', '無料'], ['め', 'めんぜい', '免稅', '免税'], ['も', 'にもつ', '行李', '荷物']]],
+      ['や', [['や', 'やすい', '便宜', '安い'], null, ['ゆ', 'ゆかた', '浴衣', '浴衣'], null, ['よ', 'よやく', '預約', '予約']]],
+      ['ら', [['ら', 'いらっしゃいませ', '歡迎光臨', 'いらっしゃいませ'], ['り', 'りょかん', '日式旅館', '旅館'], ['る', 'ひるごはん', '午餐', '昼ごはん'], ['れ', 'これ', '這個', 'これ'], ['ろ', 'おふろ', '泡澡、浴池', 'お風呂']]],
+      ['わ', [['わ', 'わさび', '芥末', 'わさび'], null, null, null, ['を', 'きっぷをかう', '買車票', '切符を買う']]],
+      ['ん', [['ん', 'おんせん', '溫泉', '温泉'], null, null, null, null]]
+    ];
+    const states = [];
+    let showAll = false;
+    const body = document.getElementById('kana-table');
+
+    // 每個假名包成帶 data-char 的元素，點擊時讓畫面上相同的字一起亮 2.5 秒。
+    function charSpan(char, tag = 'span') {
+      const el = document.createElement(tag);
+      el.dataset.char = char;
+      el.textContent = char;
+      return el;
+    }
+    let flashTimer = null;
+    function flashChar(char) {
+      clearTimeout(flashTimer);
+      for (const el of document.querySelectorAll('[data-char].flash')) el.classList.remove('flash');
+      for (const el of document.querySelectorAll('[data-char]')) {
+        if (el.dataset.char === char) el.classList.add('flash');
+      }
+      flashTimer = setTimeout(() => {
+        for (const el of document.querySelectorAll('[data-char].flash')) el.classList.remove('flash');
+      }, 2500);
+    }
+    document.addEventListener('click', (event) => {
+      const target = event.target.closest('[data-char]');
+      if (target) flashChar(target.dataset.char);
+    });
+
+    function renderMeaning(state) {
+      const visible = showAll || state.revealed;
+      state.answer.hidden = !visible;
+      state.progress.hidden = visible;
+      state.tile.classList.toggle('revealed', visible);
+    }
+    function reset(state) {
+      clearTimeout(state.timer);
+      state.timer = null;
+      state.revealed = false;
+      state.tile.classList.remove('waiting');
+      renderMeaning(state);
+    }
+    function start(state) {
+      if (showAll || state.timer !== null || state.revealed) return;
+      state.tile.classList.add('waiting');
+      state.timer = setTimeout(() => {
+        state.timer = null;
+        state.revealed = true;
+        state.tile.classList.remove('waiting');
+        renderMeaning(state);
+      }, 2500);
+    }
+    function leaveIfInactive(state) {
+      if (!state.hovered && !state.focused) reset(state);
+    }
+
+    for (const [rowKana, entries] of rows) {
+      const tr = document.createElement('tr');
+      const rowHeader = document.createElement('th');
+      rowHeader.scope = 'row';
+      rowHeader.textContent = rowKana === 'ん' ? 'ん' : rowKana + '行';
+      tr.append(rowHeader);
+      for (const entry of entries) {
+        const td = document.createElement('td');
+        tr.append(td);
+        if (!entry) {
+          td.className = 'empty';
+          td.textContent = '—';
+          continue;
+        }
+        const [kana, word, meaning, spoken] = entry;
+        const id = 'meaning-' + states.length;
+        const tile = document.createElement('div');
+        tile.className = 'tile';
+        const kanaLabel = document.createElement('div');
+        kanaLabel.className = 'kana';
+        kanaLabel.lang = 'ja';
+        kanaLabel.textContent = kana;
+        const wordButton = document.createElement('button');
+        wordButton.type = 'button';
+        wordButton.className = word.length >= 7 ? 'word long' : 'word';
+        wordButton.lang = 'ja';
+        wordButton.setAttribute('aria-label', word + '，點一下播放發音，等待 2.5 秒顯示中文');
+        wordButton.setAttribute('aria-describedby', id);
+        const index = word.indexOf(kana);
+        [...word].forEach((char, i) => wordButton.append(charSpan(char, i === index ? 'strong' : 'span')));
+        const translation = document.createElement('div');
+        translation.className = 'translation';
+        translation.id = id;
+        translation.setAttribute('aria-live', 'polite');
+        const answer = document.createElement('span');
+        answer.className = 'answer';
+        answer.textContent = meaning;
+        answer.hidden = true;
+        const progress = document.createElement('div');
+        progress.className = 'progress';
+        progress.setAttribute('aria-hidden', 'true');
+        translation.append(progress, answer);
+        tile.append(kanaLabel, wordButton, translation);
+        td.append(tile);
+        const state = { tile, answer, progress, word, spoken, hovered: false, focused: false, revealed: false, timer: null };
+        states.push(state);
+        tile.addEventListener('pointerenter', (event) => {
+          if (event.pointerType === 'touch') return;
+          state.hovered = true;
+          start(state);
+        });
+        tile.addEventListener('pointerleave', (event) => {
+          if (event.pointerType === 'touch') return;
+          state.hovered = false;
+          // 滑鼠移開時清掉點擊留下的焦點，避免仍繼續計時。
+          if (tile.contains(document.activeElement)) document.activeElement.blur();
+          state.focused = false;
+          leaveIfInactive(state);
+        });
+        tile.addEventListener('focusin', () => {
+          state.focused = true;
+          start(state);
+        });
+        tile.addEventListener('focusout', (event) => {
+          if (event.relatedTarget && tile.contains(event.relatedTarget)) return;
+          state.focused = false;
+          leaveIfInactive(state);
+        });
+        wordButton.addEventListener('click', () => {
+          wordButton.focus();
+          start(state);
+          speak(state);
+        });
+      }
+      body.append(tr);
+    }
+
+    document.getElementById('show-all').addEventListener('click', (event) => {
+      showAll = !showAll;
+      event.currentTarget.setAttribute('aria-pressed', String(showAll));
+      event.currentTarget.textContent = showAll ? '隱藏全部中文' : '顯示全部中文';
+      for (const state of states) {
+        reset(state);
+        if (!showAll && (state.hovered || state.focused)) start(state);
+      }
+    });
+    function clearActivity() {
+      for (const state of states) {
+        state.hovered = false;
+        state.focused = false;
+        reset(state);
+      }
+    }
+    window.addEventListener('blur', clearActivity);
+    window.addEventListener('focus', () => {
+      const active = states.find(state => state.tile.contains(document.activeElement));
+      if (active) { active.focused = true; start(active); }
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { clearActivity(); stopSpeech(); }
+    });
+
+    const status = document.getElementById('audio-status');
+    const voiceSelect = document.getElementById('voice');
+    const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
+    const supportsSpeech = synth && 'SpeechSynthesisUtterance' in window;
+    let voices = [];
+    let currentUtterance = null;
+    let speechTimeout = null;
+    function loadVoices() {
+      if (!supportsSpeech) {
+        voiceSelect.replaceChildren(new Option('此瀏覽器不支援發音', ''));
+        status.textContent = '此瀏覽器不支援語音播放，仍可使用中文練習。';
+        return;
+      }
+      const selected = voiceSelect.value;
+      voices = synth.getVoices().filter(voice => /^ja(?:[-_]|$)/i.test(voice.lang));
+      voiceSelect.replaceChildren();
+      if (!voices.length) {
+        voiceSelect.append(new Option('未找到日語語音', ''));
+        status.textContent = '這台裝置尚未提供日語語音。可在系統語音設定加入日語後重新開啟頁面；中文練習可照常使用。';
+      } else {
+        for (const voice of voices) voiceSelect.append(new Option(voice.name, voice.voiceURI));
+        // 優先選品質最好的聲音：Edge 線上神經語音 → Google 日本語 → 其他。
+        const preferred = voices.find(voice => voice.voiceURI === selected)
+          || voices.find(voice => /Natural|Online/i.test(voice.name))
+          || voices.find(voice => /Google/i.test(voice.name))
+          || voices[0];
+        voiceSelect.value = preferred.voiceURI;
+        status.textContent = '';
+      }
+      voiceSelect.disabled = !voices.length;
+    }
+    function stopSpeech() {
+      currentUtterance = null;
+      clearTimeout(speechTimeout);
+      speechTimeout = null;
+      if (supportsSpeech) synth.cancel();
+      for (const state of states) state.tile.classList.remove('speaking');
+    }
+    function speak(state) {
+      const voice = voices.find(item => item.voiceURI === voiceSelect.value);
+      if (!supportsSpeech || !voice) {
+        status.textContent = '目前沒有可用的日語語音，請檢查裝置的語音設定。';
+        return;
+      }
+      stopSpeech();
+      const utterance = new SpeechSynthesisUtterance(state.spoken);
+      currentUtterance = utterance;
+      utterance.lang = 'ja-JP';
+      utterance.voice = voice;
+      utterance.rate = Number(document.getElementById('rate').value);
+      const finish = (message) => {
+        if (currentUtterance !== utterance) return;
+        clearTimeout(speechTimeout);
+        speechTimeout = null;
+        state.tile.classList.remove('speaking');
+        currentUtterance = null;
+        status.textContent = message;
+      };
+      utterance.onstart = () => {
+        if (currentUtterance !== utterance) return;
+        clearTimeout(speechTimeout);
+        speechTimeout = null;
+        state.tile.classList.add('speaking');
+        status.textContent = '';
+      };
+      utterance.onend = () => finish('');
+      utterance.onerror = () => finish('這次未能播放，請確認裝置音量、日語語音與網路連線，再按一次試試看。');
+      status.textContent = '';
+      speechTimeout = setTimeout(() => {
+        if (currentUtterance !== utterance) return;
+        finish('語音未能開始播放，請確認日語語音與裝置設定，再按一次試試看。');
+        synth.cancel();
+      }, 10000);
+      try { synth.speak(utterance); }
+      catch { finish('這次未能播放，請檢查瀏覽器的語音設定。'); }
+    }
+    loadVoices();
+    if (supportsSpeech) {
+      synth.addEventListener('voiceschanged', loadVoices);
+      // 有些瀏覽器的語音清單稍晚才出現。
+      setTimeout(loadVoices, 1500);
+    }
+    window.addEventListener('pagehide', stopSpeech);
+  </script>
+</body>
+</html>

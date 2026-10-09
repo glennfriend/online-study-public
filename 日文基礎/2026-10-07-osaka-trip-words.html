@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>大阪旅行單字</title>
+  <style>
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --kanji-rt: #2f6f8f; --kata-rt: #b4682a; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
+    button, select { font: inherit; }
+    button, select, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, a:focus-visible { outline: 3px solid #d48b38; outline-offset: 3px; }
+    main { width: min(1160px, calc(100% - 48px)); margin: 32px auto 48px; }
+    h1 { margin: 0; font-size: clamp(30px, 4vw, 46px); letter-spacing: .04em; line-height: 1.3; }
+    .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+
+    /* 頂部播放列：捲動時固定在畫面上方，隨時可以停止。 */
+    .player { position: sticky; top: 0; z-index: 5; margin: 18px -12px 0; padding: 12px; background: #f5f3ebf2; backdrop-filter: blur(6px); border-bottom: 1px solid transparent; }
+    .player.stuck { border-bottom-color: var(--line); }
+    .player-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+    #play-all { display: inline-flex; align-items: center; gap: 10px; border: 0; border-radius: 999px; padding: 12px 26px 12px 20px; background: var(--green); color: #fff; font-size: 18px; font-weight: 700; box-shadow: 0 6px 18px #23695c33; }
+    /* 文字固定 4 字寬，「全部播放」↔「停止」切換時按鈕不會變寬變窄。 */
+    #play-all .label { display: inline-block; min-width: 4em; text-align: left; }
+    #play-all .icon { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: #ffffff2e; font-size: 14px; }
+    #play-all[aria-pressed="true"] { background: #b3402f; box-shadow: 0 6px 18px #b3402f33; }
+    .audio-controls { display: flex; flex-wrap: wrap; gap: 8px 10px; align-items: center; font-size: 14px; }
+    select, .toggle { border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 8px; padding: 7px 11px; }
+    #voice { max-width: 220px; }
+    .toggle { font-size: 14px; }
+    .toggle[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+    .now { margin: 8px 2px 0; font-size: 14px; color: var(--muted); min-height: 1.7em; }
+    .now strong { color: var(--ink); }
+    .bar { height: 3px; border-radius: 3px; background: #e2e7dc; overflow: hidden; margin-top: 4px; }
+    .bar > i { display: block; height: 100%; width: 0; background: #74a984; transition: width .3s; }
+
+
+    nav.cats { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 8px; }
+    nav.cats button { color: var(--ink); background: var(--paper); border: 1px solid var(--line); border-radius: 999px; padding: 4px 13px; font-size: 14px; }
+    nav.cats button:hover { border-color: #a9c2ad; }
+    nav.cats small { color: var(--muted); margin-left: 4px; }
+    nav.cats button[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+    nav.cats button[aria-pressed="true"] small { color: #ffffffc0; }
+
+    section { margin-top: 30px; scroll-margin-top: 130px; }
+    .sec-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 14px; border-bottom: 2px solid var(--line); padding-bottom: 6px; margin-bottom: 14px; }
+    h2 { margin: 0; font-size: 22px; letter-spacing: .03em; }
+    .sec-head p { margin: 0; color: var(--muted); font-size: 14px; flex: 1 1 260px; }
+    .play-cat { border: 1px solid #b9cdb9; background: var(--paper); color: var(--green); border-radius: 999px; padding: 3px 14px; font-size: 14px; font-weight: 600; }
+    .play-cat[aria-pressed="true"] { background: #b3402f; border-color: #b3402f; color: #fff; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+    .card { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); padding: 14px 16px; min-height: 130px; transition: border-color .15s, box-shadow .15s, background .15s; }
+    .card:hover { border-color: #a9c2ad; box-shadow: 0 4px 14px #344e3b10; }
+    .card.wide { grid-column: span 2; }
+    .card.speaking { border-color: var(--green); background: #eef6ee; box-shadow: 0 0 0 3px #23695c33; }
+    .jp { font-size: 36px; line-height: 2.1; font-weight: 600; letter-spacing: .02em; word-break: keep-all; overflow-wrap: anywhere; }
+    .card.long .jp { font-size: 28px; }
+    ruby { ruby-position: over; ruby-align: center; }
+    rt { font-size: .5em; font-weight: 600; letter-spacing: 0; color: var(--kanji-rt); }
+    rt.k { color: var(--kata-rt); }
+    body.no-rt rt { visibility: hidden; }
+    body.no-kata rt.k { visibility: hidden; }
+    .zh { font-size: 17px; font-weight: 600; color: #365b45; line-height: 1.45; }
+    body.no-zh .zh, body.no-zh .note { visibility: hidden; }
+    .note { font-size: 14.5px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
+
+    .status { margin: 10px 2px 0; font-size: 13px; color: #b3402f; }
+    .status:empty { display: none; }
+    footer { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 12px; color: var(--muted); }
+
+    @media (max-width: 650px) {
+      main { width: calc(100% - 32px); margin: 24px auto; }
+      .player { margin: 14px -16px 0; padding: 10px 16px; }
+      #play-all { font-size: 16px; padding: 10px 20px 10px 14px; }
+      #voice { max-width: 160px; }
+      .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; }
+      .card.wide { grid-column: 1 / -1; }
+      .jp { font-size: 30px; }
+      .card.long .jp { font-size: 23px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { transition: none !important; } }
+    @media print {
+      body { background: #fff; }
+      main { width: 100%; margin: 0; }
+      .player, nav.cats, .play-cat, .status, footer { display: none !important; }
+      body.no-rt rt, body.no-kata rt.k, body.no-zh .zh, body.no-zh .note { visibility: visible; }
+      .card { break-inside: avoid; min-height: 0; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>大阪旅行單字</h1>
+    <p class="lead">Day 1～Day 5 一路上最常看到、聽到的日文。點任何一張卡片聽發音，或按「全部播放」從頭念到尾。</p>
+
+    <div class="player" id="player">
+      <div class="player-row">
+        <button type="button" id="play-all" aria-pressed="false"><span class="icon" aria-hidden="true">▶</span><span class="label">全部播放</span></button>
+        <div class="audio-controls">
+          <label for="rate">速度</label>
+          <select id="rate"><option value="0.7">慢慢念</option><option value="0.9" selected>稍慢</option><option value="1">一般</option></select>
+          <label for="gap">間隔</label>
+          <select id="gap"><option value="400">短</option><option value="900" selected>中</option><option value="1800">長（跟著念）</option></select>
+          <label for="voice">聲音</label>
+          <select id="voice" disabled><option>正在尋找日語語音…</option></select>
+        </div>
+        <div class="audio-controls">
+          <button type="button" class="toggle" id="t-rt" aria-pressed="true">讀音</button>
+          <button type="button" class="toggle" id="t-zh" aria-pressed="true">中文</button>
+        </div>
+      </div>
+      <p class="now" id="now" aria-live="polite"></p>
+      <div class="bar" aria-hidden="true"><i id="bar"></i></div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+
+    <nav class="cats" id="cats" aria-label="只顯示這個分類"></nav>
+    <noscript><p>請啟用 JavaScript，才能顯示單字與播放發音。</p></noscript>
+    <div id="sections"></div>
+
+    <footer>發音使用裝置內建的日語語音（Windows、macOS、iPhone、Android 通常都有），聲音好壞依裝置而異。地名、數字與時間念的是平假名讀音，以免語音把漢字念成別的讀法。列印時讀音與中文會全部顯示。</footer>
+  </main>
+
+  <script>
+    'use strict';
+    // 標記方式：{漢字|讀音} 會加上平假名讀音；片假名會自動標上對應的平假名。
+    // 每個詞：[標記, 中文, 補充說明, 念法]。念法：1＝念讀音；字串＝直接念這個字串（修正語音容易念錯的詞）。
+    // kana: true 的分類預設念讀音。
+    const categories = [
+      { id: 'place', title: '地點', desc: '車站廣播、路標、Google 地圖上會一直看到的地名', words: [
+        ['{関|かん}{西|さい}{空|くう}{港|こう}', '關西機場', '蓋在海上人工島的國際機場，簡稱「{関|かん}{空|くう}」'],
+        ['{大|おお}{阪|さか}', '大阪', '日本西部最大城市，以美食聞名'],
+        ['{難|なん}{波|ば}', '難波', '大阪南區最熱鬧的地方，南海、近鐵、地鐵都在這裡交會。招牌常直接寫「なんば」'],
+        ['{新|しん}{今|いま}{宮|みや}', '新今宮', '離飯店最近的車站，JR 環狀線和南海電鐵都停'],
+        ['{恵|え}{美|び}{須|す}{町|ちょう}', '惠美須町', '飯店旁的地鐵站，走到新世界、通天閣最近', 1],
+        ['{日|にっ}{本|ぽん}{橋|ばし}', '日本橋（電器街）', '大阪的電器、動漫街，像台北的光華商場。大阪念 にっぽんばし，東京的才念 にほんばし', 1],
+        ['{黒|くろ}{門|もん}{市|いち}{場|ば}', '黑門市場', '號稱「大阪的廚房」的傳統市場，海鮮、水果、小吃都有，多數店 17:00 前收'],
+        ['{谷|たに}{町|まち}{九|きゅう}{丁|ちょう}{目|め}', '谷町九丁目', '「丁目」是日本地址的區段，類似台灣的「段」。簡稱「{谷|たに}{九|きゅう}」'],
+        ['なんばパークス', 'Namba Parks 購物中心', '難波站旁、有屋頂花園的購物中心'],
+        ['{道|どう}{頓|とん}{堀|ぼり}', '道頓堀', '沿著運河的美食街，固力果跑跑人看板就在這裡'],
+        ['{心|しん}{斎|さい}{橋|ばし}', '心齋橋', '有屋頂的長商店街，藥妝、服飾店最集中'],
+        ['{梅|うめ}{田|だ}', '梅田', '大阪北區的交通與百貨中心，JR 大阪站就在這裡'],
+        ['{新|しん}{世|せ}{界|かい}', '新世界', '通天閣下的老街區，炸串店集中，有昭和復古感'],
+        ['{通|つう}{天|てん}{閣|かく}', '通天閣', '大阪的地標鐵塔，高 108 公尺'],
+        ['ユニバーサル・スタジオ・ジャパン', '日本環球影城', '簡稱 USJ（ユー・エス・ジェイ）', 0, 'wide'],
+        ['ユニバーサルシティ', '環球城站', 'USJ 門口的 JR 車站，出站走幾分鐘就到'],
+        ['{西|にし}{九|く}{条|じょう}', '西九條', '從 JR 環狀線轉往 USJ 的車站'],
+        ['{宇|う}{治|じ}', '宇治', '京都南邊的小城，以抹茶和平等院聞名'],
+        ['{小|お}{倉|ぐら}', '小倉（宇治）', '這裡念 おぐら；九州的小倉才念 こくら', 1],
+        ['{任|にん}{天|てん}{堂|どう}ミュージアム', '任天堂博物館', '2024 年由任天堂舊工廠改建，沒有現場售票，要抽籤'],
+        ['{大和|やまと}{西|さい}{大|だい}{寺|じ}', '大和西大寺', '近鐵往小倉、奈良的轉車站。「大和」是奈良一帶的古地名', 1],
+        ['{神|こう}{戸|べ}', '神戶', '大阪西邊的港口城市，搭電車約 30 分鐘'],
+        ['{六|ろっ}{甲|こう}{山|さん}', '六甲山', '神戶後方的山，冬天有人工雪場'],
+        ['{奈|な}{良|ら}', '奈良', '8 世紀時的日本首都，鹿在市區自由走動'],
+        ['{奈|な}{良|ら}{公|こう}{園|えん}', '奈良公園', '住著上千隻鹿的大公園，東大寺就在裡面'],
+        ['{東|とう}{大|だい}{寺|じ}', '東大寺', '供奉巨大銅造大佛的寺廟，世界遺產'],
+        ['{新|しん}{大|おお}{宮|みや}', '新大宮', '近鐵奈良的前一站，志津香釜飯在這裡', 1],
+      ]},
+      { id: 'train', title: '交通・車站', desc: '搭電車、找月台、看時刻表時的關鍵字', words: [
+        ['{駅|えき}', '車站'],
+        ['{電|でん}{車|しゃ}', '電車', '日本說「電車」是指所有鐵路列車，不是只有路面電車'],
+        ['{地|ち}{下|か}{鉄|てつ}', '地下鐵', '大阪地鐵的正式名稱是「Osaka Metro」'],
+        ['{切|きっ}{符|ぷ}', '車票', '用 ICOCA 刷卡就不用買'],
+        ['{改|かい}{札|さつ}{口|ぐち}', '剪票口', '刷 ICOCA 進出站的閘門'],
+        ['{乗|の}り{換|か}え', '轉乘'],
+        ['{出|で}{口|ぐち}', '出口'],
+        ['{東|ひがし}{口|ぐち}', '東口', '去任天堂博物館走小倉站東口', 1],
+        ['{一|いち}{番|ばん}{線|せん}', '1 號月台', '「〇番線」＝第幾月台'],
+        ['{関|かん}{西|さい}{空|くう}{港|こう}{行|ゆ}き', '往關西機場', '「〇〇行き」＝開往〇〇', '関西空港ゆき'],
+        ['{次|つぎ}は', '下一站是', 'は 在這裡念 わ', 'つぎわ'],
+        ['{終|しゅう}{点|てん}', '終點站'],
+        ['{普|ふ}{通|つう}', '普通車', '每站都停，也寫「{各|かく}{駅|えき}{停|てい}{車|しゃ}」'],
+        ['{急|きゅう}{行|こう}', '急行', '只停大站，不用加錢'],
+        ['{快|かい}{速|そく}{急|きゅう}{行|こう}', '快速急行', '近鐵從難波直達奈良的車種，不用加錢'],
+        ['{空|くう}{港|こう}{急|きゅう}{行|こう}', '機場急行', '南海電鐵往關西機場的車種，不用加錢'],
+        ['{特|とっ}{急|きゅう}', '特急', '要另外買「特急券」，例如南海往機場的「ラピート」'],
+        ['{南|なん}{海|かい}', '南海電鐵', '南海電氣鐵道，民營鐵路，從難波往關西機場、和歌山'],
+        ['{近|きん}{鉄|てつ}', '近鐵', '近畿日本鐵道，日本路線最長的民營鐵路。從難波往奈良、京都都靠它'],
+        ['{JR|ジェイアール}', 'JR', '日本最大的鐵路公司（原國鐵），大阪這一帶是 JR 西日本。JR、民營鐵路、地鐵各自收費', 1],
+        ['{ICOCA|イコカ}', 'ICOCA 卡', 'JR 西日本的交通卡，像台灣的悠遊卡，電車、地鐵、公車、便利商店都能刷', 1],
+        ['チャージ', '儲值', '在車站售票機或便利商店儲值，通常只收現金'],
+        ['{精|せい}{算|さん}{機|き}', '補票機', '卡片餘額不夠、出不了站時用'],
+        ['コインロッカー', '投幣置物櫃', '車站裡的投幣置物櫃，很多也能刷 ICOCA'],
+        ['{乗|の}り{場|ば}', '乘車處', '公車、計程車的上車處'],
+        ['バス', '公車'],
+        ['タクシー', '計程車', '日本計程車的後門是自動開關，不用自己開'],
+      ]},
+      { id: 'food', title: '吃的', desc: '菜單、招牌、店門口最常看到的食物', words: [
+        ['たこ{焼|や}き', '章魚燒', '包章魚丁的麵糊小球，大阪代表小吃'],
+        ['お{好|この}み{焼|や}き', '大阪燒', '台灣叫「大阪燒」，日本叫 お{好|この}み{焼|や}き'],
+        ['{串|くし}カツ', '炸串', '肉、蔬菜裹麵衣油炸成串，新世界最有名'],
+        ['{二|に}{度|ど}づけ{禁|きん}{止|し}', '醬汁禁止沾兩次', '炸串店牆上一定會看到'],
+        ['おでん', '關東煮'],
+        ['{関|かん}{東|と}{煮|だき}', '關東煮（大阪老說法）', 'たこ梅 本店的寫法', 1],
+        ['{焼|やき}{肉|にく}', '燒肉', '自己在桌上烤的燒肉'],
+        ['{牛|ぎゅう}タン', '牛舌', '', 1],
+        ['ハラミ', '橫膈膜（牛肉）', '牛的橫膈膜，燒肉店的人氣部位'],
+        ['とんかつ', '炸豬排'],
+        ['カレーライス', '咖哩飯'],
+        ['{親|おや}{子|こ}{丼|どん}', '親子丼', '雞肉加蛋的蓋飯，雞是「親」、蛋是「子」', 1],
+        ['{釜|かま}{飯|めし}', '釜飯', '用小鐵鍋現點現煮的炊飯，鍋巴很香'],
+        ['おにぎり', '飯糰'],
+        ['サンドイッチ', '三明治'],
+        ['{玉|たま}{子|ご}サンド', '雞蛋三明治', '日本咖啡廳、便利商店的經典三明治'],
+        ['ハンバーガー', '漢堡'],
+        ['{豚|ぶた}まん', '豬肉包', '大阪名店 551 蓬萊的招牌，大阪人常買的伴手禮', 1],
+        ['ラーメン', '拉麵'],
+        ['{天|てん}ぷらうどん', '天婦羅烏龍麵'],
+        ['よもぎ{餅|もち}', '艾草麻糬', '奈良中谷堂，以高速搗麻糬表演出名'],
+        ['プリン', '布丁'],
+        ['ホットケーキ', '鬆餅', '日式厚鬆餅'],
+        ['ポップコーン', '爆米花'],
+        ['{抹|まっ}{茶|ちゃ}', '抹茶'],
+        ['コーヒー', '咖啡'],
+        ['{純|じゅん}{喫|きっ}{茶|さ}', '昭和風老咖啡廳', '昭和時代風格的老咖啡廳，賣咖啡、鬆餅、三明治，不賣酒'],
+        ['{弁|べん}{当|とう}', '便當'],
+      ]},
+      { id: 'restaurant', title: '餐廳裡', desc: '進門、點餐、結帳時店員會說、菜單上會寫的', words: [
+        ['いらっしゃいませ', '歡迎光臨', '店員說的招呼，不用回應，點頭就好'],
+        ['{何|なん}{名|めい}{様|さま}ですか', '請問幾位？', '回答時用手指比人數也可以', 1],
+        ['{四|よ}{人|にん}です', '4 位', '你們一行 4 人', 1],
+        ['{少|しょう}{々|しょう}お{待|ま}ちください', '請稍等', '', 0, 'wide'],
+        ['{満|まん}{席|せき}', '客滿'],
+        ['{予|よ}{約|やく}', '預約'],
+        ['メニュー', '菜單'],
+        ['お{水|みず}', '水', '日本餐廳的水、茶通常免費'],
+        ['{食|しょっ}{券|けん}', '餐券', '拉麵店多半先在機器買票', 1],
+        ['{店|てん}{内|ない}でお{召|め}し{上|あ}がりですか', '內用嗎？', '速食店、咖啡店點餐時會問', '店内で、おめしあがりですか', 'wide'],
+        ['お{持|も}ち{帰|かえ}り', '外帶'],
+        ['テイクアウト', '外帶'],
+        ['お{通|とお}し', '小菜（座位費）', '居酒屋會自動上，會收費', 1],
+        ['ラストオーダー', '最後點餐', '常寫 L.O.'],
+        ['{食|た}べ{放|ほう}{題|だい}', '吃到飽', '通常有時間限制，例如 90 分鐘'],
+        ['お{会|かい}{計|けい}', '結帳', '多數店是拿帳單到門口櫃台結帳，不在桌上付'],
+        ['おいしい', '好吃'],
+        ['ごちそうさまでした', '謝謝招待（吃飽了）', '吃完離開時對店員說，很有禮貌', 0, 'wide'],
+      ]},
+      { id: 'play', title: '玩的', desc: 'USJ、任天堂博物館、遊戲中心、雪場、奈良', words: [
+        ['ガチャガチャ', '扭蛋機', '也叫「ガチャ」，一次多半 ¥300～500，大多只收硬幣'],
+        ['カプセルトイ', '扭蛋', '扭蛋專賣店的招牌寫法'],
+        ['ゲームセンター', '遊戲中心', '簡稱「ゲーセン」'],
+        ['クレーンゲーム', '夾娃娃機'],
+        ['プリクラ', '大頭貼', '日本的大頭貼機，美顏、修圖功能很強'],
+        ['アトラクション', '遊樂設施'],
+        ['ジェットコースター', '雲霄飛車'],
+        ['{整|せい}{理|り}{券|けん}', '號碼牌', 'USJ 用官方 App 免費拿任天堂區的入場時段'],
+        ['{抽|ちゅう}{選|せん}', '抽籤'],
+        ['{待|ま}ち{時|じ}{間|かん}', '等候時間'],
+        ['{入|にゅう}{場|じょう}{券|けん}', '入場券'],
+        ['マリオ', '瑪利歐'],
+        ['{花|はな}{札|ふだ}', '花札', '任天堂最早做的就是花札', 1],
+        ['{展|てん}{望|ぼう}{台|だい}', '展望台'],
+        ['{夜|や}{景|けい}', '夜景'],
+        ['すべり{台|だい}', '溜滑梯', '通天閣 TOWER SLIDER'],
+        ['スノーパーク', '雪場'],
+        ['そり', '雪橇（雪盆）'],
+        ['{雪|ゆき}だるま', '雪人'],
+        ['リフト', '纜車（吊椅）', '上滑雪道才需要，只玩雪不用買'],
+        ['レンタル', '租借', '雪場可以租雪衣、雪橇'],
+        ['{鹿|しか}', '鹿', '', 1],
+        ['{鹿|しか}せんべい', '鹿仙貝', '約 ¥200 一疊，鹿會鞠躬討食', 1],
+        ['{大|だい}{仏|ぶつ}', '大佛', '東大寺的大佛高約 15 公尺'],
+      ]},
+      { id: 'shop', title: '購物・退稅', desc: '藥妝店、電器街、伴手禮店', words: [
+        ['いくらですか', '多少錢？'],
+        ['{免|めん}{税|ぜい}', '免稅', '2026/11 起改成先付含稅價，出境時在機場退稅'],
+        ['{税|ぜい}{込|こみ}', '含稅價', '標價常同時寫含稅與未稅，結帳付的是含稅價', 1],
+        ['{税|ぜい}{抜|ぬき}', '未稅價', '退稅門檻看的是未稅價', 1],
+        ['ドラッグストア', '藥妝店', '例如松本清、大國藥妝'],
+        ['コンビニ', '便利商店', '7-11、全家、Lawson'],
+        ['{家|か}{電|でん}{量|りょう}{販|はん}{店|てん}', '3C 家電賣場', '例如 Bic Camera、Yodobashi', 0, 'wide'],
+        ['{中|ちゅう}{古|こ}', '二手', '日本橋有很多二手遊戲、相機店'],
+        ['{新|しん}{品|ぴん}', '全新'],
+        ['フィギュア', '公仔'],
+        ['{限|げん}{定|てい}', '限定', '地區限定、季節限定，伴手禮最常見的字'],
+        ['{割|わり}{引|びき}', '打折'],
+        ['セール', '特價'],
+        ['お{土産|みやげ}', '伴手禮'],
+        ['{試|し}{着|ちゃく}', '試穿'],
+        ['サイズ', '尺寸'],
+        ['レシート', '收據', '要退稅的收據全部留好'],
+        ['{現|げん}{金|きん}', '現金'],
+        ['カード', '信用卡', '多數店可刷卡，小店、扭蛋、寺廟常只收現金'],
+        ['パスポート', '護照'],
+      ]},
+      { id: 'hotel', title: '飯店', desc: 'ESLEAD HOTEL 自助入住、房間設備', words: [
+        ['ホテル', '飯店'],
+        ['チェックイン', '入住'],
+        ['チェックアウト', '退房'],
+        ['フロント', '櫃台', '自助入住的飯店可能沒有櫃台人員'],
+        ['{荷|に}{物|もつ}', '行李'],
+        ['{荷|に}{物|もつ}{預|あず}かり', '行李寄放', '入住前、退房後都可以寄放行李'],
+        ['{暗|あん}{証|しょう}{番|ばん}{号|ごう}', '密碼', '飯店大門解鎖碼'],
+        ['{部屋|へや}', '房間'],
+        ['{電|でん}{子|し}レンジ', '微波爐', 'Day 2 早上熱飯糰'],
+        ['{冷|れい}{蔵|ぞう}{庫|こ}', '冰箱'],
+        ['エレベーター', '電梯'],
+        ['タオル', '毛巾'],
+        ['{朝|あさ}ごはん', '早餐'],
+        ['{宿|しゅく}{泊|はく}{税|ぜい}', '住宿稅', '大阪每人每晚另收 ¥200～500，現場付'],
+      ]},
+      { id: 'sign', title: '標示・看板', desc: '門口、牆上、地上會看到的字', words: [
+        ['{入|いり}{口|ぐち}', '入口', '', 1],
+        ['トイレ', '廁所'],
+        ['お{手|て}{洗|あら}い', '洗手間', '比「トイレ」更客氣的說法'],
+        ['{男|おとこ}', '男', '', 1],
+        ['{女|おんな}', '女', '', 1],
+        ['{押|お}す', '推', '門上的字'],
+        ['{引|ひ}く', '拉', '門上的字'],
+        ['{営|えい}{業|ぎょう}{中|ちゅう}', '營業中'],
+        ['{準|じゅん}{備|び}{中|ちゅう}', '準備中（還沒開）', '門口掛這塊牌子＝還沒開或中午休息'],
+        ['{定|てい}{休|きゅう}{日|び}', '公休日'],
+        ['{本|ほん}{日|じつ}{休|きゅう}{業|ぎょう}', '今日休息'],
+        ['{禁|きん}{煙|えん}', '禁菸'],
+        ['{撮|さつ}{影|えい}{禁|きん}{止|し}', '禁止攝影', '任天堂博物館 2F'],
+        ['{立|たち}{入|いり}{禁|きん}{止|し}', '禁止進入'],
+        ['{非|ひ}{常|じょう}{口|ぐち}', '緊急出口', '綠色奔跑小人的標示'],
+        ['{足|あし}{元|もと}{注|ちゅう}{意|い}', '小心腳下'],
+        ['{危|き}{険|けん}', '危險'],
+        ['{最|さい}{後|こう}{尾|び}', '隊伍最後面', '排隊時看到這塊牌子就排在它後面', 1],
+      ]},
+      { id: 'hear', title: '常聽到的話', desc: '電車廣播、店員常說的句子，聽得懂就不慌', words: [
+        ['ありがとうございました', '謝謝光臨', '', 0, 'wide'],
+        ['またお{越|こ}しくださいませ', '歡迎再來', '', 0, 'wide'],
+        ['かしこまりました', '好的，明白了', '店員接受點餐、要求時說'],
+        ['ポイントカードはお{持|も}ちですか', '有集點卡嗎？', '說「ないです」就好', 0, 'wide'],
+        ['{袋|ふくろ}はご{利|り}{用|よう}ですか', '需要袋子嗎？', '袋子要另外付錢，不要就說「{大|だい}{丈|じょう}{夫|ぶ}です」', 0, 'wide'],
+        ['{温|あたた}めますか', '要加熱嗎？', '便利商店買便當時'],
+        ['お{箸|はし}お{付|つ}けしますか', '需要筷子嗎？', '', 0, 'wide'],
+        ['{以|い}{上|じょう}でよろしいですか', '這樣就好了嗎？', '點完餐，店員確認時說', 0, 'wide'],
+        ['{次|つぎ}は{難|なん}{波|ば}です', '下一站是難波', '', '次は、難波です', 'wide'],
+        ['ドアが{閉|し}まります', '車門要關了', '', 0, 'wide'],
+        ['{白|はく}{線|せん}の{内|うち}{側|がわ}までお{下|さ}がりください', '請退到白線內側', '月台廣播', '白線の、うちがわまで、お下がりください', 'wide'],
+        ['{足|あし}{元|もと}にご{注|ちゅう}{意|い}ください', '請注意腳下', '', 0, 'wide'],
+        ['お{気|き}をつけて', '請小心／路上小心'],
+      ]},
+      { id: 'say', title: '自己會用到的話', desc: '用這幾句就能應付大部分情況', words: [
+        ['すみません', '不好意思（叫人、道歉都用）'],
+        ['お{願|ねが}いします', '麻煩你'],
+        ['ありがとうございます', '謝謝', '', 0, 'wide'],
+        ['これください', '我要這個'],
+        ['{大|だい}{丈|じょう}{夫|ぶ}です', '不用了／沒問題', '店員問要不要袋子、要不要加熱時，說這句＝不用了'],
+        ['トイレはどこですか', '廁所在哪裡？', '', 0, 'wide'],
+        ['{駅|えき}はどこですか', '車站在哪裡？'],
+        ['{大人|おとな}{四|よん}{枚|まい}ください', '大人 4 張', '買票時用', 'おとな、よんまい、ください', 'wide'],
+        ['カードで{払|はら}えますか', '可以刷卡嗎？', '', 0, 'wide'],
+        ['{免|めん}{税|ぜい}できますか', '可以免稅嗎？'],
+        ['{写|しゃ}{真|しん}を{撮|と}ってもいいですか', '可以拍照嗎？', '', 0, 'wide'],
+        ['{英|えい}{語|ご}のメニューはありますか', '有英文菜單嗎？', '', 0, 'wide'],
+        ['{日|に}{本|ほん}{語|ご}がわかりません', '我不懂日文', '', 0, 'wide'],
+        ['おはようございます', '早安', '', 0, 'wide'],
+        ['こんにちは', '你好'],
+        ['こんばんは', '晚上好'],
+      ]},
+      { id: 'number', title: '數字', desc: '看價錢、聽店員報價最常用。有幾個數字會變音，要特別記', kana: true, words: [
+        ['{一|いち}', '1', '', '1'],
+        ['{二|に}', '2', '', '2'],
+        ['{三|さん}', '3', '', '3'],
+        ['{四|よん}', '4', '也念 し', '4'],
+        ['{五|ご}', '5', '', '5'],
+        ['{六|ろく}', '6', '', '6'],
+        ['{七|なな}', '7', '也念 しち', '7'],
+        ['{八|はち}', '8', '', '8'],
+        ['{九|きゅう}', '9', '也念 く', '9'],
+        ['{十|じゅう}', '10', '', '10'],
+        ['{五|ご}{十|じゅう}', '50', '', '50'],
+        ['{百|ひゃく}', '100', '直接說 ひゃく，不加「一」', '100'],
+        ['{三|さん}{百|びゃく}', '300', '變音：びゃく', '300'],
+        ['{五|ご}{百|ひゃく}', '500', '', '500'],
+        ['{六|ろっ}{百|ぴゃく}', '600', '變音：ろっぴゃく', '600'],
+        ['{八|はっ}{百|ぴゃく}', '800', '變音：はっぴゃく', '800'],
+        ['{千|せん}', '1,000', '直接說 せん，不加「一」', '1000'],
+        ['{三|さん}{千|ぜん}', '3,000', '變音：ぜん', '3000'],
+        ['{五|ご}{千|せん}', '5,000', '', '5000'],
+        ['{八|はっ}{千|せん}', '8,000', '變音：はっせん', '8000'],
+        ['{一|いち}{万|まん}', '10,000', '「萬」要加「一」', '10000'],
+        ['{円|えん}', '日圓', '', 'えん'],
+        ['{五|ご}{百|ひゃく}{円|えん}', '500 日圓', '硬幣', '500円'],
+        ['{千|せん}{円|えん}', '1,000 日圓', '紙鈔', '1000円'],
+      ]},
+      { id: 'time', title: '人數・時間', desc: '點餐、買票、看營業時間', kana: true, words: [
+        ['{一人|ひとり}', '1 個人'],
+        ['{二人|ふたり}', '2 個人'],
+        ['{三|さん}{人|にん}', '3 個人'],
+        ['{四|よ}{人|にん}', '4 個人', '不念 よんにん'],
+        ['{大人|おとな}', '大人'],
+        ['{子|こ}ども', '小孩'],
+        ['{中|ちゅう}{学|がく}{生|せい}', '國中生', '多數地方國中生買大人票'],
+        ['{今日|きょう}', '今天'],
+        ['{明日|あした}', '明天'],
+        ['{今|いま}', '現在'],
+        ['{午|ご}{前|ぜん}', '上午'],
+        ['{午|ご}{後|ご}', '下午'],
+        ['{四|よ}{時|じ}', '4 點', '不念 よんじ', '4時'],
+        ['{九|く}{時|じ}', '9 點', '不念 きゅうじ', '9時'],
+        ['{十|じゅう}{時|じ}{半|はん}', '10 點半', '', '10時半'],
+        ['{五|ご}{分|ふん}', '5 分鐘', '', '5分'],
+        ['{十|じゅっ}{分|ぷん}', '10 分鐘', '變音：ぷん', '10分'],
+        ['{平|へい}{日|じつ}', '平日'],
+        ['{土|ど}{日|にち}{祝|しゅく}', '週末與國定假日', '票價常分平日／土日祝'],
+        ['{営|えい}{業|ぎょう}{時|じ}{間|かん}', '營業時間'],
+      ]},
+      { id: 'winter', title: '冬天・天氣', desc: '1 月的大阪和六甲山雪場', words: [
+        ['{寒|さむ}い', '好冷'],
+        ['{暖|あたた}かい', '溫暖'],
+        ['{雪|ゆき}', '雪'],
+        ['{雨|あめ}', '雨'],
+        ['{晴|は}れ', '晴天'],
+        ['{風|かぜ}が{強|つよ}い', '風很大'],
+        ['{天|てん}{気|き}{予|よ}{報|ほう}', '天氣預報'],
+        ['{傘|かさ}', '雨傘'],
+        ['カイロ', '暖暖包', '分「{貼|は}る」（貼在衣服上）和不貼兩種，便利商店、藥妝店都有賣'],
+        ['{手|て}{袋|ぶくろ}', '手套'],
+        ['{帽|ぼう}{子|し}', '帽子'],
+        ['{運|うん}{休|きゅう}', '停駛', '大雪時看到這個字＝車不開'],
+        ['{営|えい}{業|ぎょう}{中|ちゅう}{止|し}', '暫停營業', '雪場天候不佳時的公告'],
+      ]},
+    ];
+
+    // ---------- 讀音處理 ----------
+    const KATA = /[ァ-ヺー・]+/g;
+    const toHira = (s) => [...s].map((c) => {
+      const code = c.charCodeAt(0);
+      if (c === '・') return '';
+      return code >= 0x30A1 && code <= 0x30F6 ? String.fromCharCode(code - 0x60) : c;
+    }).join('');
+    // 把標記拆成 [文字, 讀音, 種類] 片段；種類：kanji 有標漢字讀音、kata 片假名、plain 不加讀音。
+    function parse(markup) {
+      const parts = [];
+      const re = /\{([^|}]+)\|([^}]+)\}/g;
+      let last = 0, m;
+      const pushPlain = (text) => {
+        let i = 0;
+        for (const k of text.matchAll(KATA)) {
+          if (k.index > i) parts.push([text.slice(i, k.index), null, 'plain']);
+          // 在「・」後切段，長的外來語才能在手機上換行。
+          for (const chunk of k[0].split(/(?<=・)/)) parts.push([chunk, toHira(chunk), 'kata']);
+          i = k.index + k[0].length;
+        }
+        if (i < text.length) parts.push([text.slice(i), null, 'plain']);
+      };
+      while ((m = re.exec(markup))) {
+        if (m.index > last) pushPlain(markup.slice(last, m.index));
+        // 讀音本身若是片假名（如 JR、ICOCA），也轉成平假名並用橘色標示。
+        const isKata = /^[ァ-ー・]+$/.test(m[2]);
+        parts.push([m[1], isKata ? toHira(m[2]) : m[2], isKata ? 'kata' : 'kanji', m[2]]);
+        last = re.lastIndex;
+      }
+      if (last < markup.length) pushPlain(markup.slice(last));
+      return parts;
+    }
+    function rubyNode(parts) {
+      const frag = document.createDocumentFragment();
+      for (const [text, reading, kind] of parts) {
+        if (!reading) { frag.append(text); continue; }
+        const ruby = document.createElement('ruby');
+        ruby.append(text);
+        const rt = document.createElement('rt');
+        rt.textContent = reading;
+        if (kind === 'kata') rt.className = 'k';
+        ruby.append(rt);
+        frag.append(ruby);
+      }
+      return frag;
+    }
+    const plainText = (parts) => parts.map(p => p[0]).join('');
+    // 漢字送讀音；片假名原樣送出（轉成平假名會讓外來語念得不自然）。
+    const readingText = (parts) => parts.map(p => p[3] || (p[2] === 'kata' ? p[0] : p[1]) || p[0]).join('');
+
+    // ---------- 記住設定 ----------
+    // 本機檔案（file://）在 Chrome 不會存 cookie，所以優先用 localStorage，cookie 當備援。
+    const STORE_KEY = 'osakaTripWords';
+    function loadSettings() {
+      try {
+        const raw = localStorage.getItem(STORE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch {}
+      try {
+        const m = document.cookie.match(new RegExp('(?:^|; )' + STORE_KEY + '=([^;]*)'));
+        if (m) return JSON.parse(decodeURIComponent(m[1]));
+      } catch {}
+      return {};
+    }
+    const settings = loadSettings();
+    function saveSettings() {
+      const json = JSON.stringify(settings);
+      try { localStorage.setItem(STORE_KEY, json); } catch {}
+      try { document.cookie = STORE_KEY + '=' + encodeURIComponent(json) + '; max-age=31536000; path=/; SameSite=Lax'; } catch {}
+    }
+
+    // ---------- 畫面 ----------
+    const items = [];
+    const sectionsEl = document.getElementById('sections');
+    const catsEl = document.getElementById('cats');
+    const chips = new Map();   // 分類 id → 篩選按鈕
+    function addChip(id, title, count) {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.setAttribute('aria-pressed', 'false');
+      chip.append(title);
+      const small = document.createElement('small');
+      small.textContent = count;
+      chip.append(small);
+      chip.addEventListener('click', () => applyFilter(id));
+      chips.set(id, chip);
+      catsEl.append(chip);
+    }
+    addChip('all', '全部', categories.reduce((n, c) => n + c.words.length, 0));
+    for (const cat of categories) {
+      const section = document.createElement('section');
+      section.id = cat.id;
+      section.setAttribute('aria-labelledby', 'h-' + cat.id);
+      const head = document.createElement('div');
+      head.className = 'sec-head';
+      const h2 = document.createElement('h2');
+      h2.id = 'h-' + cat.id;
+      h2.textContent = cat.title;
+      const desc = document.createElement('p');
+      desc.textContent = cat.desc;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'play-cat';
+      btn.setAttribute('aria-pressed', 'false');
+      btn.textContent = '▶ 播放這一類';
+      btn.setAttribute('aria-label', '播放「' + cat.title + '」全部單字');
+      head.append(h2, desc, btn);
+      const grid = document.createElement('div');
+      grid.className = 'grid';
+      const catItems = [];
+      for (const [markup, zh, note, useReading, size] of cat.words) {
+        const parts = parse(markup);
+        const plain = plainText(parts);
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'card' + (size === 'wide' ? ' wide' : '') + (plain.length >= 9 ? ' long' : '');
+        const jp = document.createElement('span');
+        jp.className = 'jp';
+        jp.lang = 'ja';
+        jp.append(rubyNode(parts));
+        const zhEl = document.createElement('span');
+        zhEl.className = 'zh';
+        zhEl.textContent = zh;
+        card.append(jp, zhEl);
+        if (note) {
+          const noteEl = document.createElement('span');
+          noteEl.className = 'note';
+          noteEl.append(rubyNode(parse(note)));
+          card.append(noteEl);
+        }
+        card.setAttribute('aria-label', plain + '（' + readingText(parts) + '），' + zh + '。點一下播放發音');
+        const say = typeof useReading === 'string' ? useReading : (cat.kana || useReading) ? readingText(parts) : plain;
+        const item = { card, cat, say, plain };
+        card.addEventListener('click', () => { stopQueue(); speakOne(item); });
+        items.push(item);
+        catItems.push(item);
+        grid.append(card);
+      }
+      btn.addEventListener('click', () => {
+        if (queue && queue.button === btn) { stopQueue(); return; }
+        playQueue(catItems, btn, '播放這一類');
+      });
+      section.append(head, grid);
+      sectionsEl.append(section);
+      cat.section = section;
+      addChip(cat.id, cat.title, cat.words.length);
+    }
+
+    // ---------- 分類篩選 ----------
+    let filter = 'all';
+    const visibleItems = () => filter === 'all' ? items : items.filter(it => it.cat.id === filter);
+    function applyFilter(id, { save = true } = {}) {
+      if (!chips.has(id)) id = 'all';
+      // 再點一次已選的分類＝回到全部。
+      if (save && id === filter && id !== 'all') id = 'all';
+      if (queue) stopQueue();
+      filter = id;
+      for (const [key, chip] of chips) chip.setAttribute('aria-pressed', String(key === id));
+      for (const cat of categories) cat.section.hidden = id !== 'all' && cat.id !== id;
+      showProgress();
+      if (save) { settings.cat = id; saveSettings(); }
+    }
+
+    // ---------- 顯示切換 ----------
+    function bindToggle(id, cls, key) {
+      const el = document.getElementById(id);
+      const set = (on) => {
+        el.setAttribute('aria-pressed', String(on));
+        document.body.classList.toggle(cls, !on);
+      };
+      if (settings[key] === false) set(false);
+      el.addEventListener('click', () => {
+        const on = el.getAttribute('aria-pressed') !== 'true';
+        set(on);
+        settings[key] = on;
+        saveSettings();
+      });
+    }
+    bindToggle('t-rt', 'no-rt', 'showReading');
+    bindToggle('t-zh', 'no-zh', 'showZh');
+
+    // 速度、間隔：還原上次的選擇，改了就存起來。
+    for (const id of ['rate', 'gap']) {
+      const el = document.getElementById(id);
+      if (settings[id] && [...el.options].some(o => o.value === settings[id])) el.value = settings[id];
+      el.addEventListener('change', () => { settings[id] = el.value; saveSettings(); });
+    }
+
+    const player = document.getElementById('player');
+    new IntersectionObserver(([e]) => player.classList.toggle('stuck', e.intersectionRatio < 1), { threshold: [1], rootMargin: '-1px 0px 0px 0px' }).observe(player);
+
+    // ---------- 語音 ----------
+    const statusEl = document.getElementById('status');
+    const nowEl = document.getElementById('now');
+    const barEl = document.getElementById('bar');
+    const voiceSelect = document.getElementById('voice');
+    const playAllBtn = document.getElementById('play-all');
+    const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
+    const supportsSpeech = !!(synth && 'SpeechSynthesisUtterance' in window);
+    let voices = [];
+    let current = null;      // 目前的 utterance，保留參照避免被回收而不觸發 onend
+    let watchdog = null;
+    let queue = null;        // { index, end, button, label, timer }
+
+    function loadVoices() {
+      if (!supportsSpeech) {
+        voiceSelect.replaceChildren(new Option('此瀏覽器不支援發音', ''));
+        statusEl.textContent = '此瀏覽器不支援語音播放，仍可看單字與讀音。';
+        return;
+      }
+      // 上次選的聲音優先（選單變更時會同步存進 settings.voice）。
+      const selected = settings.voice || voiceSelect.value;
+      voices = synth.getVoices().filter(v => /^ja(?:[-_]|$)/i.test(v.lang));
+      voiceSelect.replaceChildren();
+      if (!voices.length) {
+        voiceSelect.append(new Option('未找到日語語音', ''));
+        statusEl.textContent = '這台裝置尚未提供日語語音。可在系統語音設定加入日語後重新開啟頁面。';
+      } else {
+        for (const v of voices) voiceSelect.append(new Option(v.name, v.voiceURI));
+        // 優先選品質最好的聲音：Edge 線上神經語音 → Google 日本語 → 其他。
+        const preferred = voices.find(v => v.voiceURI === selected)
+          || voices.find(v => /Natural|Online/i.test(v.name))
+          || voices.find(v => /Google/i.test(v.name))
+          || voices[0];
+        voiceSelect.value = preferred.voiceURI;
+        statusEl.textContent = '';
+      }
+      voiceSelect.disabled = !voices.length;
+    }
+
+    function clearSpeaking() {
+      for (const it of items) it.card.classList.remove('speaking');
+    }
+    function cancelSpeech() {
+      current = null;
+      clearTimeout(watchdog);
+      if (supportsSpeech) synth.cancel();
+      clearSpeaking();
+    }
+    // 念一個詞；念完（或失敗、逾時）後呼叫 done。
+    function speakOne(item, done) {
+      const voice = voices.find(v => v.voiceURI === voiceSelect.value);
+      if (!supportsSpeech || !voice) {
+        statusEl.textContent = '目前沒有可用的日語語音，請檢查裝置的語音設定。';
+        if (done) stopQueue();
+        return;
+      }
+      cancelSpeech();
+      const u = new SpeechSynthesisUtterance(item.say);
+      current = u;
+      u.lang = 'ja-JP';
+      u.voice = voice;
+      u.rate = Number(document.getElementById('rate').value);
+      item.card.classList.add('speaking');
+      let finished = false;
+      const finish = (ok) => {
+        if (finished || current !== u) return;
+        finished = true;
+        clearTimeout(watchdog);
+        item.card.classList.remove('speaking');
+        current = null;
+        if (!ok) statusEl.textContent = '有一個詞未能播放，請確認音量與日語語音。';
+        if (done) done();
+      };
+      u.onend = () => finish(true);
+      u.onerror = (e) => { if (e.error !== 'interrupted' && e.error !== 'canceled') finish(false); };
+      // 部分瀏覽器偶爾不觸發 onend，最多等 12 秒就繼續下一個。
+      watchdog = setTimeout(() => finish(true), 12000);
+      statusEl.textContent = '';
+      // cancel() 之後立刻 speak() 在 Chrome 偶爾會被吞掉，稍等一下再念。
+      setTimeout(() => { if (current === u) synth.speak(u); }, 60);
+    }
+
+    function setPressed(btn, on, label) {
+      btn.setAttribute('aria-pressed', String(on));
+      if (btn === playAllBtn) {
+        btn.querySelector('.icon').textContent = on ? '■' : '▶';
+        btn.querySelector('.label').textContent = on ? '停止' : label;
+      } else {
+        btn.textContent = on ? '■ 停止' : '▶ ' + label;
+      }
+    }
+    function showProgress() {
+      if (!queue) {
+        nowEl.textContent = '';
+        barEl.style.width = '0';
+        return;
+      }
+      const it = queue.list[queue.index];
+      const doneCount = queue.index + 1;
+      const total = queue.list.length;
+      nowEl.textContent = '';
+      nowEl.append(it.cat.title + '　' + doneCount + ' / ' + total + '　');
+      const b = document.createElement('strong');
+      b.lang = 'ja';
+      b.textContent = it.plain;
+      nowEl.append(b);
+      barEl.style.width = (doneCount / total * 100) + '%';
+    }
+    function playQueue(list, button, label) {
+      stopQueue();
+      queue = { list, index: 0, button, label, timer: null };
+      setPressed(button, true, label);
+      step();
+    }
+    function step() {
+      if (!queue) return;
+      if (queue.index >= queue.list.length) { stopQueue(); return; }
+      const it = queue.list[queue.index];
+      showProgress();
+      it.card.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      speakOne(it, () => {
+        if (!queue) return;
+        queue.index++;
+        queue.timer = setTimeout(step, Number(document.getElementById('gap').value));
+      });
+    }
+    function stopQueue() {
+      if (queue) {
+        clearTimeout(queue.timer);
+        setPressed(queue.button, false, queue.label);
+        queue = null;
+      }
+      cancelSpeech();
+      showProgress();
+    }
+    // 「全部播放」只念目前篩選後看得到的詞。
+    playAllBtn.addEventListener('click', () => {
+      if (queue && queue.button === playAllBtn) { stopQueue(); return; }
+      playQueue(visibleItems(), playAllBtn, '全部播放');
+    });
+    voiceSelect.addEventListener('change', () => { settings.voice = voiceSelect.value; saveSettings(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') stopQueue(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopQueue(); });
+    window.addEventListener('pagehide', stopQueue);
+
+    loadVoices();
+    if (supportsSpeech) {
+      synth.addEventListener('voiceschanged', loadVoices);
+      setTimeout(loadVoices, 1500);
+    }
+    applyFilter(settings.cat || 'all', { save: false });
+  </script>
+</body>
+</html>
