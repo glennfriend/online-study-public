@@ -121,7 +121,7 @@
 <body>
   <main>
     <h1>大阪旅行單字</h1>
-    <p class="lead">Day 1～Day 5 一路上最常看到、聽到的日文。點任何一張卡片聽發音，或按「全部播放」從頭念到尾。</p>
+    <p class="lead">Day 1～Day 5 一路上最常看到、聽到的日文。點任何一張卡片聽發音，或按「全部播放」從頭念到尾（每個詞念三次）。</p>
 
     <div class="player" id="player">
       <div class="player-row">
@@ -652,7 +652,8 @@
     let voices = [];
     let current = null;      // 目前的 utterance，保留參照避免被回收而不觸發 onend
     let watchdog = null;
-    let queue = null;        // { index, end, button, label, timer }
+    let queue = null;        // { list, index, rep, button, label, timer }
+    const REPEAT = 3;        // 連續播放時每個詞念幾次
 
     function loadVoices() {
       if (!supportsSpeech) {
@@ -751,12 +752,12 @@
       const b = document.createElement('strong');
       b.lang = 'ja';
       b.textContent = it.plain;
-      nowEl.append(b);
+      nowEl.append(b, '　' + (queue.rep + 1) + '/' + REPEAT);
       barEl.style.width = (doneCount / total * 100) + '%';
     }
     function playQueue(list, button, label) {
       stopQueue();
-      queue = { list, index: 0, button, label, timer: null };
+      queue = { list, index: 0, rep: 0, button, label, timer: null };
       setPressed(button, true, label);
       step();
     }
@@ -765,10 +766,11 @@
       if (queue.index >= queue.list.length) { stopQueue(); return; }
       const it = queue.list[queue.index];
       showProgress();
-      it.card.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      if (queue.rep === 0) it.card.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
       speakOne(it, () => {
         if (!queue) return;
-        queue.index++;
+        // 同一個詞念滿 REPEAT 次才換下一個；每次之間都停「間隔」設定的時間，方便跟著念。
+        if (++queue.rep >= REPEAT) { queue.rep = 0; queue.index++; }
         queue.timer = setTimeout(step, Number(document.getElementById('gap').value));
       });
     }
