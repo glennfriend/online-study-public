@@ -23,7 +23,6 @@
     .title { font-size: 1.15rem; font-weight: 600; color: var(--green); }
     .meta { flex-shrink: 0; color: var(--muted); font-size: .9rem; white-space: nowrap; }
     .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; background: #e3efe9; color: var(--green); font-size: .75rem; font-weight: 600; line-height: 1.6; vertical-align: 2px; }
-    .note { margin-top: 24px; color: var(--muted); font-size: .85rem; }
   </style>
 </head>
 <body>
@@ -44,7 +43,6 @@
         </a>
       </li>
     </ul>
-    <p class="note">「離線」のページは、オンラインで一度開けばオフラインでも読めます。</p>
   </main>
   <script>
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
