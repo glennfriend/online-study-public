@@ -11,10 +11,11 @@
   <style>
     :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
     * { box-sizing: border-box; }
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans JP", "Noto Sans TC", sans-serif; line-height: 1.7; }
     main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
     h1 { margin: 0 0 4px; font-size: 1.8rem; }
-    .back { color: var(--muted); text-decoration: none; font-size: .95rem; }
+    .back { display: inline-block; padding: 8px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
     .back:hover { color: var(--green); }
     ul { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
     a.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }

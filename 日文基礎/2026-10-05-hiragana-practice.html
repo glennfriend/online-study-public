@@ -11,6 +11,8 @@
   <style>
     :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
     * { box-sizing: border-box; }
+    /* 連點時不會雙擊放大；橫向時 iOS 不會自動放大字。 */
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
     button, select { font: inherit; }
     button, select, a { -webkit-tap-highlight-color: transparent; }
@@ -71,8 +73,24 @@
       main { width: calc(100% - 28px); margin: 28px auto; }
       .instructions { gap: 10px; padding: 14px; }
       .toolbar { align-items: flex-start; }
-      #voice { max-width: 180px; }
+      .audio-controls { display: grid; grid-template-columns: auto 1fr; width: 100%; }
+      /* iOS Safari 在字級小於 16px 的選單取得焦點時會自動放大畫面。 */
+      select { font-size: 16px; width: 100%; min-width: 0; }
+      #voice { max-width: none; }
+      .toggle { min-height: 40px; }
       .notes { grid-template-columns: 1fr; gap: 16px; }
+      /* 手機不用左右滑：每一「行」變成標題加兩欄卡片。 */
+      .table-wrap { overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; }
+      table, tbody { display: block; min-width: 0; }
+      thead { display: none; }
+      tbody tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 16px; }
+      tbody th { grid-column: 1 / -1; background: none; border: 0; text-align: left; padding: 0 4px; font-size: 15px; font-weight: 700; }
+      td, tr > :last-child, tbody tr:last-child > * { display: block; height: auto; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); overflow: hidden; }
+      td.empty { display: none; }
+      /* 假名放上面，單字才有整格寬度，不會從中間斷行。 */
+      .tile { grid-template-columns: minmax(0, 1fr); row-gap: 2px; padding: 10px 8px; }
+      .kana { grid-row: auto; font-size: 26px; padding: 0 4px; }
+      .word, .word.long { min-height: 36px; white-space: normal; overflow-wrap: anywhere; line-height: 1.5; }
     }
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -115,7 +133,7 @@
         <tbody id="kana-table"></tbody>
       </table>
     </div>
-    <p class="table-note">粗體標出這格要練的假名。手機：點一下日文會播放發音，等待 2.5 秒看中文；表格可左右滑動。鍵盤：Tab 移到單字，按 Enter 播放，等待 2.5 秒看中文。</p>
+    <p class="table-note">粗體標出這格要練的假名。手機：點一下日文會播放發音，等待 2.5 秒看中文。鍵盤：Tab 移到單字，按 Enter 播放，等待 2.5 秒看中文。</p>
     <!-- 只在語音有問題時顯示訊息，正常時保持空白。 -->
     <p class="status" id="audio-status" role="status" aria-live="polite"></p>
     <div class="notes">
