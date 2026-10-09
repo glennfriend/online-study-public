@@ -767,13 +767,26 @@
       if (queue.index >= queue.list.length) { stopQueue(); return; }
       const it = queue.list[queue.index];
       showProgress();
-      if (queue.rep === 0) it.card.scrollIntoView({ block: 'nearest', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+      if (queue.rep === 0) revealAhead(queue.list, queue.index);
       speakOne(it, () => {
         if (!queue) return;
         // 同一個詞念滿 REPEAT 次才換下一個；每次之間都停「間隔」設定的時間，方便跟著念。
         if (++queue.rep >= REPEAT) { queue.rep = 0; queue.index++; }
         queue.timer = setTimeout(step, Number(document.getElementById('gap').value));
       });
+    }
+    // 捲到「正在念的卡片 + 下一排」都看得到：目前的卡在倒數第二排，可以先看到後面的詞。
+    function revealAhead(list, index) {
+      const cur = list[index].card.getBoundingClientRect();
+      // 下一排＝之後第一張頂端在目前這張底下的卡（桌機一排有好幾張）。
+      const nextRow = list.slice(index + 1).find(it => it.card.getBoundingClientRect().top >= cur.bottom - 1);
+      const target = nextRow ? nextRow.card.getBoundingClientRect() : cur;
+      const top = 8;
+      const bottom = innerHeight - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 8;
+      if (cur.top >= top && target.bottom <= bottom) return;
+      // 讓下一排貼齊底部；但正在念的卡永遠要看得到頂端。
+      const delta = Math.min(target.bottom - bottom, cur.top - top);
+      window.scrollBy({ top: delta, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
     }
     function stopQueue() {
       if (queue) {
