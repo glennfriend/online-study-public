@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
   <title>大阪旅行單字</title>
   <style>
     :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --kanji-rt: #2f6f8f; --kata-rt: #b4682a; }
@@ -638,12 +641,15 @@
         voiceSelect.append(new Option('未找到日語語音', ''));
         statusEl.textContent = '這台裝置尚未提供日語語音。可在系統語音設定加入日語後重新開啟頁面。';
       } else {
-        for (const v of voices) voiceSelect.append(new Option(v.name, v.voiceURI));
+        for (const v of voices) voiceSelect.append(new Option(v.localService ? v.name : v.name + '（需網路）', v.voiceURI));
+        // 離線時線上語音念不出來，只從裝置內建的語音中挑；settings.voice 保留不動，恢復連線後會選回來。
+        const local = navigator.onLine ? [] : voices.filter(v => v.localService);
+        const pool = local.length ? local : voices;
         // 優先選品質最好的聲音：Edge 線上神經語音 → Google 日本語 → 其他。
-        const preferred = voices.find(v => v.voiceURI === selected)
-          || voices.find(v => /Natural|Online/i.test(v.name))
-          || voices.find(v => /Google/i.test(v.name))
-          || voices[0];
+        const preferred = pool.find(v => v.voiceURI === selected)
+          || pool.find(v => /Natural|Online/i.test(v.name))
+          || pool.find(v => /Google/i.test(v.name))
+          || pool[0];
         voiceSelect.value = preferred.voiceURI;
         statusEl.textContent = '';
       }
@@ -760,8 +766,11 @@
     if (supportsSpeech) {
       synth.addEventListener('voiceschanged', loadVoices);
       setTimeout(loadVoices, 1500);
+      window.addEventListener('online', loadVoices);
+      window.addEventListener('offline', loadVoices);
     }
     applyFilter(settings.cat || 'all', { save: false });
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
   </script>
 </body>
 </html>

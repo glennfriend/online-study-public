@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
   <title>Online Study</title>
   <style>
     :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
@@ -12,10 +15,12 @@
     main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
     h1 { margin: 0; font-size: 1.8rem; }
     ul { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
-    a.item { display: block; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
+    a.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
     a.item:hover { border-color: var(--green); }
     .title { font-size: 1.15rem; font-weight: 600; color: var(--green); }
-    .meta { color: var(--muted); font-size: .9rem; }
+    .meta { flex-shrink: 0; color: var(--muted); font-size: .9rem; white-space: nowrap; }
+    .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; background: #e3efe9; color: var(--green); font-size: .75rem; font-weight: 600; line-height: 1.6; vertical-align: 2px; }
+    .note { margin-top: 24px; color: var(--muted); font-size: .85rem; }
   </style>
 </head>
 <body>
@@ -24,11 +29,15 @@
     <ul>
       <li>
         <a class="item" href="日文基礎/index.html">
-          <div class="title">日文基礎</div>
+          <div class="title">日文基礎<span class="tag">離線</span></div>
           <div class="meta">日本語の基礎 · 2 篇</div>
         </a>
       </li>
     </ul>
+    <p class="note">標有「離線」的頁面，在有網路時開啟過一次後，沒有網路也能閱讀。</p>
   </main>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { scope: './' }).catch(() => {});
+  </script>
 </body>
 </html>

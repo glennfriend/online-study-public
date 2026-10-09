@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
   <title>日本語の基礎</title>
   <style>
     :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
@@ -14,10 +17,12 @@
     .back { color: var(--muted); text-decoration: none; font-size: .95rem; }
     .back:hover { color: var(--green); }
     ul { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
-    a.item { display: block; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
+    a.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
     a.item:hover { border-color: var(--green); }
     .title { font-size: 1.15rem; font-weight: 600; color: var(--green); }
-    .meta { color: var(--muted); font-size: .9rem; }
+    .meta { flex-shrink: 0; color: var(--muted); font-size: .9rem; white-space: nowrap; }
+    .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; background: #e3efe9; color: var(--green); font-size: .75rem; font-weight: 600; line-height: 1.6; vertical-align: 2px; }
+    .note { margin-top: 24px; color: var(--muted); font-size: .85rem; }
   </style>
 </head>
 <body>
@@ -27,17 +32,21 @@
     <ul>
       <li>
         <a class="item" href="2026-10-05-hiragana-practice.html">
-          <div class="title">五十音の教室・旅行単語の練習</div>
+          <div class="title">五十音の教室・旅行単語の練習<span class="tag">離線</span></div>
           <div class="meta">2026-10-05</div>
         </a>
       </li>
       <li>
         <a class="item" href="2026-10-07-osaka-trip-words.html">
-          <div class="title">大阪旅行の単語</div>
+          <div class="title">大阪旅行の単語<span class="tag">離線</span></div>
           <div class="meta">2026-10-07</div>
         </a>
       </li>
     </ul>
+    <p class="note">「離線」のページは、オンラインで一度開けばオフラインでも読めます。</p>
   </main>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  </script>
 </body>
 </html>
