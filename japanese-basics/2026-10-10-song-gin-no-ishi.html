@@ -97,6 +97,9 @@
     .status { margin: 10px 2px 0; font-size: 13px; color: #b3402f; }
     .status:empty { display: none; }
     footer { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 12px; color: var(--muted); }
+    footer .video { margin: 0 0 10px; }
+    footer .video a { display: inline-block; border-radius: 999px; padding: 6px 16px; background: var(--green); color: #fff; font-size: 15px; font-weight: 700; text-decoration: none; }
+    footer ul { margin: 0; padding-left: 1.2em; }
 
     @media (max-width: 650px) {
       main { width: calc(100% - 32px); margin: 24px auto; }
@@ -176,7 +179,16 @@
     <noscript><p>請啟用 JavaScript，才能顯示歌詞與播放發音。</p></noscript>
     <div id="sections"></div>
 
-    <footer>發音使用裝置內建的日語語音（Windows、macOS、iPhone、Android 通常都有），聲音好壞依裝置而異；念的是語音朗讀，不是歌曲旋律。漢字一律照標註的讀音念，以免語音念成別的讀法（例如「描く」念 えがく 而不是 かく）。中文翻譯是學習用的意譯。列印時讀音與中文會全部顯示。</footer>
+    <footer>
+      <p class="video"><a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">▶ 看影片練習</a>（需要網路）</p>
+      <ul>
+        <li>發音使用裝置內建的日語語音（Windows、macOS、iPhone、Android 通常都有），聲音好壞依裝置而異。</li>
+        <li>念的是語音朗讀，不是歌曲旋律。</li>
+        <li>漢字一律照標註的讀音念，以免語音念成別的讀法（例如「描く」念 えがく 而不是 かく）。</li>
+        <li>中文翻譯是學習用的意譯。</li>
+        <li>列印時讀音與中文會全部顯示。</li>
+      </ul>
+    </footer>
   </main>
 
   <script>
