@@ -81,9 +81,18 @@
     .zh { font-size: 17px; font-weight: 600; color: #365b45; line-height: 1.45; }
     body.no-zh .zh, body.no-zh .note { visibility: hidden; }
     .note { font-size: 14.5px; color: var(--muted); line-height: 1.5; margin-top: 3px; }
-    /* 歌詞一句一張，整行寬。 */
-    .card.line { grid-column: 1 / -1; min-height: 0; }
-    .card.line .jp { font-size: 32px; line-height: 2.3; }
+    /* 歌詞：段與段之間用虛線和段名隔開；一行一個框，框裡的小段卡片排成一排。 */
+    .stanza + .stanza { margin-top: 30px; padding-top: 20px; border-top: 2px dashed #cfd8cc; }
+    .stanza h3 { display: inline-block; margin: 0 0 10px; border-radius: 999px; padding: 1px 14px; background: var(--green); color: #fff; font-size: 15px; letter-spacing: .1em; }
+    .lyric { border-left: 4px solid #cfe0d3; padding: 2px 0 2px 14px; margin-bottom: 18px; }
+    .lyric:last-child { margin-bottom: 0; }
+    .phrases { display: flex; flex-wrap: wrap; gap: 8px; }
+    .card.phrase { min-height: 0; padding: 6px 16px 10px; }
+    .card.phrase .jp { font-size: 30px; }
+    .card.phrase .zh { font-size: 14.5px; }
+    .lyric-zh { margin: 8px 0 0; font-size: 17px; font-weight: 600; color: #365b45; line-height: 1.5; }
+    .lyric .note { margin: 2px 0 0; }
+    body.no-zh .lyric-zh { visibility: hidden; }
     /* 文法卡：上面一行是句型，下面是例句。 */
     .pat { display: inline-block; border-radius: 6px; padding: 0 8px; background: #e3efe9; color: var(--green); font-size: 15px; font-weight: 700; line-height: 1.7; }
     .card.gram .jp { font-size: 26px; }
@@ -114,7 +123,11 @@
       .card.wide { grid-column: 1 / -1; }
       .jp { font-size: 30px; }
       .card.long .jp { font-size: 24px; }
-      .card.line .jp { font-size: 24px; line-height: 2.2; }
+      .lyric { padding-left: 10px; }
+      .phrases { gap: 6px; }
+      .card.phrase { padding: 4px 12px 8px; }
+      .card.phrase .jp { font-size: 24px; }
+      .lyric-zh { font-size: 16px; }
       .card.gram .jp { font-size: 21px; }
       .zh { font-size: 16px; }
       .note { font-size: 13.5px; }
@@ -124,7 +137,7 @@
       body { background: #fff; }
       main { width: 100%; margin: 0; }
       .player, .mini, nav.cats, .play-cat, .status, footer { display: none !important; }
-      body.no-rt rt, body.no-kata rt.k, body.no-zh .zh, body.no-zh .note { visibility: visible; }
+      body.no-rt rt, body.no-kata rt.k, body.no-zh .zh, body.no-zh .note, body.no-zh .lyric-zh { visibility: visible; }
       .card { break-inside: avoid; min-height: 0; }
     }
   </style>
@@ -132,7 +145,7 @@
 <body>
   <main>
     <h1>歌詞學習・銀色の矢</h1>
-    <p class="lead">四句歌詞逐句拆解：先看整句意思，再學裡面的單字和文法。點任何一張卡片聽發音，或按「全部播放」從頭念到尾。</p>
+    <p class="lead">歌詞一行切成幾小段，先一段一段聽懂，再學裡面的單字和文法。點任何一張卡片聽發音，或按「全部播放」從頭念到尾。</p>
 
     <div class="player" id="player">
       <div class="player-row">
@@ -173,18 +186,33 @@
   <script>
     'use strict';
     // 標記方式：{漢字|讀音} 會加上平假名讀音；片假名會自動標上對應的平假名。
-    // 歌詞、單字：[標記, 中文, 補充說明, 念法]；文法：[句型, 例句標記, 中文, 說明]。
+    // 單字：[標記, 中文, 補充說明, 念法]；文法：[句型, 例句標記, 中文, 說明]。
+    // 歌詞：分段（stanzas）→ 每一行（lines）→ 每行切成幾小段（phrases：[標記, 中文]），一小段一張卡。
     // 念法：字串＝直接念這個字串。kana: true 的分類一律念讀音，漢字不會被念成別的讀法。
     const categories = [
-      { id: 'lyrics', type: 'lyrics', title: '歌詞', desc: '一句一張卡，下面是中文意思和這句的重點', kana: true, words: [
-        ['{蒼|あお}い{時|とき}　{描|えが}く{軌|き}{跡|せき}{辿|たど}り', '沿著青澀時光裡描繪出的軌跡前進',
-          '「{蒼|あお}い{時|とき}」＝青澀的時光；「{描|えが}く{軌|き}{跡|せき}」＝描繪出的軌跡（動詞直接修飾名詞）；「{辿|たど}り」＝{辿|たど}って，歌詞、書面語常這樣接下一句'],
-        ['{答|こた}え{探|さが}す　{同|おな}じ{空|そら}　{見|み}{上|あ}げながら', '一邊仰望同一片天空，一邊尋找答案',
-          '「{答|こた}え{探|さが}す」省略了助詞 を（＝{答|こた}えを{探|さが}す），歌詞常省略助詞；「〜ながら」＝一邊…一邊…'],
-        ['{胸|むね}に{秘|ひ}めた{想|おも}い　{溢|あふ}れ{出|だ}し', '深藏在心中的思念滿溢而出',
-          '「{胸|むね}に{秘|ひ}めた」＝藏在心裡的，修飾後面的「{想|おも}い」；「{溢|あふ}れ{出|だ}し」＝{溢|あふ}れ{出|だ}して，接到下一句'],
-        ['{空|そら}を{翔|か}けて　{銀|ぎん}{色|いろ}の{矢|や}に{変|か}わる', '翱翔天際，化作一支銀色的箭',
-          '「{空|そら}を」的 を 表示飛過的地方；「〜に{変|か}わる」＝變成〜'],
+      { id: 'lyrics', type: 'lyrics', title: '歌詞', desc: '每行歌詞切成幾小段，一段一張卡可以單獨聽；下面是整行的意思和重點', kana: true, stanzas: [
+        { title: '第一段', lines: [
+          { phrases: [['{蒼|あお}い{時|とき}', '青澀的時光'], ['{描|えが}く{軌|き}{跡|せき}{辿|たど}り', '沿著描繪出的軌跡']],
+            zh: '沿著青澀時光裡描繪出的軌跡前進',
+            note: '「{描|えが}く{軌|き}{跡|せき}」＝描繪出的軌跡（動詞直接修飾名詞）；「{辿|たど}り」＝{辿|たど}って，歌詞、書面語常這樣接下一句' },
+          { phrases: [['{答|こた}え{探|さが}す', '尋找答案'], ['{同|おな}じ{空|そら}', '同一片天空'], ['{見|み}{上|あ}げながら', '一邊仰望']],
+            zh: '一邊仰望同一片天空，一邊尋找答案',
+            note: '「{答|こた}え{探|さが}す」省略了助詞 を（＝{答|こた}えを{探|さが}す），歌詞常省略助詞；「〜ながら」＝一邊…一邊…' },
+          { phrases: [['{胸|むね}に{秘|ひ}めた{想|おも}い', '藏在心中的思念'], ['{溢|あふ}れ{出|だ}し', '滿溢而出']],
+            zh: '深藏在心中的思念滿溢而出',
+            note: '「{胸|むね}に{秘|ひ}めた」＝藏在心裡的，修飾後面的「{想|おも}い」；「{溢|あふ}れ{出|だ}し」＝{溢|あふ}れ{出|だ}して，接到下一句' },
+          { phrases: [['{空|そら}を{翔|か}けて', '飛越天空'], ['{銀|ぎん}{色|いろ}の{矢|や}に{変|か}わる', '化作銀色的箭']],
+            zh: '翱翔天際，化作一支銀色的箭',
+            note: '「{空|そら}を」的 を 表示飛過的地方；「〜に{変|か}わる」＝變成〜' },
+        ]},
+        { title: '第二段', lines: [
+          { phrases: [['{求|もと}め{合|あ}う{心|こころ}が', '互相渴求的心'], ['{違|ちが}う{痛|いた}みは', '各不相同的痛']],
+            zh: '彼此渴求的心，各自不同的痛',
+            note: '「{求|もと}め{合|あ}う」＝{求|もと}める＋{合|あ}う（互相）；「{違|ちが}う{痛|いた}み」＝不一樣的痛（動詞直接修飾名詞）' },
+          { phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{霞|かす}ませるけれど', '雖然讓它變得模糊']],
+            zh: '雖然會讓通往真實的道路變得模糊',
+            note: '「{霞|かす}ませる」＝{霞|かす}む（變朦朧）的使役形，讓…變朦朧；「けれど」＝雖然…，後面通常接轉折' },
+        ]},
       ]},
       { id: 'vocab', title: '單字', desc: '歌詞裡出現的詞，動詞用原形（字典形）列出', kana: true, words: [
         ['{蒼|あお}い', '蒼藍的；青澀的', '「{青|あお}い」的文學寫法，常帶有年輕、還不成熟的感覺'],
@@ -206,6 +234,14 @@
         ['{銀|ぎん}{色|いろ}', '銀色'],
         ['{矢|や}', '箭', '弓是「{弓|ゆみ}」'],
         ['{変|か}わる', '改變、變成', '自己變了用「{変|か}わる」，把東西改變用「{変|か}える」'],
+        ['{求|もと}める', '渴求、尋求', '比「{欲|ほ}しい」更強烈、更書面的說法'],
+        ['{合|あ}う', '（接在動詞後）互相…', '例：{助|たす}け{合|あ}う＝互相幫忙'],
+        ['{心|こころ}', '心'],
+        ['{違|ちが}う', '不一樣；不對', '「{違|ちが}います」也常用來說「不是」'],
+        ['{痛|いた}み', '痛、痛苦', '形容詞「{痛|いた}い」變成名詞'],
+        ['{真|しん}{実|じつ}', '真實、真相'],
+        ['{道|みち}', '道路；方向', '也比喻人生的道路'],
+        ['{霞|かす}む', '變得朦朧、看不清楚', '名詞「{霞|かすみ}」是春天的薄霧'],
       ]},
       { id: 'grammar', type: 'grammar', title: '文法', desc: '歌詞用到的句型，例句是另外寫的生活簡單句', kana: true, words: [
         ['〜ながら', '{音|おん}{楽|がく}を{聞|き}きながら、{勉|べん}{強|きょう}します', '一邊聽音樂，一邊讀書',
@@ -222,6 +258,12 @@
           '飛、走、過等移動動詞前的 を，表示經過的地方。歌詞：{空|そら}を{翔|か}けて'],
         ['ＡがＢに{変|か}わる', '{信|しん}{号|ごう}が{青|あお}に{変|か}わりました', '紅綠燈變成綠燈了',
           '＝Ａ變成Ｂ。日本把綠燈叫「{青|あお}」。歌詞：{銀|ぎん}{色|いろ}の{矢|や}に{変|か}わる'],
+        ['ます形＋{合|あ}う', '{友|とも}だちと{助|たす}け{合|あ}います', '和朋友互相幫忙',
+          '動詞ます形去掉ます＋{合|あ}う＝互相…。歌詞：{求|もと}め{合|あ}う'],
+        ['〜せる／させる', '{母|はは}は{子|こ}どもに{野|や}{菜|さい}を{食|た}べさせます', '媽媽讓小孩吃蔬菜',
+          '使役形＝讓…、使…。歌詞：{霞|かす}む → {霞|かす}ませる（讓它變模糊）'],
+        ['〜けれど', 'この{店|みせ}は{高|たか}いけれど、おいしいです', '這家店雖然貴，但是很好吃',
+          '＝雖然…但是…，口語常說「けど」。歌詞：{霞|かす}ませるけれど'],
       ]},
     ];
 
@@ -313,6 +355,49 @@
       chips.set(id, chip);
       catsEl.append(chip);
     }
+    // 歌詞的每一小段都算一張卡，攤平後計數、播放都跟其他分類一樣。
+    for (const cat of categories) {
+      if (cat.stanzas) cat.words = cat.stanzas.flatMap(st => st.lines.flatMap(line => line.phrases));
+    }
+    // 建一張卡（按鈕），點了會念出來；回傳的 item 給播放佇列用。
+    function makeCard(cat, entry) {
+      // 文法卡多一個句型欄位放最前面。
+      const pattern = cat.type === 'grammar' ? entry[0] : null;
+      const [markup, zh, note, useReading, size] = pattern ? entry.slice(1) : entry;
+      const parts = parse(markup);
+      const plain = plainText(parts);
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = 'card' + (cat.type === 'lyrics' ? ' phrase' : cat.type === 'grammar' ? ' wide gram' : '')
+        + (size === 'wide' ? ' wide' : '') + (!cat.type && plain.length >= 9 ? ' long' : '');
+      if (pattern) {
+        const pat = document.createElement('span');
+        pat.className = 'pat';
+        pat.lang = 'ja';
+        pat.append(rubyNode(parse(pattern)));
+        card.append(pat);
+      }
+      const jp = document.createElement('span');
+      jp.className = 'jp';
+      jp.lang = 'ja';
+      jp.append(rubyNode(parts));
+      const zhEl = document.createElement('span');
+      zhEl.className = 'zh';
+      zhEl.textContent = zh;
+      card.append(jp, zhEl);
+      if (note) {
+        const noteEl = document.createElement('span');
+        noteEl.className = 'note';
+        noteEl.append(rubyNode(parse(note)));
+        card.append(noteEl);
+      }
+      card.setAttribute('aria-label', plain + '（' + readingText(parts) + '），' + zh + '。點一下播放發音');
+      const say = typeof useReading === 'string' ? useReading : (cat.kana || useReading) ? readingText(parts) : plain;
+      const item = { card, cat, say, plain };
+      card.addEventListener('click', () => { stopQueue(); speakOne(item); });
+      items.push(item);
+      return item;
+    }
     addChip('all', '全部', categories.reduce((n, c) => n + c.words.length, 0));
     for (const cat of categories) {
       const section = document.createElement('section');
@@ -333,47 +418,44 @@
       btn.setAttribute('aria-label', '播放「' + cat.title + '」全部');
       head.append(h2, desc, btn);
       const grid = document.createElement('div');
-      grid.className = 'grid';
       const catItems = [];
-      for (const entry of cat.words) {
-        // 文法卡多一個句型欄位放最前面。
-        const pattern = cat.type === 'grammar' ? entry[0] : null;
-        const [markup, zh, note, useReading, size] = pattern ? entry.slice(1) : entry;
-        const parts = parse(markup);
-        const plain = plainText(parts);
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'card' + (cat.type === 'lyrics' ? ' line' : cat.type === 'grammar' ? ' wide gram' : '')
-          + (size === 'wide' ? ' wide' : '') + (!cat.type && plain.length >= 9 ? ' long' : '');
-        if (pattern) {
-          const pat = document.createElement('span');
-          pat.className = 'pat';
-          pat.lang = 'ja';
-          pat.append(rubyNode(parse(pattern)));
-          card.append(pat);
+      if (cat.stanzas) {
+        // 歌詞：每段一個區塊；每行一個框，框裡是這行的小段卡片，下面是整行的意思。
+        grid.className = 'stanzas';
+        for (const st of cat.stanzas) {
+          const stEl = document.createElement('div');
+          stEl.className = 'stanza';
+          const h3 = document.createElement('h3');
+          h3.textContent = st.title;
+          stEl.append(h3);
+          for (const line of st.lines) {
+            const lineEl = document.createElement('div');
+            lineEl.className = 'lyric';
+            const row = document.createElement('div');
+            row.className = 'phrases';
+            for (const phrase of line.phrases) {
+              const item = makeCard(cat, phrase);
+              catItems.push(item);
+              row.append(item.card);
+            }
+            const zhEl = document.createElement('p');
+            zhEl.className = 'lyric-zh';
+            zhEl.textContent = line.zh;
+            const noteEl = document.createElement('p');
+            noteEl.className = 'note';
+            noteEl.append(rubyNode(parse(line.note)));
+            lineEl.append(row, zhEl, noteEl);
+            stEl.append(lineEl);
+          }
+          grid.append(stEl);
         }
-        const jp = document.createElement('span');
-        jp.className = 'jp';
-        jp.lang = 'ja';
-        jp.append(rubyNode(parts));
-        const zhEl = document.createElement('span');
-        zhEl.className = 'zh';
-        zhEl.textContent = zh;
-        card.append(jp, zhEl);
-        if (note) {
-          const noteEl = document.createElement('span');
-          noteEl.className = 'note';
-          noteEl.append(rubyNode(parse(note)));
-          card.append(noteEl);
+      } else {
+        grid.className = 'grid';
+        for (const entry of cat.words) {
+          const item = makeCard(cat, entry);
+          catItems.push(item);
+          grid.append(item.card);
         }
-        card.setAttribute('aria-label', plain + '（' + readingText(parts) + '），' + zh + '。點一下播放發音');
-        // 歌詞裡的全形空白換成「、」，念的時候才會停頓。
-        const say = (typeof useReading === 'string' ? useReading : (cat.kana || useReading) ? readingText(parts) : plain).replace(/　/g, '、');
-        const item = { card, cat, say, plain };
-        card.addEventListener('click', () => { stopQueue(); speakOne(item); });
-        items.push(item);
-        catItems.push(item);
-        grid.append(card);
       }
       btn.addEventListener('click', () => {
         if (queue && queue.button === btn) { stopQueue(); return; }
