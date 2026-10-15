@@ -221,7 +221,9 @@
       const kata = toKata(kana);
       // 三個詞的位置隨機，但一律由上往下念。
       renderWords(kana, shuffle(words));
-      hint.hidden = true;
+      // 記憶小撇步跟三個詞一起出現，整個字念完前都看得到。
+      hintText.textContent = tip;
+      hint.hidden = false;
       big.textContent = kata;
       big.classList.remove('hira');
       // 自動換字後先停一下，讓人看著片假名和三個詞想想怎麼念。
@@ -259,8 +261,6 @@
         }
         row.btn.classList.remove('speaking');
       }
-      hintText.textContent = tip;
-      hint.hidden = false;
       return true;
     }
 
