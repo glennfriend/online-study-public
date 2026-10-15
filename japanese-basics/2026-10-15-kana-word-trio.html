@@ -69,7 +69,7 @@
     <button type="button" class="card" id="card">
       <span class="counter" id="counter"></span>
       <span class="big" id="big" lang="ja"></span>
-      <span class="tap" id="tap">點一下開始</span>
+      <span class="tap" id="tap" hidden></span>
     </button>
 
     <ul class="words" id="words"></ul>
@@ -370,7 +370,7 @@
     }
 
     card.addEventListener('click', onCard);
-    $('count').addEventListener('change', () => { stop('點一下開始'); newSession(); });
+    $('count').addEventListener('change', () => { stop(); newSession(); });
     document.addEventListener('visibilitychange', () => { if (document.hidden && playing) stop(); });
     window.addEventListener('pagehide', () => stop());
 
