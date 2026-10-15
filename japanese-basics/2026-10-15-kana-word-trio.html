@@ -45,7 +45,6 @@
     .word.speaking { background: #eaf3e6; border-color: var(--green); }
     .placeholder { padding: 18px; text-align: center; color: #a9b4a6; border: 1px dashed #d5dccf; border-radius: 14px; font-size: 14px; }
     .hint { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #e9efe5; font-size: 14px; }
-    .hint strong { display: block; color: var(--green); margin-bottom: 2px; }
     .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
     .status:empty { display: none; }
     [hidden] { display: none !important; }
@@ -75,7 +74,7 @@
     </button>
 
     <ul class="words" id="words"></ul>
-    <div class="hint" id="hint" hidden><strong>記憶小撇步</strong><span id="hint-text"></span></div>
+    <div class="hint" id="hint" hidden><span id="hint-text"></span></div>
 
     <p class="status" id="status" role="status" aria-live="polite"></p>
 
