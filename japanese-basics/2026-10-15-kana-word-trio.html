@@ -220,7 +220,7 @@
     }
 
     // 念完一個字（假名三次＋三個詞各三次），被中斷時回傳 false。
-    async function playOne(alive) {
+    async function playOne(alive, thinkMs = 0) {
       const [kana, tip, words] = current;
       const kata = toKata(kana);
       // 三個詞的位置隨機，但一律由上往下念。
@@ -228,6 +228,11 @@
       hint.hidden = true;
       big.textContent = kata;
       big.classList.remove('hira');
+      // 自動換字後先停一下，讓人看著片假名和三個詞想想怎麼念。
+      if (thinkMs) {
+        await wait(thinkMs);
+        if (!alive()) return false;
+      }
 
       // 單一假名用片假名送去念，避免「は」「へ」被當助詞讀成 wa、e。
       for (let i = 0; i < 3; i++) {
@@ -269,8 +274,10 @@
       playing = true;
       card.classList.add('playing');
       tap.hidden = true;
+      let thinkMs = 0;
       while (alive()) {
-        if (!(await playOne(alive))) return;
+        if (!(await playOne(alive, thinkMs))) return;
+        thinkMs = 2000;
         if (pos + 1 >= session.length) break;
         await wait(2000);
         if (!alive()) return;
