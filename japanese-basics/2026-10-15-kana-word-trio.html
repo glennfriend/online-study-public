@@ -32,8 +32,6 @@
     .big { display: block; font-size: 120px; line-height: 1.15; font-weight: 700; color: var(--green); transition: transform .25s, color .25s; }
     .big.hira { color: #8a4b00; }
     .big.pulse { transform: scale(1.08); }
-    .sub { display: block; min-height: 24px; font-size: 15px; color: var(--muted); }
-    .sub b { color: var(--ink); font-size: 18px; margin: 0 2px; }
     .tap { display: block; margin-top: 4px; font-size: 13px; color: var(--muted); }
     .words { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 10px; }
     .word { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 4px 12px; width: 100%; padding: 12px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); color: var(--ink); text-align: left; transition: background .2s, border-color .2s; }
@@ -49,9 +47,6 @@
     .placeholder { padding: 18px; text-align: center; color: #a9b4a6; border: 1px dashed #d5dccf; border-radius: 14px; font-size: 14px; }
     .hint { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #e9efe5; font-size: 14px; }
     .hint strong { display: block; color: var(--green); margin-bottom: 2px; }
-    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-    .btn { min-height: 48px; border-radius: 12px; border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); font-size: 16px; }
-    .btn.primary { background: var(--green); border-color: var(--green); color: white; font-weight: 600; }
     .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
     .status:empty { display: none; }
     [hidden] { display: none !important; }
@@ -65,29 +60,26 @@
   <main>
     <a class="back" href="index.html">← 日本語の基礎</a>
     <h1>假名三連詞</h1>
-    <p class="lead">點片假名：念三次（第二次變平假名），接著隨機念三個詞，每個詞念三次。念到時才顯示中文，先猜猜看怎麼念。</p>
+    <p class="lead">點片假名開始：念三次（第二次變平假名），接著三個詞由上往下各念三次，念到時才顯示中文。念完自動換下一個字，再點一次片假名可暫停。</p>
     <div class="controls">
       <label for="rate">播放速度</label>
       <select id="rate"><option value="1" selected>一般速度</option><option value="0.75">慢慢念</option></select>
+      <label for="count">練習數量</label>
+      <select id="count"><option value="1">1 個字</option><option value="10">10 個字</option><option value="46" selected>46 個字（全部）</option></select>
       <label for="voice">日語聲音</label>
       <select id="voice" disabled><option>正在尋找日語語音…</option></select>
     </div>
     <noscript><p>請啟用 JavaScript 才能練習。</p></noscript>
 
-    <button type="button" class="card" id="card" aria-describedby="sub">
+    <button type="button" class="card" id="card">
       <span class="counter" id="counter"></span>
       <span class="big" id="big" lang="ja"></span>
-      <span class="sub" id="sub"></span>
       <span class="tap" id="tap">點一下開始</span>
     </button>
 
     <ul class="words" id="words"></ul>
     <div class="hint" id="hint" hidden><strong>記憶小撇步</strong><span id="hint-text"></span></div>
 
-    <div class="actions">
-      <button type="button" class="btn" id="replay">再念一次</button>
-      <button type="button" class="btn primary" id="next">下一個 →</button>
-    </div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
 
     <footer>發音使用裝置提供的日語語音；離線時請選不需網路的聲音。三個詞挑的是到日本旅行用得到、而且彼此有兩種以上關聯（同位置、同字根、同主題）的詞，比較好記。</footer>
@@ -155,40 +147,35 @@
     }
 
     const $ = id => document.getElementById(id);
-    const card = $('card'), big = $('big'), sub = $('sub'), tap = $('tap'), wordsEl = $('words');
+    const card = $('card'), big = $('big'), tap = $('tap'), wordsEl = $('words');
     const hint = $('hint'), hintText = $('hint-text'), status = $('status'), voiceSelect = $('voice');
 
-    // 洗牌一輪，全部出現過才重洗，避免一直抽到同一個。
-    let deck = [];
+    // 一回合：從 46 個裡隨機抽 N 個，依序自動念完；字與字之間停兩秒。
+    let session = [];
+    let pos = 0;
     let current = null;
     let rows = [];
     let runId = 0;
+    let playing = false;
 
-    function nextEntry() {
-      if (!deck.length) {
-        deck = shuffle(DATA.map((_, i) => i));
-        // 新的一輪第一個不要跟剛剛那個一樣。
-        const last = deck.length - 1;
-        if (current && DATA[deck[last]] === current) [deck[0], deck[last]] = [deck[last], deck[0]];
-      }
-      return DATA[deck.pop()];
+    function newSession() {
+      session = shuffle(DATA).slice(0, Number($('count').value));
+      pos = 0;
+      show();
     }
 
-    function show(entry) {
-      stop();
-      current = entry;
-      const [kana] = entry;
+    function show() {
+      current = session[pos];
+      const [kana] = current;
       big.textContent = toKata(kana);
       big.classList.remove('hira');
-      sub.textContent = '片假名';
-      tap.textContent = '點一下開始';
-      $('counter').textContent = `${DATA.length - deck.length} / ${DATA.length}`;
-      card.setAttribute('aria-label', `片假名 ${toKata(kana)}，點一下播放`);
+      $('counter').textContent = `${pos + 1} / ${session.length}`;
+      card.setAttribute('aria-label', `片假名 ${toKata(kana)}`);
       hint.hidden = true;
       rows = [];
       const ph = document.createElement('li');
       ph.className = 'placeholder';
-      ph.textContent = '點上面的片假名，三個詞就會出現';
+      ph.textContent = '點上面的片假名開始，三個詞就會出現';
       wordsEl.replaceChildren(ph);
     }
 
@@ -217,14 +204,14 @@
         btn.append(ja, zhEl, reps);
         li.append(btn);
         const row = { btn, zhEl, reps, zh, spoken };
-        // 單獨點某個詞：只念一次並顯示中文。
+        // 暫停時單獨點某個詞：念一次並顯示中文。
         btn.addEventListener('click', async () => {
-          stop();
-          const id = ++runId;
+          if (playing) return;
+          synth && synth.cancel();
           row.zhEl.textContent = row.zh;
           btn.classList.add('speaking');
           await say(row.spoken);
-          if (id === runId) btn.classList.remove('speaking');
+          btn.classList.remove('speaking');
         });
         return { li, row };
       });
@@ -232,67 +219,89 @@
       rows = items.map(item => item.row);
     }
 
-    async function play() {
-      if (!current) return;
-      stop();
-      const id = ++runId;
-      const alive = () => id === runId;
+    // 念完一個字（假名三次＋三個詞各三次），被中斷時回傳 false。
+    async function playOne(alive) {
       const [kana, tip, words] = current;
       const kata = toKata(kana);
-      renderWords(kana, words);
+      // 三個詞的位置隨機，但一律由上往下念。
+      renderWords(kana, shuffle(words));
       hint.hidden = true;
       big.textContent = kata;
       big.classList.remove('hira');
-      sub.textContent = '片假名';
-      card.classList.add('playing');
-      tap.textContent = '播放中…';
 
       // 單一假名用片假名送去念，避免「は」「へ」被當助詞讀成 wa、e。
       for (let i = 0; i < 3; i++) {
-        if (!alive()) return;
         if (i === 1) {
           big.textContent = kana;
           big.classList.add('hira');
-          sub.innerHTML = '';
-          sub.append('片假名 ', Object.assign(document.createElement('b'), { textContent: kata }), ' → 平假名 ', Object.assign(document.createElement('b'), { textContent: kana }));
         }
         big.classList.add('pulse');
         await say(kata);
         big.classList.remove('pulse');
-        if (!alive()) return;
+        if (!alive()) return false;
         await wait(350);
+        if (!alive()) return false;
       }
 
-      for (const row of shuffle(rows)) {
-        if (!alive()) return;
+      for (const row of rows) {
         await wait(400);
+        if (!alive()) return false;
         row.btn.classList.add('speaking');
         row.btn.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
         for (let i = 0; i < 3; i++) {
-          if (!alive()) return;
           if (i === 0) row.zhEl.textContent = row.zh;
           row.reps.children[i].classList.add('on');
           await say(row.spoken);
-          if (!alive()) return;
+          if (!alive()) return false;
           await wait(300);
+          if (!alive()) return false;
         }
         row.btn.classList.remove('speaking');
       }
-      if (!alive()) return;
       hintText.textContent = tip;
       hint.hidden = false;
-      card.classList.remove('playing');
-      tap.textContent = '再點一次重聽';
+      return true;
     }
 
-    function stop() {
+    async function run() {
+      const id = ++runId;
+      const alive = () => id === runId;
+      playing = true;
+      card.classList.add('playing');
+      tap.hidden = true;
+      while (alive()) {
+        if (!(await playOne(alive))) return;
+        if (pos + 1 >= session.length) break;
+        await wait(2000);
+        if (!alive()) return;
+        pos++;
+        show();
+      }
+      playing = false;
+      card.classList.remove('playing');
+      tap.textContent = '全部念完了，點一下重新開始';
+      tap.hidden = false;
+      pos = session.length;
+    }
+
+    function stop(label = '點一下繼續') {
       runId++;
+      playing = false;
       currentUtterance = null;
       if (supportsSpeech) synth.cancel();
       card.classList.remove('playing');
       big.classList.remove('pulse');
       for (const row of rows) row.btn.classList.remove('speaking');
-      if (current) tap.textContent = rows.length ? '再點一次重聽' : '點一下開始';
+      tap.textContent = label;
+      tap.hidden = false;
+    }
+
+    // 點片假名：開始／暫停；暫停後再點，從目前這個字重新念。
+    function onCard() {
+      if (playing) return stop();
+      if (pos >= session.length) newSession();
+      else show();
+      run();
     }
     const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -362,13 +371,12 @@
       window.addEventListener('offline', loadVoices);
     }
 
-    card.addEventListener('click', play);
-    $('replay').addEventListener('click', play);
-    $('next').addEventListener('click', () => show(nextEntry()));
-    document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
-    window.addEventListener('pagehide', stop);
+    card.addEventListener('click', onCard);
+    $('count').addEventListener('change', () => { stop('點一下開始'); newSession(); });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && playing) stop(); });
+    window.addEventListener('pagehide', () => stop());
 
-    show(nextEntry());
+    newSession();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
   </script>
 </body>
