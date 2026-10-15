@@ -43,7 +43,6 @@
     .word .reps i { width: 8px; height: 8px; border-radius: 50%; background: #e2e7dc; transition: background .2s; }
     .word .reps i.on { background: var(--green); }
     .word.speaking { background: #eaf3e6; border-color: var(--green); }
-    .placeholder { padding: 18px; text-align: center; color: #a9b4a6; border: 1px dashed #d5dccf; border-radius: 14px; font-size: 14px; }
     .hint { margin: 14px 0 0; padding: 12px 14px; border-radius: 12px; background: #e9efe5; font-size: 14px; }
     .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
     .status:empty { display: none; }
@@ -168,10 +167,7 @@
       card.setAttribute('aria-label', `片假名 ${toKata(kana)}`);
       hint.hidden = true;
       rows = [];
-      const ph = document.createElement('li');
-      ph.className = 'placeholder';
-      ph.textContent = '點上面的片假名開始，三個詞就會出現';
-      wordsEl.replaceChildren(ph);
+      wordsEl.replaceChildren();
     }
 
     function renderWords(kana, words) {
@@ -286,7 +282,7 @@
       pos = session.length;
     }
 
-    function stop(label = '點一下繼續') {
+    function stop(label = '') {
       runId++;
       playing = false;
       currentUtterance = null;
@@ -295,7 +291,7 @@
       big.classList.remove('pulse');
       for (const row of rows) row.btn.classList.remove('speaking');
       tap.textContent = label;
-      tap.hidden = false;
+      tap.hidden = !label;
     }
 
     // 點片假名：開始／暫停；暫停後再點，從目前這個字重新念。
