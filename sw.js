@@ -1,7 +1,7 @@
 // 離線快取：首次開啟後把所有頁面存進快取，之後沒有網路也能閱讀。
 // 有網路時一律先抓最新版（network-first），抓不到才用快取，所以內容更新不需要改版號；
 // 新增或移除頁面時，記得同步更新 PAGES 並調高 VERSION。
-const VERSION = 'v8';
+const VERSION = 'v9';
 // 這些資料夾有自己的 sw.js（scope 更精確），離線由它們自己負責，這裡完全不碰。
 const SELF_MANAGED = ['./math/curvelab/'];
 const CACHE = `online-study-${VERSION}`;
@@ -43,11 +43,11 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
   // 有自己 sw.js 的工具，整個資料夾放行，交給它自己處理。
   if (SELF_MANAGED.some(dir => url.pathname.startsWith(new URL(dir, self.registration.scope).pathname))) return;
-  // iOS Safari 播音檔會送 Range 請求；快取裡是完整檔案，要自己切成 206 回應，離線才播得出來。
+  // 播音檔時瀏覽器會送 Range 請求：一樣先抓網路（音檔才會更新）；離線時快取裡是完整檔案，要自己切成 206 回應。
   if (request.headers.has('range')) {
     event.respondWith(
-      caches.match(request, { ignoreSearch: true })
-        .then(cached => cached ? rangeResponse(cached, request.headers.get('range')) : fetch(request))
+      fetch(request).catch(() => caches.match(request, { ignoreSearch: true })
+        .then(cached => cached ? rangeResponse(cached, request.headers.get('range')) : Promise.reject(new Error('offline'))))
     );
     return;
   }
