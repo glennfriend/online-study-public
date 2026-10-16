@@ -336,7 +336,7 @@
       if (document.hidden) { clearActivity(); stopSpeech(); }
     });
 
-    // 發音用預先產生的 mp3（tools/generate-hiragana-audio.mjs），每台裝置聽到的都一樣，離線也能播。
+    // 發音用預先產生的 mp3（tools/generate-kana-audio.mjs），每台裝置聽到的都一樣，離線也能播。
     const status = document.getElementById('audio-status');
     const player = new Audio();
     player.preload = 'auto';
