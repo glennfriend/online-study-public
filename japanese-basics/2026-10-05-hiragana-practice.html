@@ -26,7 +26,6 @@
     .toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
     .audio-controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 14px; }
     select, .toggle { border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 8px; padding: 8px 12px; }
-    #voice { max-width: 240px; }
     .toggle { font-size: 14px; }
     .toggle[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: white; }
     .table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); box-shadow: 0 8px 28px #344e3b06; }
@@ -44,7 +43,8 @@
     /* 主字在左，單字與中文在右。 */
     .tile { height: 100%; display: grid; grid-template-columns: auto 1fr; align-content: center; align-items: center; column-gap: 8px; padding: 10px; text-align: left; position: relative; transition: background .2s; }
     .tile.waiting, .tile.revealed { background: #f0f6ed; }
-    .kana { grid-row: span 2; color: var(--green); font-size: 30px; line-height: 1.2; font-weight: 700; }
+    .kana { grid-row: span 2; color: var(--green); font-size: 30px; line-height: 1.2; font-weight: 700; justify-self: start; margin: 0; padding: 0 4px; border: 0; border-radius: 6px; background: transparent; font-family: inherit; }
+    .kana:hover { background: #e6efdf; }
     .word { margin: 0; padding: 0 4px; text-align: left; display: block; width: 100%; border: 0; background: transparent; color: var(--ink); font-size: 18px; line-height: 1.6; white-space: nowrap; border-radius: 5px; }
     .word.long { font-size: 14px; line-height: 28.8px; }
     .word:hover { background: #e6efdf; }
@@ -76,7 +76,6 @@
       .audio-controls { display: grid; grid-template-columns: auto 1fr; width: 100%; }
       /* iOS Safari 在字級小於 16px 的選單取得焦點時會自動放大畫面。 */
       select { font-size: 16px; width: 100%; min-width: 0; }
-      #voice { max-width: none; }
       .toggle { min-height: 40px; }
       .notes { grid-template-columns: 1fr; gap: 16px; }
       /* 手機不用左右滑：每一「行」變成標題加兩欄卡片。 */
@@ -114,15 +113,13 @@
     <div class="instructions" id="instructions">
       <span><i class="step">1</i>先念念看日文</span>
       <span><i class="step">2</i>滑鼠停留 2.5 秒，看中文</span>
-      <span><i class="step">3</i>點日文單字聽發音，跟著念</span>
+      <span><i class="step">3</i>點假名或日文單字聽發音，跟著念</span>
       <span><i class="step">4</i>點單字裡的假名，所有單字中相同的字會亮 2.5 秒</span>
     </div>
     <div class="toolbar">
       <div class="audio-controls">
         <label for="rate">播放速度</label>
         <select id="rate"><option value="0.75">慢慢念</option><option value="1">一般速度</option></select>
-        <label for="voice">日語聲音</label>
-        <select id="voice" disabled><option>正在尋找日語語音…</option></select>
       </div>
       <button type="button" class="toggle" id="show-all" aria-pressed="false">顯示全部中文</button>
     </div>
@@ -133,7 +130,6 @@
         <tbody id="kana-table"></tbody>
       </table>
     </div>
-    <p class="table-note">粗體標出這格要練的假名。手機：點一下日文會播放發音，等待 2.5 秒看中文。鍵盤：Tab 移到單字，按 Enter 播放，等待 2.5 秒看中文。</p>
     <!-- 只在語音有問題時顯示訊息，正常時保持空白。 -->
     <p class="status" id="audio-status" role="status" aria-live="polite"></p>
     <div class="notes">
@@ -156,7 +152,6 @@
         </ul>
       </div>
     </div>
-    <footer>發音使用裝置提供的日語語音；聲音與可用性依瀏覽器、系統而異。沒有日語語音時，仍可練習表格與中文。列印時會顯示全部中文。</footer>
   </main>
   <script>
     'use strict';
@@ -174,6 +169,14 @@
       ['わ', [['わ', 'わさび', '芥末', 'わさび'], null, null, null, ['を', 'きっぷをかう', '買車票', '切符を買う']]],
       ['ん', [['ん', 'おんせん', '溫泉', '温泉'], null, null, null, null]]
     ];
+    // 發音檔的檔名：kana-ka.mp3、word-ka.mp3。
+    const ROMAJI = {
+      あ: 'a', い: 'i', う: 'u', え: 'e', お: 'o', か: 'ka', き: 'ki', く: 'ku', け: 'ke', こ: 'ko',
+      さ: 'sa', し: 'shi', す: 'su', せ: 'se', そ: 'so', た: 'ta', ち: 'chi', つ: 'tsu', て: 'te', と: 'to',
+      な: 'na', に: 'ni', ぬ: 'nu', ね: 'ne', の: 'no', は: 'ha', ひ: 'hi', ふ: 'fu', へ: 'he', ほ: 'ho',
+      ま: 'ma', み: 'mi', む: 'mu', め: 'me', も: 'mo', や: 'ya', ゆ: 'yu', よ: 'yo',
+      ら: 'ra', り: 'ri', る: 'ru', れ: 're', ろ: 'ro', わ: 'wa', を: 'wo', ん: 'n'
+    };
     const states = [];
     let showAll = false;
     const body = document.getElementById('kana-table');
@@ -246,10 +249,13 @@
         const id = 'meaning-' + states.length;
         const tile = document.createElement('div');
         tile.className = 'tile';
-        const kanaLabel = document.createElement('div');
+        const kanaLabel = document.createElement('button');
+        kanaLabel.type = 'button';
         kanaLabel.className = 'kana';
         kanaLabel.lang = 'ja';
         kanaLabel.textContent = kana;
+        kanaLabel.setAttribute('aria-label', kana + '，點一下聽這個假名的發音');
+        kanaLabel.addEventListener('click', () => play('kana-' + ROMAJI[kana], tile));
         const wordButton = document.createElement('button');
         wordButton.type = 'button';
         wordButton.className = word.length >= 7 ? 'word long' : 'word';
@@ -299,7 +305,7 @@
         wordButton.addEventListener('click', () => {
           wordButton.focus();
           start(state);
-          speak(state);
+          play('word-' + ROMAJI[kana], tile);
         });
       }
       body.append(tr);
@@ -330,93 +336,38 @@
       if (document.hidden) { clearActivity(); stopSpeech(); }
     });
 
+    // 發音用預先產生的 mp3（tools/generate-hiragana-audio.mjs），每台裝置聽到的都一樣，離線也能播。
     const status = document.getElementById('audio-status');
-    const voiceSelect = document.getElementById('voice');
-    const synth = 'speechSynthesis' in window ? window.speechSynthesis : null;
-    const supportsSpeech = synth && 'SpeechSynthesisUtterance' in window;
-    let voices = [];
-    let currentUtterance = null;
-    let speechTimeout = null;
-    function loadVoices() {
-      if (!supportsSpeech) {
-        voiceSelect.replaceChildren(new Option('此瀏覽器不支援發音', ''));
-        status.textContent = '此瀏覽器不支援語音播放，仍可使用中文練習。';
-        return;
-      }
-      const selected = voiceSelect.value;
-      voices = synth.getVoices().filter(voice => /^ja(?:[-_]|$)/i.test(voice.lang));
-      voiceSelect.replaceChildren();
-      if (!voices.length) {
-        voiceSelect.append(new Option('未找到日語語音', ''));
-        status.textContent = '這台裝置尚未提供日語語音。可在系統語音設定加入日語後重新開啟頁面；中文練習可照常使用。';
-      } else {
-        for (const voice of voices) voiceSelect.append(new Option(voice.localService ? voice.name : voice.name + '（需網路）', voice.voiceURI));
-        // 離線時線上語音念不出來，只從裝置內建的語音中挑。
-        const local = navigator.onLine ? [] : voices.filter(voice => voice.localService);
-        const pool = local.length ? local : voices;
-        // 優先選品質最好的聲音：Edge 線上神經語音 → Google 日本語 → 其他。
-        const preferred = pool.find(voice => voice.voiceURI === selected)
-          || pool.find(voice => /Natural|Online/i.test(voice.name))
-          || pool.find(voice => /Google/i.test(voice.name))
-          || pool[0];
-        voiceSelect.value = preferred.voiceURI;
-        status.textContent = '';
-      }
-      voiceSelect.disabled = !voices.length;
-    }
+    const player = new Audio();
+    player.preload = 'auto';
+    let speakingTile = null;
     function stopSpeech() {
-      currentUtterance = null;
-      clearTimeout(speechTimeout);
-      speechTimeout = null;
-      if (supportsSpeech) synth.cancel();
-      for (const state of states) state.tile.classList.remove('speaking');
+      player.pause();
+      if (speakingTile) speakingTile.classList.remove('speaking');
+      speakingTile = null;
     }
-    function speak(state) {
-      const voice = voices.find(item => item.voiceURI === voiceSelect.value);
-      if (!supportsSpeech || !voice) {
-        status.textContent = '目前沒有可用的日語語音，請檢查裝置的語音設定。';
-        return;
-      }
+    function play(file, tile) {
       stopSpeech();
-      const utterance = new SpeechSynthesisUtterance(state.spoken);
-      currentUtterance = utterance;
-      utterance.lang = 'ja-JP';
-      utterance.voice = voice;
-      utterance.rate = Number(document.getElementById('rate').value);
-      const finish = (message) => {
-        if (currentUtterance !== utterance) return;
-        clearTimeout(speechTimeout);
-        speechTimeout = null;
-        state.tile.classList.remove('speaking');
-        currentUtterance = null;
-        status.textContent = message;
-      };
-      utterance.onstart = () => {
-        if (currentUtterance !== utterance) return;
-        clearTimeout(speechTimeout);
-        speechTimeout = null;
-        state.tile.classList.add('speaking');
-        status.textContent = '';
-      };
-      utterance.onend = () => finish('');
-      utterance.onerror = () => finish('這次未能播放，請確認裝置音量、日語語音與網路連線，再按一次試試看。');
+      player.src = `audio/hiragana/${file}.mp3`;
+      // 換 src 會把 playbackRate 重設成 defaultPlaybackRate，兩個都要設。
+      const rate = Number(document.getElementById('rate').value);
+      player.defaultPlaybackRate = rate;
+      player.playbackRate = rate;
+      speakingTile = tile;
+      tile.classList.add('speaking');
       status.textContent = '';
-      speechTimeout = setTimeout(() => {
-        if (currentUtterance !== utterance) return;
-        finish('語音未能開始播放，請確認日語語音與裝置設定，再按一次試試看。');
-        synth.cancel();
-      }, 10000);
-      try { synth.speak(utterance); }
-      catch { finish('這次未能播放，請檢查瀏覽器的語音設定。'); }
+      player.play().catch(() => {
+        if (speakingTile !== tile) return;
+        stopSpeech();
+        status.textContent = '這次未能播放，請確認裝置音量，再按一次試試看。';
+      });
     }
-    loadVoices();
-    if (supportsSpeech) {
-      synth.addEventListener('voiceschanged', loadVoices);
-      // 有些瀏覽器的語音清單稍晚才出現。
-      setTimeout(loadVoices, 1500);
-      window.addEventListener('online', loadVoices);
-      window.addEventListener('offline', loadVoices);
-    }
+    player.addEventListener('ended', stopSpeech);
+    player.addEventListener('error', () => {
+      if (!speakingTile) return;
+      stopSpeech();
+      status.textContent = '找不到這個發音檔，請連上網路重新整理頁面後再試。';
+    });
     window.addEventListener('pagehide', stopSpeech);
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
   </script>
