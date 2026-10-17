@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>店員說什麼</title>
+  <style>
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --hi: #d48b38; --ok: #2f8a5b; --ng: #c0533a; }
+    * { box-sizing: border-box; }
+    /* 連點時不會雙擊放大；橫向時 iOS 不會自動放大字。 */
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans JP", "Noto Sans TC", sans-serif; line-height: 1.7; }
+    button, select { font: inherit; }
+    button, select, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible { outline: 3px solid var(--hi); outline-offset: 3px; }
+    main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+    .back { display: inline-block; padding: 4px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    h1 { margin: 4px 0 12px; font-size: 1.6rem; }
+    .scenes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .chip { padding: 6px 12px; border: 1px solid #ced8cc; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 14px; }
+    .chip[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: white; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 14px; }
+    .modes { display: inline-flex; border: 1px solid #ced8cc; border-radius: 10px; overflow: hidden; }
+    .modes button { border: 0; padding: 8px 14px; background: var(--paper); color: var(--ink); font-size: 14px; }
+    .modes button[aria-pressed="true"] { background: var(--green); color: white; }
+    /* iOS Safari 在字級小於 16px 的選單取得焦點時會自動放大畫面。 */
+    select { font-size: 16px; border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 8px; padding: 5px 10px; }
+    .score { margin-left: auto; color: var(--muted); }
+    .card { border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 8px 28px #344e3b0d; padding: 18px 16px; }
+    .who { font-size: 13px; color: var(--muted); }
+    .play { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 72px; margin: 6px 0 14px; border: 0; border-radius: 16px; background: #e9efe5; color: var(--green); font-size: 18px; font-weight: 600; }
+    .play.speaking { background: #d7e8d3; }
+    .play svg { width: 28px; height: 28px; flex: none; }
+    .options { display: grid; gap: 10px; }
+    .option { width: 100%; min-height: 52px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); font-size: 16px; text-align: left; }
+    .option:disabled { cursor: default; }
+    .option.right { border-color: var(--ok); background: #e7f4ec; color: #1d5e3c; font-weight: 600; }
+    .option.wrong { border-color: var(--ng); background: #fbece8; color: #8a3524; }
+    .reveal { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+    .line { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; }
+    .mini { grid-row: span 2; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #e9efe5; color: var(--green); display: grid; place-items: center; }
+    .mini.speaking { background: #d7e8d3; }
+    .mini svg { width: 20px; height: 20px; }
+    .ja { font-size: 22px; line-height: 2; letter-spacing: .02em; }
+    .ja rt { font-size: 11px; color: var(--muted); letter-spacing: 0; }
+    .ja mark { background: #ffe6b3; color: inherit; border-radius: 4px; padding: 0 2px; }
+    .zh { font-size: 15px; font-weight: 600; color: #365b45; }
+    .reply { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: #f0f5f8; }
+    .reply .mini { background: #dde8ef; color: #2f5d7c; }
+    .reply .mini.speaking { background: #c9dbe8; }
+    .reply .zh { color: #2f5d7c; }
+    .tip { margin: 10px 0 0; font-size: 14px; color: var(--muted); }
+    .next { width: 100%; min-height: 48px; margin-top: 16px; border: 0; border-radius: 12px; background: var(--green); color: white; font-size: 16px; font-weight: 600; }
+    .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
+    .status:empty { display: none; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="index.html">← 日本語の基礎</a>
+    <h1>店員說什麼</h1>
+    <div class="scenes" id="scenes" role="group" aria-label="情境"></div>
+    <div class="controls">
+      <div class="modes" role="group" aria-label="模式">
+        <button type="button" id="mode-quiz" aria-pressed="true">測驗</button>
+        <button type="button" id="mode-listen" aria-pressed="false">連續聽</button>
+      </div>
+      <select id="rate" aria-label="播放速度"><option value="1" selected>一般速度</option><option value="0.75">慢慢念</option></select>
+      <span class="score" id="score"></span>
+    </div>
+    <noscript><p>請啟用 JavaScript 才能練習。</p></noscript>
+
+    <section class="card">
+      <div class="who" id="who">店員說：</div>
+      <button type="button" class="play" id="play">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
+        <span id="play-label">開始</span>
+      </button>
+      <div class="options" id="options"></div>
+      <div class="reveal" id="reveal" hidden>
+        <div class="line">
+          <button type="button" class="mini" id="again" aria-label="再聽一次店員說的話">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+          </button>
+          <div class="ja" id="q-ja" lang="ja"></div>
+          <div class="zh" id="q-zh"></div>
+        </div>
+        <div class="reply" id="reply" hidden>
+          <div class="who">你可以回：</div>
+          <div class="line">
+            <button type="button" class="mini" id="reply-play" aria-label="聽回應的說法">
+              <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>
+            </button>
+            <div class="ja" id="a-ja" lang="ja"></div>
+            <div class="zh" id="a-zh"></div>
+          </div>
+        </div>
+        <p class="tip" id="tip" hidden></p>
+      </div>
+      <button type="button" class="next" id="next" hidden>下一句 →</button>
+    </section>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+  </main>
+  <script>
+    'use strict';
+    // 寫法：{漢字|讀音} 會加上注音假名，[ ] 標出聽懂這句的關鍵字；say 是怕語音念錯時指定的念法。
+    // 發音檔 audio/clerk/<情境>-<序號>-q.mp3（店員）、-a.mp3（回應），由 tools/generate-clerk-audio.mjs 產生。
+    const SCENES = [
+      { id: 'konbini', name: '便利商店', items: [
+        { jp: '[いらっしゃいませ]', zh: '歡迎光臨', tip: '不用回答，點頭或微笑就好' },
+        { jp: '[{温|あたた}め]ますか', zh: '要加熱嗎？', say: 'あたためますか', reply: { jp: 'はい、お{願|ねが}いします', zh: '好，麻煩你' } },
+        { jp: '[{袋|ふくろ}]はご{利用|りよう}ですか', zh: '需要袋子嗎？', reply: { jp: '{大丈夫|だいじょうぶ}です', zh: '不用了' } },
+        { jp: 'お[{箸|はし}]はお{付|つ}けしますか', zh: '需要筷子嗎？', reply: { jp: 'はい、お{願|ねが}いします', zh: '好，麻煩你' } },
+        { jp: '[ポイントカード]はお{持|も}ちですか', zh: '有集點卡嗎？', reply: { jp: 'いいえ', zh: '沒有' } },
+        { jp: 'お[{支払|しはら}い]はどうされますか', zh: '要怎麼付款？', reply: { jp: 'カードで', zh: '刷卡' } },
+        { jp: '[{合計|ごうけい}]{千二百円|せんにひゃくえん}です', zh: '總共 1200 日圓', tip: '金額也會顯示在收銀機螢幕上' }
+      ] },
+      { id: 'restaurant', name: '餐廳', items: [
+        { jp: '[{何名様|なんめいさま}]ですか', zh: '請問幾位？', reply: { jp: '{二人|ふたり}です', zh: '兩位' } },
+        { jp: 'お[タバコ]は{吸|す}われますか', zh: '請問抽菸嗎？', reply: { jp: 'いいえ', zh: '不抽' } },
+        { jp: 'ご[{注文|ちゅうもん}]はお{決|き}まりですか', zh: '決定好要點什麼了嗎？', reply: { jp: 'これをください', zh: '請給我這個（指著菜單）' } },
+        { jp: 'お[{飲|の}み{物|もの}]はいかがですか', zh: '要喝點什麼嗎？', reply: { jp: 'お{水|みず}をください', zh: '請給我水' } },
+        { jp: '[{少々|しょうしょう}]お{待|ま}ちください', zh: '請稍等一下', tip: '不用回答，等一下就好' },
+        { jp: 'ご{注文|ちゅうもん}は[{以上|いじょう}]でよろしいですか', zh: '這樣就點好了嗎？', reply: { jp: 'はい', zh: '對' } },
+        { jp: 'お{会計|かいけい}は[ご{一緒|いっしょ}]でよろしいですか', zh: '要一起結帳嗎？', reply: { jp: '{別々|べつべつ}でお{願|ねが}いします', zh: '麻煩分開結帳' } }
+      ] },
+      { id: 'ramen', name: '拉麵店', items: [
+        { jp: '[{食券|しょっけん}]をお{願|ねが}いします', zh: '請給我餐券', tip: '把售票機買的票交給店員' },
+        { jp: '[{麺|めん}の{硬|かた}さ]はどうしますか', zh: '麵要多硬？', reply: { jp: '{普通|ふつう}で', zh: '普通就好' } },
+        { jp: '[{味|あじ}の{濃|こ}さ]はどうしますか', zh: '湯頭要多濃？', reply: { jp: '{普通|ふつう}で', zh: '普通就好' } },
+        { jp: '[{大盛|おおも}り]にしますか', zh: '要大碗嗎？', reply: { jp: '{並|なみ}で', zh: '一般份量就好', say: 'なみで' } },
+        { jp: '[カウンター{席|せき}]でもよろしいですか', zh: '坐吧台可以嗎？', reply: { jp: 'はい、{大丈夫|だいじょうぶ}です', zh: '可以' } },
+        { jp: '[{替|か}え{玉|だま}]はいかがですか', zh: '要加麵嗎？', reply: { jp: '{大丈夫|だいじょうぶ}です', zh: '不用了' } },
+        { jp: 'お[{待|ま}たせしました]', zh: '讓您久等了（上菜）', tip: '餐點來了，可以說「ありがとうございます」' }
+      ] },
+      { id: 'station', name: '車站', items: [
+        { jp: 'まもなく[{電車|でんしゃ}]が{参|まい}ります', zh: '電車即將進站', tip: '月台廣播，準備上車' },
+        { jp: '[{黄色|きいろ}い{線|せん}]の{内側|うちがわ}までお{下|さ}がりください', zh: '請退到黃線內側', tip: '月台廣播，往後站一點' },
+        { jp: '[{次|つぎ}]は{新大阪|しんおおさか}です', zh: '下一站是新大阪', tip: '車上廣播，注意聽站名' },
+        { jp: '[ドア]が{閉|し}まります', zh: '車門要關了', tip: '不要再衝進去了' },
+        { jp: '[{三番線|さんばんせん}]です', zh: '在 3 號月台', reply: { jp: 'ありがとうございます', zh: '謝謝' } },
+        { jp: '[{切符|きっぷ}]を{拝見|はいけん}します', zh: '請讓我看一下車票', reply: { jp: 'はい、どうぞ', zh: '好，請看' } },
+        { jp: '[{終点|しゅうてん}]です', zh: '終點站到了', tip: '全部的人都要下車' }
+      ] },
+      { id: 'hotel', name: '飯店', items: [
+        { jp: '[チェックイン]ですか', zh: '要辦入住嗎？', reply: { jp: 'はい、{予約|よやく}しています', zh: '對，我有預約' } },
+        { jp: 'お[{名前|なまえ}]をお{願|ねが}いします', zh: '請問大名？', reply: { jp: 'リンです', zh: '我姓林（換成你的姓）' } },
+        { jp: '[パスポート]をお{願|ねが}いします', zh: '請給我護照', reply: { jp: 'はい、どうぞ', zh: '好，請看' } },
+        { jp: '[{朝食|ちょうしょく}]は{七時|しちじ}からです', zh: '早餐 7 點開始', say: '朝食はしちじからです', tip: '記下時間就好' },
+        { jp: 'お[{荷物|にもつ}]をお{預|あず}かりしましょうか', zh: '要幫您寄放行李嗎？', reply: { jp: 'お{願|ねが}いします', zh: '麻煩你' } },
+        { jp: '[チェックアウト]は{十時|じゅうじ}です', zh: '退房時間是 10 點', tip: '記下時間就好' },
+        { jp: 'お[{部屋|へや}]は{五階|ごかい}です', zh: '房間在 5 樓', reply: { jp: 'ありがとうございます', zh: '謝謝' } }
+      ] },
+      { id: 'drugstore', name: '藥妝店', items: [
+        { jp: '[{免税|めんぜい}]されますか', zh: '要辦免稅嗎？', reply: { jp: 'はい、お{願|ねが}いします', zh: '好，麻煩你' } },
+        { jp: '[パスポート]はお{持|も}ちですか', zh: '有帶護照嗎？', reply: { jp: 'はい', zh: '有' } },
+        { jp: '[{袋|ふくろ}]はお{分|わ}けしますか', zh: '袋子要分開裝嗎？', reply: { jp: '{一緒|いっしょ}で{大丈夫|だいじょうぶ}です', zh: '裝在一起就好' } },
+        { jp: '[{開封|かいふう}]しないでください', zh: '請不要拆開', tip: '免稅品在日本境內不能拆' },
+        { jp: '[{在庫|ざいこ}]を{確認|かくにん}します', zh: '我去確認庫存', tip: '不用回答，等一下就好' },
+        { jp: '[{売|う}り{切|き}れ]です', zh: '賣完了', reply: { jp: 'そうですか、ありがとうございます', zh: '這樣啊，謝謝' } },
+        { jp: 'こちらに[サイン]をお{願|ねが}いします', zh: '請在這裡簽名', reply: { jp: 'はい', zh: '好' } }
+      ] }
+    ];
+
+    const $ = id => document.getElementById(id);
+    const shuffle = list => {
+      const a = list.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    };
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const escapeHtml = s => s.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+    // {漢字|讀音} → <ruby>、[ ] → <mark>
+    const toHtml = markup => escapeHtml(markup)
+      .replace(/\{([^|}]+)\|([^}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>')
+      .replace(/\[/g, '<mark>').replace(/\]/g, '</mark>');
+
+    // 每句帶上情境與發音檔路徑，方便出題。
+    const ALL = SCENES.flatMap(scene => scene.items.map((item, i) => ({
+      ...item,
+      scene: scene.id,
+      q: `audio/clerk/${scene.id}-${i + 1}-q.mp3`,
+      a: item.reply ? `audio/clerk/${scene.id}-${i + 1}-a.mp3` : null
+    })));
+
+    let sceneFilter = 'all';
+    let mode = 'quiz';
+    let queue = [];
+    let current = null;
+    let runId = 0;
+    let started = false;
+    let right = 0;
+    let answered = 0;
+
+    // ---- 播放 ----
+    const player = new Audio();
+    player.preload = 'auto';
+    let speakingEl = null;
+    let finishPlay = null;
+    function stopAudio() {
+      player.pause();
+      if (speakingEl) speakingEl.classList.remove('speaking');
+      speakingEl = null;
+      if (finishPlay) finishPlay();
+    }
+    // 播完（或失敗）才 resolve，讓連續聽可以一句接一句。
+    function play(src, el) {
+      stopAudio();
+      return new Promise(resolve => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          finishPlay = null;
+          player.removeEventListener('ended', finish);
+          player.removeEventListener('error', onError);
+          if (speakingEl === el) { el.classList.remove('speaking'); speakingEl = null; }
+          resolve();
+        };
+        const onError = () => { $('status').textContent = '找不到發音檔，請連上網路重新整理頁面後再試。'; finish(); };
+        finishPlay = finish;
+        player.addEventListener('ended', finish);
+        player.addEventListener('error', onError);
+        player.src = src;
+        // 換 src 會把 playbackRate 重設成 defaultPlaybackRate，兩個都要設。
+        const rate = Number($('rate').value);
+        player.defaultPlaybackRate = rate;
+        player.playbackRate = rate;
+        speakingEl = el;
+        if (el) el.classList.add('speaking');
+        $('status').textContent = '';
+        player.play().catch(() => {
+          $('status').textContent = '這次未能播放，請確認裝置音量，再按一次試試看。';
+          finish();
+        });
+      });
+    }
+
+    // ---- 畫面 ----
+    function pool() {
+      return sceneFilter === 'all' ? ALL : ALL.filter(item => item.scene === sceneFilter);
+    }
+    function renderScore() {
+      $('score').textContent = mode === 'quiz' && answered ? `答對 ${right} / ${answered}` : '';
+    }
+    function showReveal(item) {
+      $('q-ja').innerHTML = toHtml(item.jp);
+      $('q-zh').textContent = item.zh;
+      $('reply').hidden = !item.reply;
+      if (item.reply) {
+        $('a-ja').innerHTML = toHtml(item.reply.jp);
+        $('a-zh').textContent = item.reply.zh;
+      }
+      $('tip').hidden = !item.tip;
+      $('tip').textContent = item.tip || '';
+      $('reveal').hidden = false;
+    }
+    function resetCard(label) {
+      runId++;
+      stopAudio();
+      current = null;
+      $('options').replaceChildren();
+      $('reveal').hidden = true;
+      $('next').hidden = true;
+      $('play-label').textContent = label;
+    }
+
+    // ---- 測驗 ----
+    function nextQuestion() {
+      if (!queue.length) queue = shuffle(pool());
+      current = queue.shift();
+      const item = current;
+      $('reveal').hidden = true;
+      $('next').hidden = true;
+      $('play-label').textContent = '再聽一次';
+      // 選項：同情境的其他句子當干擾，比較像真的會搞混的情況。
+      const others = shuffle(pool().filter(x => x !== item && x.zh !== item.zh));
+      const sameScene = others.filter(x => x.scene === item.scene);
+      const picks = [...sameScene, ...others.filter(x => x.scene !== item.scene)].slice(0, 3);
+      const options = shuffle([item, ...picks]);
+      $('options').replaceChildren(...options.map(opt => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'option';
+        btn.textContent = opt.zh;
+        btn.addEventListener('click', () => answer(opt, btn));
+        return btn;
+      }));
+      play(item.q, $('play'));
+    }
+    function answer(opt, btn) {
+      const item = current;
+      const correct = opt === item;
+      answered++;
+      if (correct) right++;
+      else queue.splice(Math.min(3, queue.length), 0, item); // 答錯的過幾題再出一次
+      renderScore();
+      for (const b of $('options').children) {
+        b.disabled = true;
+        if (b.textContent === item.zh) b.classList.add('right');
+      }
+      if (!correct) btn.classList.add('wrong');
+      showReveal(item);
+      $('next').hidden = false;
+      // 先聽店員原句，再聽你可以怎麼回。
+      const id = ++runId;
+      (async () => {
+        if (!item.a) return;
+        await wait(500);
+        if (id === runId) await play(item.a, $('reply-play'));
+      })();
+    }
+
+    // ---- 連續聽 ----
+    let listening = false;
+    async function listenLoop() {
+      const id = ++runId;
+      const alive = () => id === runId;
+      listening = true;
+      $('play-label').textContent = '暫停';
+      while (alive()) {
+        if (!queue.length) queue = shuffle(pool());
+        current = queue.shift();
+        $('reveal').hidden = true;
+        await play(current.q, $('play'));
+        if (!alive()) return;
+        await wait(1200); // 先自己想一下意思
+        if (!alive()) return;
+        showReveal(current);
+        if (current.a) {
+          await wait(600);
+          if (!alive()) return;
+          await play(current.a, $('reply-play'));
+          if (!alive()) return;
+        }
+        await wait(2500);
+      }
+    }
+    function pauseListen() {
+      listening = false;
+      runId++;
+      stopAudio();
+      $('play-label').textContent = '繼續';
+    }
+
+    // ---- 事件 ----
+    $('play').addEventListener('click', () => {
+      if (mode === 'listen') {
+        if (listening) pauseListen();
+        else listenLoop();
+        return;
+      }
+      if (!started || !current) { started = true; nextQuestion(); return; }
+      play(current.q, $('play'));
+    });
+    $('again').addEventListener('click', () => { if (current) play(current.q, $('again')); });
+    $('reply-play').addEventListener('click', () => { if (current && current.a) play(current.a, $('reply-play')); });
+    $('next').addEventListener('click', nextQuestion);
+
+    function restart() {
+      listening = false;
+      started = false;
+      queue = [];
+      right = 0;
+      answered = 0;
+      renderScore();
+      resetCard('開始');
+    }
+    function setMode(next) {
+      mode = next;
+      $('mode-quiz').setAttribute('aria-pressed', String(mode === 'quiz'));
+      $('mode-listen').setAttribute('aria-pressed', String(mode === 'listen'));
+      restart();
+    }
+    $('mode-quiz').addEventListener('click', () => setMode('quiz'));
+    $('mode-listen').addEventListener('click', () => setMode('listen'));
+
+    const chips = [{ id: 'all', name: '全部' }, ...SCENES].map(scene => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.textContent = scene.name;
+      btn.setAttribute('aria-pressed', String(scene.id === sceneFilter));
+      btn.addEventListener('click', () => {
+        sceneFilter = scene.id;
+        for (const c of chips) c.setAttribute('aria-pressed', String(c === btn));
+        restart();
+      });
+      return btn;
+    });
+    $('scenes').append(...chips);
+
+    document.addEventListener('visibilitychange', () => { if (document.hidden && listening) pauseListen(); });
+    window.addEventListener('pagehide', stopAudio);
+    restart();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  </script>
+</body>
+</html>
