@@ -1,0 +1,578 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>15 個萬用句型</title>
+  <style>
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --hi: #d48b38; --rec: #c0533a; --mine: #2f5d7c; }
+    * { box-sizing: border-box; }
+    /* 連點時不會雙擊放大；橫向時 iOS 不會自動放大字。 */
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
+    button, select { font: inherit; }
+    button, select, a, summary { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    button:disabled { cursor: default; opacity: .45; }
+    button:focus-visible, select:focus-visible { outline: 3px solid var(--hi); outline-offset: 3px; }
+    main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+    .back { display: inline-block; padding: 4px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    h1 { margin: 4px 0 2px; font-size: 1.6rem; }
+    .source { margin: 0 0 12px; font-size: 13px; color: var(--muted); }
+    .source a { color: var(--muted); }
+    /* 16 個分組放一排橫向捲動，手機上不會把卡片推到很下面。 */
+    .groups { display: flex; gap: 8px; margin: 0 -16px 12px; padding: 2px 16px 8px; overflow-x: auto; scrollbar-width: thin; }
+    .chip { flex: none; padding: 6px 12px; border: 1px solid #ced8cc; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 14px; white-space: nowrap; }
+    .chip b { margin-right: 4px; color: var(--muted); font-weight: 600; }
+    .chip[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: white; }
+    .chip[aria-pressed="true"] b { color: #cfe3da; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    /* iOS Safari 在字級小於 16px 的選單取得焦點時會自動放大畫面。 */
+    select { font-size: 16px; border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 8px; padding: 5px 10px; }
+    .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; }
+    .toggle input { width: 18px; height: 18px; accent-color: var(--green); }
+    .pattern { margin: 0 0 12px; padding: 12px 16px; border-left: 4px solid var(--green); border-radius: 0 12px 12px 0; background: #eaf1e8; }
+    .pattern .head { font-size: 20px; font-weight: 700; color: var(--green); }
+    .pattern .head span { margin-left: 8px; font-size: 15px; font-weight: 600; color: var(--ink); }
+    .pattern .tip { margin-top: 2px; font-size: 14px; }
+    .pattern .tip b { color: #9a5a1c; }
+    .card { border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 8px 28px #344e3b0d; padding: 16px; }
+    .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); }
+    .nav { display: flex; gap: 6px; }
+    .nav button { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); }
+    .text { position: relative; min-height: 96px; }
+    .en { margin: 8px 0 0; font-size: 25px; line-height: 1.4; font-weight: 600; }
+    .en em { font-style: normal; color: var(--green); }
+    .zh { margin-top: 6px; font-size: 16px; font-weight: 600; color: #365b45; }
+    /* 聽力模式：先遮住文字，聽完再點開對答案。 */
+    .reveal { position: absolute; inset: 4px 0 0; display: flex; align-items: center; justify-content: center; border: 1px dashed #ced8cc; border-radius: 14px; background: #f3f1ea; color: var(--muted); font-size: 15px; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); font-size: 15px; }
+    .btn svg { width: 20px; height: 20px; flex: none; }
+    .btn.model { background: #e9efe5; border-color: #e9efe5; color: var(--green); font-weight: 600; }
+    .btn.rec { background: #fbece8; border-color: #fbece8; color: var(--rec); font-weight: 600; }
+    .btn.rec.on { background: var(--rec); border-color: var(--rec); color: white; }
+    .btn.mine { color: var(--mine); }
+    .btn.speaking { outline: 3px solid #b9d3b4; outline-offset: -3px; }
+    .btn.wide { grid-column: 1 / -1; }
+    .turn { margin-top: 12px; }
+    .turn-label { font-size: 14px; color: var(--muted); }
+    .turn-label b { color: var(--hi); }
+    .bar { height: 6px; border-radius: 3px; background: #ece7dc; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 100%; background: var(--hi); transform-origin: left; transform: scaleX(0); }
+    .list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
+    .item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); text-align: left; }
+    .item[aria-current="true"] { border-color: var(--green); background: #f0f6ed; }
+    .item .ien { font-size: 17px; }
+    .item .izh { grid-column: 1; font-size: 13px; color: var(--muted); }
+    .item .dot { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; background: transparent; }
+    .item .dot.has { background: var(--mine); }
+    .masked .item .ien, .masked .item .izh { filter: blur(6px); }
+    .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
+    .status:empty { display: none; }
+    details { margin-top: 24px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); padding: 4px 16px; }
+    summary { padding: 10px 0; font-weight: 600; color: var(--green); cursor: pointer; }
+    details h3 { margin: 12px 0 4px; font-size: 15px; }
+    details p { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+    details ul { margin: 0 0 12px; padding-left: 20px; font-size: 14px; }
+    details li span { color: var(--muted); }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="index.html">← 英文基礎</a>
+    <h1>15 個萬用句型</h1>
+    <p class="source">句型整理自 Nate - Onion English〈<a href="https://www.youtube.com/watch?v=lKTGTokarqI" rel="noopener">How to Speak Fast English</a>〉</p>
+    <div class="groups" id="groups" role="group" aria-label="句型"></div>
+    <div class="controls">
+      <select id="voice" aria-label="範本聲音"><option value="f">女聲範本</option><option value="m">男聲範本</option></select>
+      <select id="rate" aria-label="播放速度"><option value="1" selected>一般速度</option><option value="0.75">慢慢念</option></select>
+      <label class="toggle"><input type="checkbox" id="mask">聽力模式（先遮字）</label>
+    </div>
+    <noscript><p>請啟用 JavaScript 才能練習。</p></noscript>
+
+    <div class="pattern" id="pattern">
+      <div class="head" id="head"></div>
+      <div class="tip" id="tip"></div>
+    </div>
+
+    <section class="card">
+      <div class="top">
+        <span id="counter"></span>
+        <span class="nav">
+          <button type="button" id="prev" aria-label="上一句">‹</button>
+          <button type="button" id="next" aria-label="下一句">›</button>
+        </span>
+      </div>
+      <div class="text">
+        <div class="en" id="en" lang="en"></div>
+        <div class="zh" id="zh"></div>
+        <button type="button" class="reveal" id="reveal" hidden>聽完了？點這裡看答案</button>
+      </div>
+      <div class="buttons">
+        <button type="button" class="btn model" id="model">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>聽範本
+        </button>
+        <button type="button" class="btn" id="shadow">跟讀 3 次</button>
+        <button type="button" class="btn rec" id="rec">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg><span id="rec-label">錄音</span>
+        </button>
+        <button type="button" class="btn mine" id="mine" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>我的錄音
+        </button>
+        <button type="button" class="btn wide" id="compare" disabled>範本 ⇄ 我的錄音（對照聽）</button>
+        <button type="button" class="btn wide" id="playall">整組連播</button>
+      </div>
+      <div class="turn" id="turn" hidden>
+        <div class="turn-label" id="turn-label"></div>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
+    </section>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <ul class="list" id="list"></ul>
+
+    <details>
+      <summary>跟「美國人常用 30 句型」對照</summary>
+      <p>另外查了 ESL 教學網站與口語語料研究，整理出 30 個常見句型，跟這支影片比對如下。</p>
+      <h3>兩邊都有（11 個）</h3>
+      <ul>
+        <li>I'll／I feel like／Looks like／I don't know／I'm gonna／Let me／I wanna／I have to／Can I get／Do you wanna／Could you</li>
+      </ul>
+      <h3>只有影片教（4 個）</h3>
+      <ul>
+        <li>What do you…?、How do you…?、I've been…、I keep…</li>
+      </ul>
+      <h3>30 句型裡有、影片沒教（之後可以補）</h3>
+      <ul>
+        <li>I need to… <span>我需要…</span></li>
+        <li>I'd like (to)… <span>我想要…（比 I want 客氣）</span></li>
+        <li>Do you have…? <span>你們有…嗎？</span></li>
+        <li>Let's… <span>我們一起…吧</span></li>
+        <li>Is there…? <span>有…嗎？（找地點）</span></li>
+        <li>I'm looking for… <span>我在找…</span></li>
+        <li>How about…? <span>…怎麼樣？</span></li>
+        <li>I think… / I don't think… <span>我覺得…（影片建議改用 I feel like）</span></li>
+        <li>Have you ever…? <span>你有沒有…過？</span></li>
+        <li>I'm trying to… <span>我正在試著…</span></li>
+        <li>I was wondering if… <span>不知道能不能…（委婉請求）</span></li>
+        <li>Do you mind if I…? <span>你介意我…嗎？</span></li>
+        <li>I'm not sure… <span>我不太確定…</span></li>
+        <li>Why don't we…? <span>我們何不…？</span></li>
+        <li>I used to… <span>我以前常…</span></li>
+        <li>I'm about to… <span>我正要…</span></li>
+        <li>Thanks for… <span>謝謝你…</span></li>
+        <li>You should… <span>你應該…</span></li>
+        <li>I'm used to… <span>我習慣…</span></li>
+      </ul>
+    </details>
+  </main>
+  <script>
+    'use strict';
+    // 每組：head 是句型骨架，tip 是影片裡的「偷懶秘訣」（口語實際怎麼念）；items 的 en 會用 *…* 標出句型本身。
+    // say 是怕語音念錯時指定的念法。範本 audio/patterns/<組>-<序號>-f.mp3（女聲）、-m.mp3（男聲），
+    // 由 tools/generate-english-patterns-audio.mjs 產生。
+    const GROUPS = [
+      { id: 'ill', no: 1, head: "I'll…", zh: '我會…／那我就…', tip: "<b>I'll</b> 念起來像 <b>all</b>，一個音帶過。點餐、臨時決定都用它。", items: [
+        { en: "*I'll* have the chicken.", zh: '我要點雞肉。' },
+        { en: "*I'll* take this one.", zh: '我要這個。' },
+        { en: "*I'll* get the check.", zh: '我來買單。' },
+        { en: "*I'll* call you later.", zh: '我晚點打給你。' }
+      ] },
+      { id: 'feel', no: 2, head: 'I feel like…', zh: '我感覺…／我想要…', tip: '用 <b>I feel like</b> 取代 I think，語氣更軟更口語。後面接名詞或 V-ing 是「想要」。', items: [
+        { en: "*I feel like* it's gonna be hot.", zh: '我覺得會很熱。' },
+        { en: "*I feel like* she's mad.", zh: '我覺得她生氣了。' },
+        { en: "*I feel like* something's off.", zh: '我覺得哪裡怪怪的。' },
+        { en: '*I feel like* pizza.', zh: '我想吃披薩。（不是「我覺得像披薩」）' },
+        { en: '*I feel like* going out.', zh: '我想出門。' }
+      ] },
+      { id: 'looks', no: 3, head: 'Looks like…', zh: '看起來…／好像…', tip: '把 It looks like 的 <b>It</b> 省掉，直接說 Looks like。', items: [
+        { en: "*Looks like* it's gonna rain.", zh: '好像要下雨了。' },
+        { en: '*Looks like* the Wi-Fi is down.', zh: 'Wi-Fi 好像斷了。' },
+        { en: "*Looks like* we're gonna be late.", zh: '我們好像要遲到了。' }
+      ] },
+      { id: 'dunno', no: 4, head: "I don't know…", zh: '我不知道…', tip: "念成 <b>I dunno</b>，don't 的 t 吞掉。", items: [
+        { en: "*I don't know* what to do.", zh: '我不知道該做什麼。' },
+        { en: "*I don't know* where to go.", zh: '我不知道要去哪。' },
+        { en: "*I don't know* what to eat.", zh: '我不知道要吃什麼。' }
+      ] },
+      { id: 'gonna', no: 5, head: "I'm gonna…", zh: '我要…／我準備…', tip: 'going to → <b>gonna</b>。只有「要做某事」能縮，「去某地」（I\'m going to Taipei）不能縮。', items: [
+        { en: "*I'm gonna* take a shower.", zh: '我要去洗澡。' },
+        { en: "*I'm gonna* have something to eat.", zh: '我要吃點東西。' },
+        { en: "*I'm gonna* have some water.", zh: '我要喝點水。' },
+        { en: "*I'm gonna* get some rest.", zh: '我要休息一下。' }
+      ] },
+      { id: 'letme', no: 6, head: 'Let me…', zh: '我來…／讓我…', tip: 'let me 念成 <b>lemme</b>。', items: [
+        { en: '*Let me* think.', zh: '我想一想。' },
+        { en: '*Let me* handle this.', zh: '這交給我。' },
+        { en: '*Let me* start with a question.', zh: '我先從一個問題講起。' }
+      ] },
+      { id: 'wanna', no: 7, head: 'I wanna…', zh: '我想…', tip: 'want to → <b>wanna</b>，後面接動詞就是造句機器。', items: [
+        { en: '*I wanna* lie down.', zh: '我想躺一下。' },
+        { en: '*I wanna* get some air.', zh: '我想出去透透氣。' },
+        { en: '*I wanna* talk about food.', zh: '我想聊聊食物。' }
+      ] },
+      { id: 'haveto', no: 8, head: 'I have to…', zh: '我得…', tip: 'have to 念成 <b>hafta</b>；更懶的說法是 <b>I gotta</b>。', items: [
+        { en: '*I have to* use the bathroom.', zh: '我得上個廁所。' },
+        { en: '*I have to* take this.', zh: '我得接一下（電話）。' },
+        { en: '*I have to* get this done.', zh: '我得把這個做完。' },
+        { en: '*I gotta* get this done.', zh: '我得把這個做完。（更口語）' }
+      ] },
+      { id: 'canget', no: 9, head: 'Can I get…?', zh: '給我來一個…', tip: "Can I 連成 <b>k'nai</b>。美式點餐、買東西最常用。", items: [
+        { en: '*Can I get* some water?', zh: '可以給我一點水嗎？' },
+        { en: '*Can I get* this to go?', zh: '這個可以外帶嗎？' },
+        { en: '*Can I get* a bag?', zh: '可以給我一個袋子嗎？' }
+      ] },
+      { id: 'dywanna', no: 10, head: 'Do you wanna…?', zh: '你想不想…？', tip: '再懶一級，<b>Do you</b> 也能扔：Wanna grab some food?', items: [
+        { en: '*Do you wanna* grab some food?', zh: '要不要去吃點東西？' },
+        { en: '*Do you wanna* hang out?', zh: '要不要出去晃晃？' },
+        { en: '*Do you wanna* get together sometime?', zh: '改天要不要聚一聚？' }
+      ] },
+      { id: 'could', no: 11, head: 'Could you…?', zh: '你能…嗎？', tip: 'Could you 念成 <b>cudja</b>（d 跟 y 黏成「ㄐ」的音）。', items: [
+        { en: '*Could you* say that again?', zh: '你可以再說一次嗎？' },
+        { en: '*Could you* slow down a little?', zh: '你可以說慢一點嗎？' },
+        { en: '*Could you* take a picture of us?', zh: '可以幫我們拍張照嗎？' },
+        { en: '*Could you* hold this for a sec?', zh: '你可以幫我拿一下嗎？' }
+      ] },
+      { id: 'whatdo', no: 12, head: 'What do you…?', zh: '你…什麼？', tip: 'What do you 念成 <b>whaddaya</b>。', items: [
+        { en: '*What do you* do?', zh: '你是做什麼工作的？' },
+        { en: '*What do you* think?', zh: '你覺得呢？' },
+        { en: '*What do you* mean?', zh: '你是什麼意思？' },
+        { en: '*What do you* recommend?', zh: '你推薦什麼？' }
+      ] },
+      { id: 'howdo', no: 13, head: 'How do you…?', zh: '你怎麼…？', tip: 'How do you 念成 <b>hadaya</b>。', items: [
+        { en: '*How do you* say that in English?', zh: '那個英文怎麼說？' },
+        { en: '*How do you* get there?', zh: '要怎麼去那裡？' },
+        { en: '*How do you* use this?', zh: '這個怎麼用？' }
+      ] },
+      { id: 'been', no: 14, head: "I've been…", zh: '我最近一直…', tip: 'been 念 <b>bin／ben</b>，短短輕輕帶過。', items: [
+        { en: "*I've been* really busy.", zh: '我最近真的很忙。' },
+        { en: "*I've been* feeling tired lately.", zh: '我最近一直覺得很累。' },
+        { en: "*I've been* putting it off.", zh: '我一直拖著沒做。' }
+      ] },
+      { id: 'keep', no: 15, head: 'I keep…', zh: '我老是…', tip: '一個 <b>keep</b> 頂一串詞：keep + V-ing ＝「一直、老是」。', items: [
+        { en: '*I keep* forgetting.', zh: '我老是忘記。' },
+        { en: '*I keep* thinking about that.', zh: '我一直在想那件事。' },
+        { en: '*I keep* waking up at night.', zh: '我老是半夜醒來。' }
+      ] },
+      { id: 'day', no: '★', head: '串成一整天', zh: '只用這 15 個句型', tip: '影片最後一個新句型都不用，把一整天串起來。整組連播聽聽看，你能不能每句都聽懂。', items: [
+        { en: "*I'm gonna* get out of bed now.", zh: '我要起床了。' },
+        { en: '*I wanna* take a shower.', zh: '我想洗個澡。' },
+        { en: "*I feel like* it's gonna be hot today.", zh: '我覺得今天會很熱。' },
+        { en: '*Do you wanna* grab some food?', zh: '要不要去吃點東西？' },
+        { en: '*Let me* think.', zh: '我想一想。' },
+        { en: "*I don't know* what to eat.", zh: '我不知道要吃什麼。' },
+        { en: '*Looks like* that place is pretty good.', zh: '那家店好像不錯。' },
+        { en: '*What do you* recommend?', zh: '你推薦什麼？' },
+        { en: "*I'll* have that one.", zh: '那我就點那個。' },
+        { en: '*Can I get* that to go?', zh: '那個可以外帶嗎？' },
+        { en: '*Could you* hold this for a sec?', zh: '你可以幫我拿一下嗎？' },
+        { en: '*I have to* use the bathroom.', zh: '我得上個廁所。' },
+        { en: '*How do you* have so much energy?', zh: '你怎麼這麼有精神？' },
+        { en: "*I've been* really tired lately.", zh: '我最近很累。' },
+        { en: '*I keep* waking up at night.', zh: '我老是半夜醒來。' },
+        { en: "*I'm gonna* get some rest.", zh: '我要休息一下。' }
+      ] }
+    ];
+
+    const $ = id => document.getElementById(id);
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const escapeHtml = s => s.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+    const toHtml = markup => escapeHtml(markup).replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    const plain = markup => markup.replace(/\*/g, '');
+    // 只存「上次選的聲音、聽力模式」這種小偏好；讀不到就用預設值。
+    const store = {
+      get: key => { try { return localStorage.getItem(key); } catch { return null; } },
+      set: (key, value) => { try { localStorage.setItem(key, value); } catch {} }
+    };
+
+    const ALL = GROUPS.flatMap(group => group.items.map((item, i) => ({ ...item, id: `${group.id}-${i + 1}`, group: group.id })));
+    let groupFilter = GROUPS[0].id;
+    let index = 0;
+    let runId = 0;
+    let revealed = false;
+    // 錄音只放在記憶體（不上傳、不存檔），重新整理頁面就會消失。
+    const recordings = new Map();
+
+    const group = () => GROUPS.find(g => g.id === groupFilter);
+    const items = () => ALL.filter(item => item.group === groupFilter);
+    const current = () => items()[index];
+    const modelSrc = item => `audio/patterns/${item.id}-${$('voice').value}.mp3`;
+
+    // ---- 播放 ----
+    const player = new Audio();
+    player.preload = 'auto';
+    let speakingEl = null;
+    let finishPlay = null;
+    function stopAudio() {
+      player.pause();
+      if (speakingEl) speakingEl.classList.remove('speaking');
+      speakingEl = null;
+      if (finishPlay) finishPlay();
+    }
+    // 播完（或失敗）才 resolve，回傳實際長度（秒），跟讀時用來決定要留多久給你說。
+    function play(src, el, rate = Number($('rate').value)) {
+      stopAudio();
+      return new Promise(resolve => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          finishPlay = null;
+          player.removeEventListener('ended', finish);
+          player.removeEventListener('error', onError);
+          if (speakingEl === el) { el.classList.remove('speaking'); speakingEl = null; }
+          resolve(Number.isFinite(player.duration) ? player.duration : 2);
+        };
+        const onError = () => { $('status').textContent = '找不到發音檔，請連上網路重新整理頁面後再試。'; finish(); };
+        finishPlay = finish;
+        player.addEventListener('ended', finish);
+        player.addEventListener('error', onError);
+        player.src = src;
+        // 換 src 會把 playbackRate 重設成 defaultPlaybackRate，兩個都要設。
+        player.defaultPlaybackRate = rate;
+        player.playbackRate = rate;
+        speakingEl = el;
+        if (el) el.classList.add('speaking');
+        $('status').textContent = '';
+        player.play().catch(() => {
+          if (done) return; // 被下一段聲音打斷的，不算失敗
+          $('status').textContent = '這次未能播放，請確認裝置音量，再按一次試試看。';
+          finish();
+        });
+      });
+    }
+    function stopAll() {
+      runId++;
+      stopAudio();
+      if (recorder && recorder.state === 'recording') recorder.stop();
+      $('turn').hidden = true;
+    }
+
+    // ---- 跟讀 3 次：播範本 → 留同樣長的空檔讓你跟著念 ----
+    function countdown(seconds, label) {
+      $('turn').hidden = false;
+      $('turn-label').innerHTML = label;
+      const bar = $('bar');
+      bar.style.transition = 'none';
+      bar.style.transform = 'scaleX(0)';
+      void bar.offsetWidth;
+      bar.style.transition = `transform ${seconds}s linear`;
+      bar.style.transform = 'scaleX(1)';
+      return wait(seconds * 1000);
+    }
+    async function shadow() {
+      stopAll();
+      const id = ++runId;
+      const item = current();
+      for (let i = 1; i <= 3; i++) {
+        $('turn').hidden = false;
+        $('turn-label').textContent = `第 ${i} 次：先聽`;
+        $('bar').style.transition = 'none';
+        $('bar').style.transform = 'scaleX(0)';
+        const duration = await play(modelSrc(item), $('model'));
+        if (id !== runId) return;
+        // 範本最後約有 0.8 秒靜音，空檔用「說話長度 × 1.3 + 1 秒」比較從容。
+        const speech = Math.max(0.6, duration - 0.8) / Number($('rate').value);
+        await countdown(speech * 1.3 + 1, `第 ${i} 次：<b>換你說</b>`);
+        if (id !== runId) return;
+      }
+      $('turn').hidden = true;
+      reveal();
+    }
+
+    // ---- 整組連播：一句接一句，畫面跟著換；聽力模式下每句先遮字、念完才顯示 ----
+    async function playAll() {
+      stopAll();
+      const id = ++runId;
+      for (let i = index; i < items().length; i++) {
+        if (i !== index) { index = i; render(); }
+        await play(modelSrc(current()), $('playall'));
+        if (id !== runId) return;
+        reveal();
+        await wait(1200);
+        if (id !== runId) return;
+      }
+    }
+
+    // ---- 錄音 ----
+    let recorder = null;
+    let recTimer = null;
+    const canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+    async function toggleRecord() {
+      if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
+      if (!canRecord) {
+        $('status').textContent = '這個瀏覽器不支援錄音，仍可用「跟讀 3 次」練習。';
+        return;
+      }
+      stopAll();
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      } catch {
+        $('status').textContent = '沒有取得麥克風權限。請在瀏覽器設定允許這個網站使用麥克風，再按一次錄音。';
+        return;
+      }
+      // iPhone 只能錄 mp4，Android／電腦大多是 webm，挑瀏覽器支援的格式。
+      const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t));
+      const item = current();
+      const chunks = [];
+      recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+      recorder.addEventListener('dataavailable', e => { if (e.data.size) chunks.push(e.data); });
+      recorder.addEventListener('stop', () => {
+        clearInterval(recTimer);
+        // 關掉麥克風：手機上的錄音指示燈會熄滅，之後播放也不會被切到聽筒小聲播。
+        stream.getTracks().forEach(track => track.stop());
+        $('rec').classList.remove('on');
+        $('rec-label').textContent = recordings.has(item.id) || chunks.length ? '重新錄音' : '錄音';
+        if (!chunks.length) return;
+        if (recordings.has(item.id)) URL.revokeObjectURL(recordings.get(item.id));
+        recordings.set(item.id, URL.createObjectURL(new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' })));
+        renderList();
+        if (current() === item) {
+          renderButtons();
+          // 錄完自動對照聽一次；頁面在背景時不要自己出聲。
+          if (!document.hidden) compare();
+        }
+      }, { once: true });
+      recorder.start();
+      $('rec').classList.add('on');
+      const started = Date.now();
+      const tick = () => {
+        const left = Math.max(0, 8 - Math.floor((Date.now() - started) / 1000));
+        $('rec-label').textContent = `停止（${left}）`;
+        // 最多錄 8 秒，忘了按停止也不會一直錄。
+        if (left === 0 && recorder.state === 'recording') recorder.stop();
+      };
+      tick();
+      recTimer = setInterval(tick, 250);
+    }
+    // 範本 → 我的錄音，連續播一次。
+    async function compare() {
+      const item = current();
+      const mine = recordings.get(item.id);
+      if (!mine) return;
+      stopAll();
+      const id = ++runId;
+      await play(modelSrc(item), $('model'));
+      if (id !== runId) return;
+      await wait(400);
+      if (id !== runId) return;
+      await play(mine, $('mine'), 1);
+    }
+
+    // ---- 畫面 ----
+    const masked = () => $('mask').checked;
+    function reveal() {
+      revealed = true;
+      $('reveal').hidden = true;
+      $('en').style.visibility = $('zh').style.visibility = '';
+    }
+    function renderText() {
+      const hide = masked() && !revealed;
+      $('reveal').hidden = !hide;
+      $('en').style.visibility = $('zh').style.visibility = hide ? 'hidden' : '';
+      $('list').classList.toggle('masked', masked());
+    }
+    function renderButtons() {
+      const has = recordings.has(current().id);
+      $('mine').disabled = !has;
+      $('compare').disabled = !has;
+      $('rec-label').textContent = has ? '重新錄音' : '錄音';
+    }
+    function render() {
+      const g = group();
+      const list = items();
+      const item = current();
+      revealed = false;
+      $('head').innerHTML = `${escapeHtml(g.head)}<span>${escapeHtml(g.zh)}</span>`;
+      $('head').lang = 'en';
+      $('tip').innerHTML = g.tip;
+      $('counter').textContent = `${index + 1} / ${list.length}`;
+      $('en').innerHTML = toHtml(item.en);
+      $('zh').textContent = item.zh;
+      $('prev').disabled = index === 0;
+      $('next').disabled = index === list.length - 1;
+      renderText();
+      renderButtons();
+      renderList();
+    }
+    function renderList() {
+      $('list').replaceChildren(...items().map((item, i) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item';
+        btn.setAttribute('aria-current', String(i === index));
+        const en = document.createElement('span');
+        en.className = 'ien';
+        en.lang = 'en';
+        en.textContent = plain(item.en);
+        const dot = document.createElement('span');
+        dot.className = recordings.has(item.id) ? 'dot has' : 'dot';
+        dot.title = recordings.has(item.id) ? '已錄音' : '';
+        const zh = document.createElement('span');
+        zh.className = 'izh';
+        zh.textContent = item.zh;
+        btn.append(en, dot, zh);
+        btn.addEventListener('click', () => { select(i); play(modelSrc(current()), $('model')); });
+        li.append(btn);
+        return li;
+      }));
+    }
+    function select(i) {
+      stopAll();
+      index = i;
+      render();
+    }
+
+    const chips = GROUPS.map(g => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.lang = 'en';
+      btn.innerHTML = `<b>${g.no}</b>${escapeHtml(g.head)}`;
+      btn.setAttribute('aria-pressed', String(g.id === groupFilter));
+      btn.addEventListener('click', () => {
+        groupFilter = g.id;
+        for (const c of chips) c.setAttribute('aria-pressed', String(c === btn));
+        btn.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+        select(0);
+      });
+      return btn;
+    });
+    $('groups').append(...chips);
+
+    $('model').addEventListener('click', async () => {
+      stopAll();
+      const id = runId;
+      await play(modelSrc(current()), $('model'));
+      if (id === runId) reveal();
+    });
+    $('shadow').addEventListener('click', shadow);
+    $('playall').addEventListener('click', playAll);
+    $('rec').addEventListener('click', toggleRecord);
+    $('mine').addEventListener('click', () => { stopAll(); play(recordings.get(current().id), $('mine'), 1); });
+    $('compare').addEventListener('click', compare);
+    $('reveal').addEventListener('click', reveal);
+    $('prev').addEventListener('click', () => select(index - 1));
+    $('next').addEventListener('click', () => select(index + 1));
+    $('voice').value = store.get('patterns-voice') === 'm' ? 'm' : 'f';
+    $('voice').addEventListener('change', () => store.set('patterns-voice', $('voice').value));
+    $('mask').checked = store.get('patterns-mask') === '1';
+    $('mask').addEventListener('change', () => { store.set('patterns-mask', $('mask').checked ? '1' : '0'); revealed = false; renderText(); });
+
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopAll(); });
+    window.addEventListener('pagehide', stopAll);
+    render();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  </script>
+</body>
+</html>

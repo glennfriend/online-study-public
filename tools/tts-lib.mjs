@@ -19,15 +19,15 @@ export function readArray(pagePath, name) {
   return Function(`return ${match[1]}`)();
 }
 
-// jobs: [{ file, text, voice }]，voice 是 VOICES 的 key。
+// jobs: [{ file, text, voice }]，voice 是 voices 的 key（預設日文 VOICES，英文頁面傳自己的對照表）。
 // 已存在的檔案會略過；清掉 outDir 裡已經不用的舊 mp3，並寫出 files.json 給 sw.js 預先快取。
-export async function generate(outDir, jobs) {
+export async function generate(outDir, jobs, voices = VOICES) {
   fs.mkdirSync(outDir, { recursive: true });
   const connections = {};
   const connect = async voice => {
     if (!connections[voice]) {
       const tts = new MsEdgeTTS();
-      await tts.setMetadata(VOICES[voice], OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
+      await tts.setMetadata(voices[voice], OUTPUT_FORMAT.AUDIO_24KHZ_48KBITRATE_MONO_MP3);
       connections[voice] = tts;
     }
     return connections[voice];

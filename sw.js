@@ -1,7 +1,7 @@
 // 離線快取：首次開啟後把所有頁面存進快取，之後沒有網路也能閱讀。
 // 有網路時一律先抓最新版（network-first），抓不到才用快取，所以內容更新不需要改版號；
 // 新增或移除頁面時，記得同步更新 PAGES 並調高 VERSION。
-const VERSION = 'v11';
+const VERSION = 'v12';
 // 這些資料夾有自己的 sw.js（scope 更精確），離線由它們自己負責，這裡完全不碰。
 const SELF_MANAGED = ['./math/curvelab/'];
 const CACHE = `online-study-${VERSION}`;
@@ -19,6 +19,9 @@ const PAGES = [
   './japanese-basics/2026-10-16-katakana-practice.html',
   './japanese-basics/2026-10-17-clerk-listening.html',
   './japanese-basics/2026-10-17-shadowing.html',
+  './english-basics/',
+  './english-basics/index.html',
+  './english-basics/2026-10-17-15-patterns.html',
   './math/',
   './math/index.html',
 ];
@@ -26,7 +29,7 @@ const PAGES = [
 const KANA_AUDIO = ('a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no '
   + 'ha hi fu he ho ma mi mu me mo ya yu yo ra ri ru re ro wa wo n').split(' ')
   .flatMap(id => ['hiragana', 'katakana'].flatMap(kind => [`./japanese-basics/audio/${kind}/kana-${id}.mp3`, `./japanese-basics/audio/${kind}/word-${id}.mp3`]));
-const AUDIO_LISTS = ['./japanese-basics/audio/clerk/', './japanese-basics/audio/shadowing/'];
+const AUDIO_LISTS = ['./japanese-basics/audio/clerk/', './japanese-basics/audio/shadowing/', './english-basics/audio/patterns/'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {

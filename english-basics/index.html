@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>英文基礎</title>
+  <style>
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; }
+    * { box-sizing: border-box; }
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
+    main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
+    h1 { margin: 0 0 4px; font-size: 1.8rem; }
+    .back { display: inline-block; padding: 8px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    .back:hover { color: var(--green); }
+    ul { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
+    a.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
+    a.item:hover { border-color: var(--green); }
+    .title { font-size: 1.15rem; font-weight: 600; color: var(--green); }
+    .meta { flex-shrink: 0; color: var(--muted); font-size: .9rem; white-space: nowrap; }
+    .tag { display: inline-block; margin-left: 8px; padding: 0 8px; border-radius: 999px; background: #e3efe9; color: var(--green); font-size: .75rem; font-weight: 600; line-height: 1.6; vertical-align: 2px; }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="../index.html">← 回首頁</a>
+    <h1>英文基礎</h1>
+    <ul>
+      <li>
+        <a class="item" href="2026-10-17-15-patterns.html">
+          <div class="title">15 個萬用句型<span class="tag">離線</span></div>
+          <div class="meta">2026-10-17</div>
+        </a>
+      </li>
+    </ul>
+  </main>
+  <script>
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  </script>
+</body>
+</html>
