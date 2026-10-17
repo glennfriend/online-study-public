@@ -242,6 +242,7 @@
         if (el) el.classList.add('speaking');
         $('status').textContent = '';
         player.play().catch(() => {
+          if (done) return; // 被下一段聲音打斷的，不算失敗
           $('status').textContent = '這次未能播放，請確認裝置音量，再按一次試試看。';
           finish();
         });

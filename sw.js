@@ -1,7 +1,7 @@
 // 離線快取：首次開啟後把所有頁面存進快取，之後沒有網路也能閱讀。
 // 有網路時一律先抓最新版（network-first），抓不到才用快取，所以內容更新不需要改版號；
 // 新增或移除頁面時，記得同步更新 PAGES 並調高 VERSION。
-const VERSION = 'v10';
+const VERSION = 'v11';
 // 這些資料夾有自己的 sw.js（scope 更精確），離線由它們自己負責，這裡完全不碰。
 const SELF_MANAGED = ['./math/curvelab/'];
 const CACHE = `online-study-${VERSION}`;
@@ -18,6 +18,7 @@ const PAGES = [
   './japanese-basics/2026-10-15-kana-word-trio.html',
   './japanese-basics/2026-10-16-katakana-practice.html',
   './japanese-basics/2026-10-17-clerk-listening.html',
+  './japanese-basics/2026-10-17-shadowing.html',
   './math/',
   './math/index.html',
 ];
@@ -25,13 +26,14 @@ const PAGES = [
 const KANA_AUDIO = ('a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no '
   + 'ha hi fu he ho ma mi mu me mo ya yu yo ra ri ru re ro wa wo n').split(' ')
   .flatMap(id => ['hiragana', 'katakana'].flatMap(kind => [`./japanese-basics/audio/${kind}/kana-${id}.mp3`, `./japanese-basics/audio/${kind}/word-${id}.mp3`]));
+const AUDIO_LISTS = ['./japanese-basics/audio/clerk/', './japanese-basics/audio/shadowing/'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE).then(async cache => {
     await cache.addAll([...PAGES, ...KANA_AUDIO]);
-    // 店員說什麼的音檔清單由 tools/generate-clerk-audio.mjs 寫出；抓不到也不影響其他頁面離線。
-    const dir = './japanese-basics/audio/clerk/';
-    await fetch(dir + 'files.json').then(r => r.json()).then(files => cache.addAll([dir + 'files.json', ...files.map(file => dir + file)])).catch(() => {});
+    // 這些資料夾的音檔清單由 tools/generate-*-audio.mjs 寫成 files.json；某一份抓不到也不影響其他頁面離線。
+    await Promise.all(AUDIO_LISTS.map(dir => fetch(dir + 'files.json').then(r => r.json())
+      .then(files => cache.addAll([dir + 'files.json', ...files.map(file => dir + file)])).catch(() => {})));
   }).then(() => self.skipWaiting()));
 });
 

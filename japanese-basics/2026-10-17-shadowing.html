@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>跟讀錄音對照</title>
+  <style>
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --hi: #d48b38; --rec: #c0533a; --mine: #2f5d7c; }
+    * { box-sizing: border-box; }
+    /* 連點時不會雙擊放大；橫向時 iOS 不會自動放大字。 */
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans JP", "Noto Sans TC", sans-serif; line-height: 1.7; }
+    button, select { font: inherit; }
+    button, select, a { -webkit-tap-highlight-color: transparent; }
+    button { cursor: pointer; }
+    button:disabled { cursor: default; opacity: .45; }
+    button:focus-visible, select:focus-visible { outline: 3px solid var(--hi); outline-offset: 3px; }
+    main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
+    .back { display: inline-block; padding: 4px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    h1 { margin: 4px 0 12px; font-size: 1.6rem; }
+    .groups { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .chip { padding: 6px 12px; border: 1px solid #ced8cc; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 14px; }
+    .chip[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: white; }
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+    /* iOS Safari 在字級小於 16px 的選單取得焦點時會自動放大畫面。 */
+    select { font-size: 16px; border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 8px; padding: 5px 10px; }
+    .card { border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 8px 28px #344e3b0d; padding: 16px; }
+    .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); }
+    .nav { display: flex; gap: 6px; }
+    .nav button { width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 10px; background: white; color: var(--ink); }
+    .ja { margin: 8px 0 0; font-size: 26px; line-height: 2.1; letter-spacing: .02em; }
+    .ja rt { font-size: 12px; color: var(--muted); letter-spacing: 0; }
+    .zh { font-size: 16px; font-weight: 600; color: #365b45; }
+    .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+    .btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); font-size: 15px; }
+    .btn svg { width: 20px; height: 20px; flex: none; }
+    .btn.model { background: #e9efe5; border-color: #e9efe5; color: var(--green); font-weight: 600; }
+    .btn.rec { background: #fbece8; border-color: #fbece8; color: var(--rec); font-weight: 600; }
+    .btn.rec.on { background: var(--rec); border-color: var(--rec); color: white; }
+    .btn.mine { color: var(--mine); }
+    .btn.speaking { outline: 3px solid #b9d3b4; outline-offset: -3px; }
+    .btn.wide { grid-column: 1 / -1; }
+    .turn { margin-top: 12px; }
+    .turn-label { font-size: 14px; color: var(--muted); }
+    .turn-label b { color: var(--hi); }
+    .bar { height: 6px; border-radius: 3px; background: #ece7dc; overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 100%; background: var(--hi); transform-origin: left; transform: scaleX(0); }
+    .list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
+    .item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); text-align: left; }
+    .item[aria-current="true"] { border-color: var(--green); background: #f0f6ed; }
+    .item .ija { font-size: 17px; }
+    .item .izh { grid-column: 1; font-size: 13px; color: var(--muted); }
+    .item .dot { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; background: transparent; }
+    .item .dot.has { background: var(--mine); }
+    .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
+    .status:empty { display: none; }
+    [hidden] { display: none !important; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="index.html">← 日本語の基礎</a>
+    <h1>跟讀錄音對照</h1>
+    <div class="groups" id="groups" role="group" aria-label="情境"></div>
+    <div class="controls">
+      <select id="voice" aria-label="範本聲音"><option value="f">女聲範本</option><option value="m">男聲範本</option></select>
+      <select id="rate" aria-label="播放速度"><option value="1" selected>一般速度</option><option value="0.75">慢慢念</option></select>
+    </div>
+    <noscript><p>請啟用 JavaScript 才能練習。</p></noscript>
+
+    <section class="card">
+      <div class="top">
+        <span id="counter"></span>
+        <span class="nav">
+          <button type="button" id="prev" aria-label="上一句">‹</button>
+          <button type="button" id="next" aria-label="下一句">›</button>
+        </span>
+      </div>
+      <div class="ja" id="ja" lang="ja"></div>
+      <div class="zh" id="zh"></div>
+      <div class="buttons">
+        <button type="button" class="btn model" id="model">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>聽範本
+        </button>
+        <button type="button" class="btn" id="shadow">跟讀 3 次</button>
+        <button type="button" class="btn rec" id="rec">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg><span id="rec-label">錄音</span>
+        </button>
+        <button type="button" class="btn mine" id="mine" disabled>
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>我的錄音
+        </button>
+        <button type="button" class="btn wide" id="compare" disabled>範本 ⇄ 我的錄音（對照聽）</button>
+      </div>
+      <div class="turn" id="turn" hidden>
+        <div class="turn-label" id="turn-label"></div>
+        <div class="bar"><i id="bar"></i></div>
+      </div>
+    </section>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <ul class="list" id="list"></ul>
+  </main>
+  <script>
+    'use strict';
+    // 寫法：{漢字|讀音} 會加上注音假名；say 是怕語音念錯時指定的念法。
+    // 範本 audio/shadowing/<情境>-<序號>-f.mp3（女聲）、-m.mp3（男聲），由 tools/generate-shadowing-audio.mjs 產生。
+    const GROUPS = [
+      { id: 'basic', name: '基本', items: [
+        { jp: 'すみません', zh: '不好意思（叫人、道歉都能用）' },
+        { jp: 'ありがとうございます', zh: '謝謝' },
+        { jp: 'はい、お{願|ねが}いします', zh: '好，麻煩你' },
+        { jp: '{大丈夫|だいじょうぶ}です', zh: '不用了／沒關係' },
+        { jp: 'これください', zh: '請給我這個' }
+      ] },
+      { id: 'shopping', name: '購物', items: [
+        { jp: 'いくらですか', zh: '多少錢？' },
+        { jp: 'カードで{払|はら}えますか', zh: '可以刷卡嗎？' },
+        { jp: '{免税|めんぜい}できますか', zh: '可以免稅嗎？' },
+        { jp: '{袋|ふくろ}はいらないです', zh: '不用袋子' }
+      ] },
+      { id: 'restaurant', name: '餐廳', items: [
+        { jp: '{二人|ふたり}です', zh: '兩位' },
+        { jp: 'メニューをください', zh: '請給我菜單' },
+        { jp: 'お{水|みず}をください', zh: '請給我水' },
+        { jp: 'お{会計|かいけい}お{願|ねが}いします', zh: '麻煩結帳' }
+      ] },
+      { id: 'transport', name: '交通', items: [
+        { jp: '{大阪駅|おおさかえき}はどこですか', zh: '大阪車站在哪裡？' },
+        { jp: 'この{電車|でんしゃ}は{京都|きょうと}に{行|い}きますか', zh: '這班電車會到京都嗎？' },
+        { jp: '{切符|きっぷ}はどこで{買|か}えますか', zh: '車票在哪裡買？' }
+      ] },
+      { id: 'hotel', name: '飯店', items: [
+        { jp: 'チェックインお{願|ねが}いします', zh: '麻煩辦入住' },
+        { jp: '{予約|よやく}しています', zh: '我有預約' },
+        { jp: '{荷物|にもつ}を{預|あず}かってもらえますか', zh: '可以幫我寄放行李嗎？' }
+      ] },
+      { id: 'help', name: '求助', items: [
+        { jp: 'トイレはどこですか', zh: '廁所在哪裡？' },
+        { jp: '{英語|えいご}のメニューはありますか', zh: '有英文菜單嗎？' },
+        { jp: 'もう{一度|いちど}お{願|ねが}いします', zh: '麻煩再說一次' },
+        { jp: 'ゆっくり{話|はな}してください', zh: '請說慢一點' }
+      ] }
+    ];
+
+    const $ = id => document.getElementById(id);
+    const wait = ms => new Promise(r => setTimeout(r, ms));
+    const escapeHtml = s => s.replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
+    const toHtml = markup => escapeHtml(markup).replace(/\{([^|}]+)\|([^}]+)\}/g, '<ruby>$1<rt>$2</rt></ruby>');
+    const plain = markup => markup.replace(/\{([^|}]+)\|[^}]+\}/g, '$1');
+    // 只存「上次選的聲音」這種小偏好；讀不到就用預設值。
+    const store = {
+      get: key => { try { return localStorage.getItem(key); } catch { return null; } },
+      set: (key, value) => { try { localStorage.setItem(key, value); } catch {} }
+    };
+
+    const ALL = GROUPS.flatMap(group => group.items.map((item, i) => ({ ...item, id: `${group.id}-${i + 1}`, group: group.id })));
+    let groupFilter = GROUPS[0].id;
+    let index = 0;
+    let runId = 0;
+    // 錄音只放在記憶體（不上傳、不存檔），重新整理頁面就會消失。
+    const recordings = new Map();
+
+    const items = () => ALL.filter(item => item.group === groupFilter);
+    const current = () => items()[index];
+    const modelSrc = item => `audio/shadowing/${item.id}-${$('voice').value}.mp3`;
+
+    // ---- 播放 ----
+    const player = new Audio();
+    player.preload = 'auto';
+    let speakingEl = null;
+    let finishPlay = null;
+    function stopAudio() {
+      player.pause();
+      if (speakingEl) speakingEl.classList.remove('speaking');
+      speakingEl = null;
+      if (finishPlay) finishPlay();
+    }
+    // 播完（或失敗）才 resolve，回傳實際長度（秒），跟讀時用來決定要留多久給你說。
+    function play(src, el, rate = Number($('rate').value)) {
+      stopAudio();
+      return new Promise(resolve => {
+        let done = false;
+        const finish = () => {
+          if (done) return;
+          done = true;
+          finishPlay = null;
+          player.removeEventListener('ended', finish);
+          player.removeEventListener('error', onError);
+          if (speakingEl === el) { el.classList.remove('speaking'); speakingEl = null; }
+          resolve(Number.isFinite(player.duration) ? player.duration : 2);
+        };
+        const onError = () => { $('status').textContent = '找不到發音檔，請連上網路重新整理頁面後再試。'; finish(); };
+        finishPlay = finish;
+        player.addEventListener('ended', finish);
+        player.addEventListener('error', onError);
+        player.src = src;
+        // 換 src 會把 playbackRate 重設成 defaultPlaybackRate，兩個都要設。
+        player.defaultPlaybackRate = rate;
+        player.playbackRate = rate;
+        speakingEl = el;
+        if (el) el.classList.add('speaking');
+        $('status').textContent = '';
+        player.play().catch(() => {
+          if (done) return; // 被下一段聲音打斷的，不算失敗
+          $('status').textContent = '這次未能播放，請確認裝置音量，再按一次試試看。';
+          finish();
+        });
+      });
+    }
+    function stopAll() {
+      runId++;
+      stopAudio();
+      if (recorder && recorder.state === 'recording') recorder.stop();
+      $('turn').hidden = true;
+    }
+
+    // ---- 跟讀 3 次：播範本 → 留同樣長的空檔讓你跟著念 ----
+    function countdown(seconds, label) {
+      $('turn').hidden = false;
+      $('turn-label').innerHTML = label;
+      const bar = $('bar');
+      bar.style.transition = 'none';
+      bar.style.transform = 'scaleX(0)';
+      void bar.offsetWidth;
+      bar.style.transition = `transform ${seconds}s linear`;
+      bar.style.transform = 'scaleX(1)';
+      return wait(seconds * 1000);
+    }
+    async function shadow() {
+      stopAll();
+      const id = ++runId;
+      const item = current();
+      for (let i = 1; i <= 3; i++) {
+        $('turn').hidden = false;
+        $('turn-label').textContent = `第 ${i} 次：先聽`;
+        $('bar').style.transition = 'none';
+        $('bar').style.transform = 'scaleX(0)';
+        const duration = await play(modelSrc(item), $('model'));
+        if (id !== runId) return;
+        // 範本最後約有 0.8 秒靜音，空檔用「說話長度 × 1.3 + 1 秒」比較從容。
+        const speech = Math.max(0.6, duration - 0.8) / Number($('rate').value);
+        await countdown(speech * 1.3 + 1, `第 ${i} 次：<b>換你說</b>`);
+        if (id !== runId) return;
+      }
+      $('turn').hidden = true;
+    }
+
+    // ---- 錄音 ----
+    let recorder = null;
+    let recTimer = null;
+    const canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
+    async function toggleRecord() {
+      if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
+      if (!canRecord) {
+        $('status').textContent = '這個瀏覽器不支援錄音，仍可用「跟讀 3 次」練習。';
+        return;
+      }
+      stopAll();
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      } catch {
+        $('status').textContent = '沒有取得麥克風權限。請在瀏覽器設定允許這個網站使用麥克風，再按一次錄音。';
+        return;
+      }
+      // iPhone 只能錄 mp4，Android／電腦大多是 webm，挑瀏覽器支援的格式。
+      const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t));
+      const item = current();
+      const chunks = [];
+      recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
+      recorder.addEventListener('dataavailable', e => { if (e.data.size) chunks.push(e.data); });
+      recorder.addEventListener('stop', () => {
+        clearInterval(recTimer);
+        // 關掉麥克風：手機上的錄音指示燈會熄滅，之後播放也不會被切到聽筒小聲播。
+        stream.getTracks().forEach(track => track.stop());
+        $('rec').classList.remove('on');
+        $('rec-label').textContent = recordings.has(item.id) || chunks.length ? '重新錄音' : '錄音';
+        if (!chunks.length) return;
+        if (recordings.has(item.id)) URL.revokeObjectURL(recordings.get(item.id));
+        recordings.set(item.id, URL.createObjectURL(new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' })));
+        renderList();
+        if (current() === item) {
+          renderButtons();
+          // 錄完自動對照聽一次；頁面在背景時不要自己出聲。
+          if (!document.hidden) compare();
+        }
+      }, { once: true });
+      recorder.start();
+      $('rec').classList.add('on');
+      const started = Date.now();
+      const tick = () => {
+        const left = Math.max(0, 8 - Math.floor((Date.now() - started) / 1000));
+        $('rec-label').textContent = `停止（${left}）`;
+        // 最多錄 8 秒，忘了按停止也不會一直錄。
+        if (left === 0 && recorder.state === 'recording') recorder.stop();
+      };
+      tick();
+      recTimer = setInterval(tick, 250);
+    }
+    // 範本 → 我的錄音，連續播一次。
+    async function compare() {
+      const item = current();
+      const mine = recordings.get(item.id);
+      if (!mine) return;
+      stopAll();
+      const id = ++runId;
+      await play(modelSrc(item), $('model'));
+      if (id !== runId) return;
+      await wait(400);
+      if (id !== runId) return;
+      await play(mine, $('mine'), 1);
+    }
+
+    // ---- 畫面 ----
+    function renderButtons() {
+      const has = recordings.has(current().id);
+      $('mine').disabled = !has;
+      $('compare').disabled = !has;
+      $('rec-label').textContent = has ? '重新錄音' : '錄音';
+    }
+    function render() {
+      const list = items();
+      const item = current();
+      $('counter').textContent = `${index + 1} / ${list.length}`;
+      $('ja').innerHTML = toHtml(item.jp);
+      $('zh').textContent = item.zh;
+      $('prev').disabled = index === 0;
+      $('next').disabled = index === list.length - 1;
+      renderButtons();
+      renderList();
+    }
+    function renderList() {
+      $('list').replaceChildren(...items().map((item, i) => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'item';
+        btn.setAttribute('aria-current', String(i === index));
+        const ja = document.createElement('span');
+        ja.className = 'ija';
+        ja.lang = 'ja';
+        ja.textContent = plain(item.jp);
+        const dot = document.createElement('span');
+        dot.className = recordings.has(item.id) ? 'dot has' : 'dot';
+        dot.title = recordings.has(item.id) ? '已錄音' : '';
+        const zh = document.createElement('span');
+        zh.className = 'izh';
+        zh.textContent = item.zh;
+        btn.append(ja, dot, zh);
+        btn.addEventListener('click', () => { select(i); play(modelSrc(current()), $('model')); });
+        li.append(btn);
+        return li;
+      }));
+    }
+    function select(i) {
+      stopAll();
+      index = i;
+      render();
+    }
+
+    const chips = GROUPS.map(group => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'chip';
+      btn.textContent = group.name;
+      btn.setAttribute('aria-pressed', String(group.id === groupFilter));
+      btn.addEventListener('click', () => {
+        groupFilter = group.id;
+        for (const c of chips) c.setAttribute('aria-pressed', String(c === btn));
+        select(0);
+      });
+      return btn;
+    });
+    $('groups').append(...chips);
+
+    $('model').addEventListener('click', () => { stopAll(); play(modelSrc(current()), $('model')); });
+    $('shadow').addEventListener('click', shadow);
+    $('rec').addEventListener('click', toggleRecord);
+    $('mine').addEventListener('click', () => { stopAll(); play(recordings.get(current().id), $('mine'), 1); });
+    $('compare').addEventListener('click', compare);
+    $('prev').addEventListener('click', () => select(index - 1));
+    $('next').addEventListener('click', () => select(index + 1));
+    $('voice').value = store.get('shadowing-voice') === 'm' ? 'm' : 'f';
+    $('voice').addEventListener('change', () => store.set('shadowing-voice', $('voice').value));
+
+    document.addEventListener('visibilitychange', () => { if (document.hidden) stopAll(); });
+    window.addEventListener('pagehide', stopAll);
+    render();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  </script>
+</body>
+</html>
