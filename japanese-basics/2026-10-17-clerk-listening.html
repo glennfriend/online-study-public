@@ -20,11 +20,12 @@
     button:focus-visible, select:focus-visible { outline: 3px solid var(--hi); outline-offset: 3px; }
     main { max-width: 560px; margin: 0 auto; padding: 20px 16px 40px; }
     .back { display: inline-block; padding: 4px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
-    h1 { margin: 4px 0 12px; font-size: 1.6rem; }
-    .scenes { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
-    .chip { padding: 6px 12px; border: 1px solid #ced8cc; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 14px; }
+    h1 { margin: 2px 0 8px; font-size: 1.5rem; }
+    /* 情境按鈕放一排橫向滑動，手機上題目卡才不會被推到畫面下方。 */
+    .scenes { display: flex; gap: 8px; margin: 0 -16px 8px; padding: 2px 16px 6px; overflow-x: auto; scrollbar-width: thin; }
+    .chip { flex: none; white-space: nowrap; padding: 6px 12px; border: 1px solid #ced8cc; border-radius: 999px; background: var(--paper); color: var(--ink); font-size: 14px; }
     .chip[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: white; }
-    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 16px; font-size: 14px; }
+    .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 14px; }
     .modes { display: inline-flex; border: 1px solid #ced8cc; border-radius: 10px; overflow: hidden; }
     .modes button { border: 0; padding: 8px 14px; background: var(--paper); color: var(--ink); font-size: 14px; }
     .modes button[aria-pressed="true"] { background: var(--green); color: white; }
@@ -33,15 +34,21 @@
     .score { margin-left: auto; color: var(--muted); }
     .card { border: 1px solid var(--line); border-radius: 20px; background: var(--paper); box-shadow: 0 8px 28px #344e3b0d; padding: 18px 16px; }
     .who { font-size: 13px; color: var(--muted); }
-    .play { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 72px; margin: 6px 0 14px; border: 0; border-radius: 16px; background: #e9efe5; color: var(--green); font-size: 18px; font-weight: 600; }
+    .play { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; min-height: 60px; margin: 6px 0 12px; border: 0; border-radius: 16px; background: #e9efe5; color: var(--green); font-size: 18px; font-weight: 600; }
     .play.speaking { background: #d7e8d3; }
     .play svg { width: 28px; height: 28px; flex: none; }
     .options { display: grid; gap: 10px; }
-    .option { width: 100%; min-height: 52px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); font-size: 16px; text-align: left; }
+    .option { width: 100%; min-height: 46px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: white; color: var(--ink); font-size: 16px; text-align: left; }
     .option:disabled { cursor: default; }
+    /* 作答後只留正確答案和你選的，答案區才擠得進同一個畫面。 */
+    .option.dim { display: none; }
     .option.right { border-color: var(--ok); background: #e7f4ec; color: #1d5e3c; font-weight: 600; }
     .option.wrong { border-color: var(--ng); background: #fbece8; color: #8a3524; }
-    .reveal { margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+    .reveal { position: relative; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--line); }
+    /* 連續聽：答案區一直佔著位置，答案出現、消失時畫面高度不會跳。 */
+    .listen .reveal { min-height: 212px; }
+    .reveal.pending > * { visibility: hidden; }
+    .reveal.pending::after { content: "先想一想是什麼意思…"; position: absolute; inset: 14px 0 0; display: grid; place-items: center; color: var(--muted); font-size: 15px; }
     .line { display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; align-items: start; }
     .mini { grid-row: span 2; width: 40px; height: 40px; border: 0; border-radius: 50%; background: #e9efe5; color: var(--green); display: grid; place-items: center; }
     .mini.speaking { background: #d7e8d3; }
@@ -79,7 +86,7 @@
     </div>
     <noscript><p>請啟用 JavaScript 才能練習。</p></noscript>
 
-    <section class="card">
+    <section class="card" id="card">
       <div class="who" id="who">店員說：</div>
       <button type="button" class="play" id="play">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4zM14 3.2v2.1a7 7 0 0 1 0 13.4v2.1a9 9 0 0 0 0-17.6z"/></svg>
@@ -266,7 +273,15 @@
       }
       $('tip').hidden = !item.tip;
       $('tip').textContent = item.tip || '';
+      $('reveal').classList.remove('pending');
       $('reveal').hidden = false;
+    }
+    // 元素超出畫面才捲過去（矮的手機上用得到），已經看得到就不動。
+    function ensureVisible(el) {
+      const rect = el.getBoundingClientRect();
+      if (rect.top >= 0 && rect.bottom <= window.innerHeight) return;
+      const smooth = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      el.scrollIntoView({ block: 'nearest', behavior: smooth ? 'smooth' : 'auto' });
     }
     function resetCard(label) {
       runId++;
@@ -274,6 +289,7 @@
       current = null;
       $('options').replaceChildren();
       $('reveal').hidden = true;
+      $('reveal').classList.remove('pending');
       $('next').hidden = true;
       $('play-label').textContent = label;
     }
@@ -299,6 +315,7 @@
         btn.addEventListener('click', () => answer(opt, btn));
         return btn;
       }));
+      ensureVisible($('play'));
       play(item.q, $('play'));
     }
     function answer(opt, btn) {
@@ -311,10 +328,12 @@
       for (const b of $('options').children) {
         b.disabled = true;
         if (b.textContent === item.zh) b.classList.add('right');
+        else if (b !== btn) b.classList.add('dim');
       }
       if (!correct) btn.classList.add('wrong');
       showReveal(item);
       $('next').hidden = false;
+      ensureVisible($('next'));
       // 先聽店員原句，再聽你可以怎麼回。
       const id = ++runId;
       (async () => {
@@ -334,7 +353,9 @@
       while (alive()) {
         if (!queue.length) queue = shuffle(pool());
         current = queue.shift();
-        $('reveal').hidden = true;
+        $('reveal').classList.add('pending');
+        $('reveal').hidden = false;
+        ensureVisible($('reveal'));
         await play(current.q, $('play'));
         if (!alive()) return;
         await wait(1200); // 先自己想一下意思
@@ -383,6 +404,7 @@
       mode = next;
       $('mode-quiz').setAttribute('aria-pressed', String(mode === 'quiz'));
       $('mode-listen').setAttribute('aria-pressed', String(mode === 'listen'));
+      $('card').classList.toggle('listen', mode === 'listen');
       restart();
     }
     $('mode-quiz').addEventListener('click', () => setMode('quiz'));
