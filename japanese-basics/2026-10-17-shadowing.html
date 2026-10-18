@@ -56,6 +56,14 @@
     .item .izh { grid-column: 1; font-size: 13px; color: var(--muted); }
     .item .dot { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; background: transparent; }
     .item .dot.has { background: var(--mine); }
+    .pitch { margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line); }
+    .pitch-head { display: flex; justify-content: space-between; align-items: center; font-size: 13px; color: var(--muted); }
+    .legend { white-space: nowrap; }
+    .legend i { display: inline-block; width: 14px; height: 3px; margin: 0 4px 0 10px; border-radius: 2px; vertical-align: middle; }
+    .legend .lm { background: var(--green); }
+    .legend .lu { background: var(--mine); }
+    .pitch canvas { display: block; width: 100%; height: 120px; margin-top: 6px; border-radius: 10px; background: #fbfaf5; }
+    .pitch-note { margin-top: 6px; font-size: 14px; }
     .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
     .status:empty { display: none; }
     [hidden] { display: none !important; }
@@ -97,6 +105,14 @@
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>我的錄音
         </button>
         <button type="button" class="btn wide" id="compare" disabled>範本 ⇄ 我的錄音（對照聽）</button>
+      </div>
+      <div class="pitch" id="pitch" hidden>
+        <div class="pitch-head">
+          <span>語調曲線（聲音高低）</span>
+          <span class="legend"><i class="lm"></i>範本<i class="lu"></i>我的</span>
+        </div>
+        <canvas id="pitch-canvas" role="img" aria-label="範本與我的錄音的音高曲線"></canvas>
+        <div class="pitch-note" id="pitch-note"></div>
       </div>
       <div class="turn" id="turn" hidden>
         <div class="turn-label" id="turn-label"></div>
@@ -282,11 +298,12 @@
         $('rec').classList.remove('on');
         $('rec-label').textContent = recordings.has(item.id) || chunks.length ? '重新錄音' : '錄音';
         if (!chunks.length) return;
-        if (recordings.has(item.id)) URL.revokeObjectURL(recordings.get(item.id));
+        if (recordings.has(item.id)) { pitchCache.delete(recordings.get(item.id)); URL.revokeObjectURL(recordings.get(item.id)); }
         recordings.set(item.id, URL.createObjectURL(new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' })));
         renderList();
         if (current() === item) {
           renderButtons();
+          drawPitch();
           // 錄完自動對照聽一次；頁面在背景時不要自己出聲。
           if (!document.hidden) compare();
         }
@@ -317,6 +334,146 @@
       await play(mine, $('mine'), 1);
     }
 
+    // ---- 語調曲線：在手機上直接算音高（YIN 演算法），不用網路 ----
+    // 兩段聲音各自換算成「相對自己平均音高幾個半音」，男生跟女聲範本比也看得出起伏；
+    // 去掉頭尾沒聲音的部分後拉成一樣長，比的是高低起伏的形狀，不是速度。
+    // 不打分數：實測同一句的女聲、男聲範本，曲線差異就跟不同句子差不多，分數只會誤導。
+    const SR = 22050; // 舊版 Safari 的 OfflineAudioContext 不接受更低的取樣率
+    const pitchCache = new Map();
+    function decodeAudio(buffer) {
+      const Ctx = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      const ctx = new Ctx(1, SR, SR);
+      return new Promise((resolve, reject) => {
+        const p = ctx.decodeAudioData(buffer, resolve, reject);
+        if (p && p.then) p.then(resolve, reject);
+      });
+    }
+    function trackPitch(x) {
+      const hop = Math.round(SR * 0.012), W = Math.round(SR * 0.03);
+      const tauMin = Math.floor(SR / 450), tauMax = Math.ceil(SR / 70);
+      const d = new Float32Array(tauMax + 1);
+      const f0 = [], rms = [];
+      for (let s = 0; s + W + tauMax < x.length; s += hop) {
+        let energy = 0;
+        for (let j = 0; j < W; j++) energy += x[s + j] * x[s + j];
+        rms.push(Math.sqrt(energy / W));
+        let sum = 0;
+        for (let tau = 1; tau <= tauMax; tau++) {
+          let acc = 0;
+          for (let j = 0; j < W; j++) { const v = x[s + j] - x[s + j + tau]; acc += v * v; }
+          sum += acc;
+          d[tau] = sum ? acc * tau / sum : 1;
+        }
+        let best = 0;
+        for (let tau = tauMin; tau < tauMax; tau++) {
+          if (d[tau] < 0.2) {
+            while (tau + 1 < tauMax && d[tau + 1] < d[tau]) tau++;
+            best = tau;
+            break;
+          }
+        }
+        // 沒有低於門檻的（男聲常見），最低點夠低也算有聲音。
+        if (!best) {
+          let low = tauMin;
+          for (let tau = tauMin; tau < tauMax; tau++) if (d[tau] < d[low]) low = tau;
+          if (d[low] < 0.35) best = low;
+        }
+        if (!best || best >= tauMax) { f0.push(0); continue; }
+        const a = d[best - 1], b = d[best], c = d[best + 1];
+        const shift = (a - c) / (2 * (a - 2 * b + c)) || 0;
+        f0.push(SR / (best + Math.max(-1, Math.min(1, shift))));
+      }
+      // 太小聲的（呼吸、雜音）不算；只出現一下下的也不算。
+      const loud = Math.max(0, ...rms) * 0.1;
+      const voiced = f0.map((f, i) => f > 0 && rms[i] > loud && rms[i] > 0.003);
+      for (let i = 0; i < voiced.length;) {
+        if (!voiced[i]) { i++; continue; }
+        let j = i;
+        while (j < voiced.length && voiced[j]) j++;
+        if (j - i < 5) voiced.fill(false, i, j);
+        i = j;
+      }
+      const idx = voiced.flatMap((v, i) => v ? [i] : []);
+      if (idx.length < 8) return null;
+      // 中位數濾波去掉突然跳八度的雜點。
+      const smooth = idx.map((i, k) => {
+        const around = idx.slice(Math.max(0, k - 2), k + 3).map(j => f0[j]).sort((p, q) => p - q);
+        return around[around.length >> 1];
+      });
+      const center = smooth.slice().sort((p, q) => p - q)[smooth.length >> 1];
+      const first = idx[0], span = Math.max(1, idx[idx.length - 1] - first);
+      return idx.map((i, k) => ({ i, t: (i - first) / span, st: 12 * Math.log2(smooth[k] / center) }));
+    }
+    function analyze(src) {
+      if (!pitchCache.has(src)) {
+        pitchCache.set(src, fetch(src).then(r => r.arrayBuffer()).then(decodeAudio)
+          .then(audio => trackPitch(audio.getChannelData(0)))
+          .catch(error => { pitchCache.delete(src); throw error; }));
+      }
+      return pitchCache.get(src);
+    }
+    let lastPlot = null;
+    function plot(model, mine) {
+      lastPlot = [model, mine];
+      const canvas = $('pitch-canvas');
+      const ratio = window.devicePixelRatio || 1;
+      const w = canvas.clientWidth, h = canvas.clientHeight;
+      canvas.width = Math.round(w * ratio);
+      canvas.height = Math.round(h * ratio);
+      const g = canvas.getContext('2d');
+      g.setTransform(ratio, 0, 0, ratio, 0, 0);
+      g.clearRect(0, 0, w, h);
+      const pad = 10, range = 8; // 上下各 8 個半音
+      const X = t => pad + t * (w - pad * 2);
+      const Y = st => h / 2 - Math.max(-range, Math.min(range, st)) / range * (h / 2 - pad);
+      g.strokeStyle = '#e2e7dc';
+      g.lineWidth = 1;
+      g.setLineDash([4, 4]);
+      g.beginPath(); g.moveTo(pad, h / 2); g.lineTo(w - pad, h / 2); g.stroke();
+      g.setLineDash([]);
+      const line = (points, color, width) => {
+        g.strokeStyle = color;
+        g.lineWidth = width;
+        g.lineJoin = g.lineCap = 'round';
+        g.beginPath();
+        points.forEach((p, k) => {
+          // 中間停頓超過 5 格（約 0.06 秒）就斷開，不硬連起來。
+          if (k && p.i - points[k - 1].i <= 5) g.lineTo(X(p.t), Y(p.st));
+          else g.moveTo(X(p.t), Y(p.st));
+        });
+        g.stroke();
+      };
+      const css = getComputedStyle(document.documentElement);
+      line(model, css.getPropertyValue('--green').trim(), 4);
+      if (mine) line(mine, css.getPropertyValue('--mine').trim(), 2.5);
+    }
+    let pitchRun = 0;
+    async function drawPitch() {
+      const run = ++pitchRun;
+      const item = current();
+      const mineSrc = recordings.get(item.id);
+      try {
+        const model = await analyze(modelSrc(item));
+        const mine = mineSrc ? await analyze(mineSrc) : null;
+        if (run !== pitchRun) return;
+        if (!model) throw new Error('no pitch');
+        $('pitch').hidden = false;
+        plot(model, mine);
+        const note = $('pitch-note');
+        if (!mineSrc) note.textContent = '綠線是範本的聲音高低。錄音後會疊上你的語調。';
+        else if (!mine) note.textContent = '沒偵測到清楚的聲音，靠近麥克風、大聲一點再錄一次。';
+        else note.textContent = '看哪裡該升、哪裡該降，形狀像就好；節奏快慢、整條線不用完全重疊。';
+      } catch {
+        // 瀏覽器解不了這種音檔時就不顯示，不影響其他功能。
+        if (run === pitchRun) $('pitch').hidden = true;
+      }
+    }
+    let resizeTimer = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => { if (lastPlot && !$('pitch').hidden) plot(...lastPlot); }, 150);
+    });
+
     // ---- 畫面 ----
     function renderButtons() {
       const has = recordings.has(current().id);
@@ -334,6 +491,7 @@
       $('next').disabled = index === list.length - 1;
       renderButtons();
       renderList();
+      drawPitch();
     }
     function renderList() {
       $('list').replaceChildren(...items().map((item, i) => {
@@ -387,7 +545,7 @@
     $('prev').addEventListener('click', () => select(index - 1));
     $('next').addEventListener('click', () => select(index + 1));
     $('voice').value = store.get('shadowing-voice') === 'm' ? 'm' : 'f';
-    $('voice').addEventListener('change', () => store.set('shadowing-voice', $('voice').value));
+    $('voice').addEventListener('change', () => { store.set('shadowing-voice', $('voice').value); drawPitch(); });
 
     document.addEventListener('visibilitychange', () => { if (document.hidden) stopAll(); });
     window.addEventListener('pagehide', stopAll);
