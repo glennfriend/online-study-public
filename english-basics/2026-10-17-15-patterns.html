@@ -9,7 +9,7 @@
   <link rel="icon" href="../icon.svg" type="image/svg+xml">
   <title>15 個萬用句型</title>
   <style>
-    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --hi: #d48b38; --rec: #c0533a; --mine: #2f5d7c; }
+    :root { --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --hi: #d48b38; }
     * { box-sizing: border-box; }
     /* 連點時不會雙擊放大；橫向時 iOS 不會自動放大字。 */
     html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
@@ -54,9 +54,6 @@
     .btn { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 14px; background: white; color: var(--ink); font-size: 15px; }
     .btn svg { width: 20px; height: 20px; flex: none; }
     .btn.model { background: #e9efe5; border-color: #e9efe5; color: var(--green); font-weight: 600; }
-    .btn.rec { background: #fbece8; border-color: #fbece8; color: var(--rec); font-weight: 600; }
-    .btn.rec.on { background: var(--rec); border-color: var(--rec); color: white; }
-    .btn.mine { color: var(--mine); }
     .btn.speaking { outline: 3px solid #b9d3b4; outline-offset: -3px; }
     .btn.wide { grid-column: 1 / -1; }
     .turn { margin-top: 12px; }
@@ -65,12 +62,10 @@
     .bar { height: 6px; border-radius: 3px; background: #ece7dc; overflow: hidden; }
     .bar i { display: block; height: 100%; width: 100%; background: var(--hi); transform-origin: left; transform: scaleX(0); }
     .list { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 8px; }
-    .item { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 2px 10px; width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); text-align: left; }
+    .item { display: grid; gap: 2px; width: 100%; padding: 10px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); text-align: left; }
     .item[aria-current="true"] { border-color: var(--green); background: #f0f6ed; }
     .item .ien { font-size: 17px; }
-    .item .izh { grid-column: 1; font-size: 13px; color: var(--muted); }
-    .item .dot { grid-row: span 2; width: 10px; height: 10px; border-radius: 50%; background: transparent; }
-    .item .dot.has { background: var(--mine); }
+    .item .izh { font-size: 13px; color: var(--muted); }
     .masked .item .ien, .masked .item .izh { filter: blur(6px); }
     .status { margin: 12px 4px 0; font-size: 13px; color: #9a4b1c; }
     .status:empty { display: none; }
@@ -122,13 +117,6 @@
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 9v6h4l5 5V4L8 9H4zm12.5 3a4.5 4.5 0 0 0-2.5-4v8a4.5 4.5 0 0 0 2.5-4z"/></svg>聽範本
         </button>
         <button type="button" class="btn" id="shadow">跟讀 3 次</button>
-        <button type="button" class="btn rec" id="rec">
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V21h2v-3.1A7 7 0 0 0 19 11h-2z"/></svg><span id="rec-label">錄音</span>
-        </button>
-        <button type="button" class="btn mine" id="mine" disabled>
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>我的錄音
-        </button>
-        <button type="button" class="btn wide" id="compare" disabled>範本 ⇄ 我的錄音（對照聽）</button>
         <button type="button" class="btn wide" id="playall">整組連播</button>
       </div>
       <div class="turn" id="turn" hidden>
@@ -298,8 +286,6 @@
     let index = 0;
     let runId = 0;
     let revealed = false;
-    // 錄音只放在記憶體（不上傳、不存檔），重新整理頁面就會消失。
-    const recordings = new Map();
 
     const group = () => GROUPS.find(g => g.id === groupFilter);
     const items = () => ALL.filter(item => item.group === groupFilter);
@@ -352,7 +338,6 @@
     function stopAll() {
       runId++;
       stopAudio();
-      if (recorder && recorder.state === 'recording') recorder.stop();
       $('turn').hidden = true;
     }
 
@@ -402,72 +387,6 @@
       }
     }
 
-    // ---- 錄音 ----
-    let recorder = null;
-    let recTimer = null;
-    const canRecord = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder);
-    async function toggleRecord() {
-      if (recorder && recorder.state === 'recording') { recorder.stop(); return; }
-      if (!canRecord) {
-        $('status').textContent = '這個瀏覽器不支援錄音，仍可用「跟讀 3 次」練習。';
-        return;
-      }
-      stopAll();
-      let stream;
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-      } catch {
-        $('status').textContent = '沒有取得麥克風權限。請在瀏覽器設定允許這個網站使用麥克風，再按一次錄音。';
-        return;
-      }
-      // iPhone 只能錄 mp4，Android／電腦大多是 webm，挑瀏覽器支援的格式。
-      const type = ['audio/webm;codecs=opus', 'audio/mp4', 'audio/webm'].find(t => MediaRecorder.isTypeSupported(t));
-      const item = current();
-      const chunks = [];
-      recorder = new MediaRecorder(stream, type ? { mimeType: type } : undefined);
-      recorder.addEventListener('dataavailable', e => { if (e.data.size) chunks.push(e.data); });
-      recorder.addEventListener('stop', () => {
-        clearInterval(recTimer);
-        // 關掉麥克風：手機上的錄音指示燈會熄滅，之後播放也不會被切到聽筒小聲播。
-        stream.getTracks().forEach(track => track.stop());
-        $('rec').classList.remove('on');
-        $('rec-label').textContent = recordings.has(item.id) || chunks.length ? '重新錄音' : '錄音';
-        if (!chunks.length) return;
-        if (recordings.has(item.id)) URL.revokeObjectURL(recordings.get(item.id));
-        recordings.set(item.id, URL.createObjectURL(new Blob(chunks, { type: recorder.mimeType || type || 'audio/webm' })));
-        renderList();
-        if (current() === item) {
-          renderButtons();
-          // 錄完自動對照聽一次；頁面在背景時不要自己出聲。
-          if (!document.hidden) compare();
-        }
-      }, { once: true });
-      recorder.start();
-      $('rec').classList.add('on');
-      const started = Date.now();
-      const tick = () => {
-        const left = Math.max(0, 8 - Math.floor((Date.now() - started) / 1000));
-        $('rec-label').textContent = `停止（${left}）`;
-        // 最多錄 8 秒，忘了按停止也不會一直錄。
-        if (left === 0 && recorder.state === 'recording') recorder.stop();
-      };
-      tick();
-      recTimer = setInterval(tick, 250);
-    }
-    // 範本 → 我的錄音，連續播一次。
-    async function compare() {
-      const item = current();
-      const mine = recordings.get(item.id);
-      if (!mine) return;
-      stopAll();
-      const id = ++runId;
-      await play(modelSrc(item), $('model'));
-      if (id !== runId) return;
-      await wait(400);
-      if (id !== runId) return;
-      await play(mine, $('mine'), 1);
-    }
-
     // ---- 畫面 ----
     const masked = () => $('mask').checked;
     function reveal() {
@@ -480,12 +399,6 @@
       $('reveal').hidden = !hide;
       $('en').style.visibility = $('zh').style.visibility = hide ? 'hidden' : '';
       $('list').classList.toggle('masked', masked());
-    }
-    function renderButtons() {
-      const has = recordings.has(current().id);
-      $('mine').disabled = !has;
-      $('compare').disabled = !has;
-      $('rec-label').textContent = has ? '重新錄音' : '錄音';
     }
     function render() {
       const g = group();
@@ -501,7 +414,6 @@
       $('prev').disabled = index === 0;
       $('next').disabled = index === list.length - 1;
       renderText();
-      renderButtons();
       renderList();
     }
     function renderList() {
@@ -515,13 +427,10 @@
         en.className = 'ien';
         en.lang = 'en';
         en.textContent = plain(item.en);
-        const dot = document.createElement('span');
-        dot.className = recordings.has(item.id) ? 'dot has' : 'dot';
-        dot.title = recordings.has(item.id) ? '已錄音' : '';
         const zh = document.createElement('span');
         zh.className = 'izh';
         zh.textContent = item.zh;
-        btn.append(en, dot, zh);
+        btn.append(en, zh);
         btn.addEventListener('click', () => { select(i); play(modelSrc(current()), $('model')); });
         li.append(btn);
         return li;
@@ -558,9 +467,6 @@
     });
     $('shadow').addEventListener('click', shadow);
     $('playall').addEventListener('click', playAll);
-    $('rec').addEventListener('click', toggleRecord);
-    $('mine').addEventListener('click', () => { stopAll(); play(recordings.get(current().id), $('mine'), 1); });
-    $('compare').addEventListener('click', compare);
     $('reveal').addEventListener('click', reveal);
     $('prev').addEventListener('click', () => select(index - 1));
     $('next').addEventListener('click', () => select(index + 1));
