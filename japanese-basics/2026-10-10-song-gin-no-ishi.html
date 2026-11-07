@@ -100,6 +100,21 @@
     footer .video { margin: 0 0 10px; }
     footer .video a { display: inline-block; border-radius: 999px; padding: 6px 16px; background: var(--green); color: #fff; font-size: 15px; font-weight: 700; text-decoration: none; }
     footer ul { margin: 0; padding-left: 1.2em; }
+    /* 影片：有網路時嵌入播放器，播放時唱到的那一行歌詞會亮起來。 */
+    .clip { margin: 0 0 14px; }
+    .clip-hint { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
+    .clip-hint:empty { display: none; }
+    .clip-slot { max-width: 560px; aspect-ratio: 16 / 9; }
+    .clip-box { width: 100%; height: 100%; border-radius: 12px; overflow: hidden; background: #000; }
+    .clip-box iframe { display: block; width: 100%; height: 100%; border: 0; }
+    /* 往上捲去看歌詞時，影片縮成右下角的小視窗繼續播（iframe 不搬位置，才不會重新載入）。 */
+    .clip-box.float { position: fixed; right: 12px; bottom: 12px; z-index: 6; width: min(320px, 46vw); height: auto; aspect-ratio: 16 / 9; box-shadow: 0 8px 26px #0005; }
+    body.has-clip main { margin-bottom: 220px; }
+    .sing { display: none; border: 1px solid #b9cdb9; background: var(--paper); color: var(--green); border-radius: 999px; padding: 0 10px; margin-bottom: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    body.has-clip .sing { display: inline-block; }
+    .lyric { transition: background .2s, border-color .2s; }
+    .lyric.singing { border-left-color: #d48b38; background: #fbf0dc; border-radius: 0 10px 10px 0; }
+    .lyric.singing .sing { background: #d48b38; border-color: #d48b38; color: #fff; }
 
     @media (max-width: 650px) {
       main { width: calc(100% - 32px); margin: 24px auto; }
@@ -180,7 +195,11 @@
     <div id="sections"></div>
 
     <footer>
-      <p class="video"><a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">▶ 看影片練習</a>（需要網路）</p>
+      <div class="clip" id="clip">
+        <p class="video"><a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">▶ 看影片練習</a>（需要網路）</p>
+        <p class="clip-hint" id="clip-hint"></p>
+        <div class="clip-slot" id="clip-slot" hidden><div class="clip-box" id="clip-box"><div id="yt"></div></div></div>
+      </div>
       <ul>
         <li>發音使用裝置內建的日語語音（Windows、macOS、iPhone、Android 通常都有），聲音好壞依裝置而異。</li>
         <li>念的是語音朗讀，不是歌曲旋律。</li>
@@ -196,60 +215,61 @@
     // 標記方式：{漢字|讀音} 會加上平假名讀音；片假名會自動標上對應的平假名。
     // 單字：[標記, 中文, 補充說明, 念法]；文法：[句型, 例句標記, 中文, 說明]。
     // 歌詞：分段（stanzas）→ 每一行（lines）→ 每行切成幾小段（phrases：[標記, 中文]），一小段一張卡。
+    // 每一行的 t＝影片裡這行字幕出現的秒數；e＝後面接間奏時，這行字幕消失的秒數（沒有就到下一行開始為止）。
     // 念法：字串＝直接念這個字串。kana: true 的分類一律念讀音，漢字不會被念成別的讀法。
     const categories = [
       { id: 'lyrics', type: 'lyrics', title: '歌詞', desc: '每行歌詞切成幾小段，一段一張卡可以單獨聽', kana: true, stanzas: [
         { title: '第一段', lines: [
-          { phrases: [['{蒼|あお}い{時|とき}', '青澀的時光'], ['{描|えが}く{軌|き}{跡|せき}{辿|たど}り', '沿著描繪出的軌跡']] },
-          { phrases: [['{答|こた}え{探|さが}す', '尋找答案'], ['{同|おな}じ{空|そら}', '同一片天空'], ['{見|み}{上|あ}げながら', '一邊仰望']] },
-          { phrases: [['{胸|むね}に{秘|ひ}めた{想|おも}い', '藏在心中的思念'], ['{溢|あふ}れ{出|だ}し', '滿溢而出']] },
-          { phrases: [['{空|そら}を{翔|か}けて', '飛越天空'], ['{銀|ぎん}{色|いろ}の{矢|や}に{変|か}わる', '化作銀色的箭']] },
+          { t: 31.4, phrases: [['{蒼|あお}い{時|とき}', '青澀的時光'], ['{描|えが}く{軌|き}{跡|せき}{辿|たど}り', '沿著描繪出的軌跡']] },
+          { t: 37.5, phrases: [['{答|こた}え{探|さが}す', '尋找答案'], ['{同|おな}じ{空|そら}', '同一片天空'], ['{見|み}{上|あ}げながら', '一邊仰望']] },
+          { t: 45.3, phrases: [['{胸|むね}に{秘|ひ}めた{想|おも}い', '藏在心中的思念'], ['{溢|あふ}れ{出|だ}し', '滿溢而出']] },
+          { t: 51.45, phrases: [['{空|そら}を{翔|か}けて', '飛越天空'], ['{銀|ぎん}{色|いろ}の{矢|や}に{変|か}わる', '化作銀色的箭']] },
         ]},
         { title: '第二段', lines: [
-          { phrases: [['{求|もと}め{合|あ}う{心|こころ}が', '互相渴求的心'], ['{違|ちが}う{痛|いた}みは', '各不相同的痛']] },
-          { phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{霞|かす}ませるけれど', '雖然讓它變得模糊']] },
+          { t: 58.4, phrases: [['{求|もと}め{合|あ}う{心|こころ}が', '互相渴求的心'], ['{違|ちが}う{痛|いた}みは', '各不相同的痛']] },
+          { t: 65.4, phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{霞|かす}ませるけれど', '雖然讓它變得模糊']] },
         ]},
         { title: '第三段', lines: [
-          { phrases: [['{交|こう}{差|さ}する{銀|ぎん}の{矢|や}', '交錯的銀色之箭'], ['{見|み}つめ{合|あ}う{瞳|ひとみ}に', '在彼此凝視的眼眸裡']] },
-          { phrases: [['{同|おな}じ{夢|ゆめ}', '同一個夢想'], ['{確|たし}かに{映|うつ}した', '確實映照出來了']] },
-          { phrases: [['たとえ{躓|つまず}いても', '就算跌倒'], ['たとえ{傷|きず}ついても', '就算受傷']] },
-          { phrases: [['{飛|と}び{立|た}とう', '起飛吧'], ['{風|かぜ}', '風'], ['{翼|つばさ}にして', '當作翅膀']] },
+          { t: 72.8, phrases: [['{交|こう}{差|さ}する{銀|ぎん}の{矢|や}', '交錯的銀色之箭'], ['{見|み}つめ{合|あ}う{瞳|ひとみ}に', '在彼此凝視的眼眸裡']] },
+          { t: 80, phrases: [['{同|おな}じ{夢|ゆめ}', '同一個夢想'], ['{確|たし}かに{映|うつ}した', '確實映照出來了']] },
+          { t: 86.75, phrases: [['たとえ{躓|つまず}いても', '就算跌倒'], ['たとえ{傷|きず}ついても', '就算受傷']] },
+          { t: 93.75, e: 100.5, phrases: [['{飛|と}び{立|た}とう', '起飛吧'], ['{風|かぜ}', '風'], ['{翼|つばさ}にして', '當作翅膀']] },
         ]},
         { title: '第四段', lines: [
-          { phrases: [['{声|こえ}も{届|とど}かない', '連聲音都傳不到'], ['{遠|とお}い{場|ば}{所|しょ}で', '在遙遠的地方']] },
-          { phrases: [['{僕|ぼく}らきっと', '我們一定'], ['{同|おな}じ{空|そら}', '同一片天空'], ['{見|み}{上|あ}げている', '正在仰望']] },
-          { phrases: [['あの{日|ひ}{出|で}{会|あ}う', '那天相遇的'], ['{奇|き}{跡|せき}さえ', '就連奇蹟'], ['{今|いま}は{信|しん}じられる', '現在也能相信']] },
-          { phrases: [['{理|り}{由|ゆう}など', '什麼理由'], ['いらないのだと', '是不需要的']] },
+          { t: 104.3, phrases: [['{声|こえ}も{届|とど}かない', '連聲音都傳不到'], ['{遠|とお}い{場|ば}{所|しょ}で', '在遙遠的地方']] },
+          { t: 110.6, phrases: [['{僕|ぼく}らきっと', '我們一定'], ['{同|おな}じ{空|そら}', '同一片天空'], ['{見|み}{上|あ}げている', '正在仰望']] },
+          { t: 118.25, phrases: [['あの{日|ひ}{出|で}{会|あ}う', '那天相遇的'], ['{奇|き}{跡|せき}さえ', '就連奇蹟'], ['{今|いま}は{信|しん}じられる', '現在也能相信']] },
+          { t: 126.85, phrases: [['{理|り}{由|ゆう}など', '什麼理由'], ['いらないのだと', '是不需要的']] },
         ]},
         { title: '第五段', lines: [
-          { phrases: [['{惹|ひ}かれあう{心|こころ}が', '互相吸引的心'], ['{近|ちか}くなる{瞬|しゅん}{間|かん}', '靠近的瞬間']] },
-          { phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{照|て}らし{出|だ}していく', '漸漸照亮出來']] },
+          { t: 131.45, phrases: [['{惹|ひ}かれあう{心|こころ}が', '互相吸引的心'], ['{近|ちか}くなる{瞬|しゅん}{間|かん}', '靠近的瞬間']] },
+          { t: 138.5, phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{照|て}らし{出|だ}していく', '漸漸照亮出來']] },
         ]},
         { title: '第六段', lines: [
-          { phrases: [['{放|はな}たれた{銀|ぎん}の{矢|や}', '被射出的銀箭'], ['{貫|つらぬ}かれた{胸|むね}に', '在被貫穿的胸口']] },
-          { phrases: [['{零|こぼ}れ{落|お}ちる{雫|しずく}に', '對著滑落的淚滴'], ['{誓|ちか}おう', '發誓吧']] },
-          { phrases: [['たとえ{苦|くる}しめても', '就算讓你痛苦'], ['たとえ{傷|きず}つけても', '就算傷害了你']] },
-          { phrases: [['{離|はな}さない', '絕不放開'], ['{結|むす}んだ{絆|きずな}は', '結下的羈絆']] },
+          { t: 145.9, phrases: [['{放|はな}たれた{銀|ぎん}の{矢|や}', '被射出的銀箭'], ['{貫|つらぬ}かれた{胸|むね}に', '在被貫穿的胸口']] },
+          { t: 152.7, phrases: [['{零|こぼ}れ{落|お}ちる{雫|しずく}に', '對著滑落的淚滴'], ['{誓|ちか}おう', '發誓吧']] },
+          { t: 159.6, phrases: [['たとえ{苦|くる}しめても', '就算讓你痛苦'], ['たとえ{傷|きず}つけても', '就算傷害了你']] },
+          { t: 166.75, e: 173.5, phrases: [['{離|はな}さない', '絕不放開'], ['{結|むす}んだ{絆|きずな}は', '結下的羈絆']] },
         ]},
         { title: '第七段', lines: [
-          { phrases: [['{求|もと}め{合|あ}う{心|こころ}が', '互相渴求的心'], ['ひとつに{溶|と}けて', '融為一體']] },
-          { phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{切|き}り{拓|ひら}いていく', '一路開拓下去']] },
+          { t: 214.85, phrases: [['{求|もと}め{合|あ}う{心|こころ}が', '互相渴求的心'], ['ひとつに{溶|と}けて', '融為一體']] },
+          { t: 222, phrases: [['{真|しん}{実|じつ}の{道|みち}', '真實的道路'], ['{切|き}り{拓|ひら}いていく', '一路開拓下去']] },
         ]},
         { title: '第八段', lines: [
-          { phrases: [['{交|こう}{差|さ}する{銀|ぎん}の{矢|や}', '交錯的銀色之箭'], ['{見|み}つめ{合|あ}う{瞳|ひとみ}に', '在彼此凝視的眼眸裡']] },
-          { phrases: [['{同|おな}じ{夢|ゆめ}', '同一個夢想'], ['{確|たし}かに{映|うつ}した', '確實映照出來了']] },
-          { phrases: [['{銀|ぎん}の{矢|や}が{貫|つらぬ}く', '銀箭貫穿'], ['{胸|むね}', '胸口'], ['{溢|あふ}れる{想|おも}い', '滿溢的思念']] },
-          { phrases: [['{駆|か}り{立|た}てる', '驅使著我'], ['{約|やく}{束|そく}の{場|ば}{所|しょ}へ', '奔向約定的地方']] },
+          { t: 231, phrases: [['{交|こう}{差|さ}する{銀|ぎん}の{矢|や}', '交錯的銀色之箭'], ['{見|み}つめ{合|あ}う{瞳|ひとみ}に', '在彼此凝視的眼眸裡']] },
+          { t: 238.1, phrases: [['{同|おな}じ{夢|ゆめ}', '同一個夢想'], ['{確|たし}かに{映|うつ}した', '確實映照出來了']] },
+          { t: 244.7, phrases: [['{銀|ぎん}の{矢|や}が{貫|つらぬ}く', '銀箭貫穿'], ['{胸|むね}', '胸口'], ['{溢|あふ}れる{想|おも}い', '滿溢的思念']] },
+          { t: 252.1, phrases: [['{駆|か}り{立|た}てる', '驅使著我'], ['{約|やく}{束|そく}の{場|ば}{所|しょ}へ', '奔向約定的地方']] },
         ]},
         { title: '第九段', lines: [
-          { phrases: [['たとえ{苦|くる}しめても', '就算讓你痛苦'], ['{迷|まよ}い{傷|きず}つけても', '就算在迷惘中傷害了你']] },
-          { phrases: [['{離|はな}さない', '絕不放開'], ['{結|むす}んだ{絆|きずな}は', '結下的羈絆']] },
-          { phrases: [['だから{躓|つまず}いても', '所以就算跌倒'], ['{何|なん}{度|ど}{傷|きず}ついても', '不管受傷幾次']] },
-          { phrases: [['{飛|と}び{立|た}とう', '起飛吧'], ['{風|かぜ}', '風'], ['{翼|つばさ}にして', '當作翅膀']] },
+          { t: 258.95, phrases: [['たとえ{苦|くる}しめても', '就算讓你痛苦'], ['{迷|まよ}い{傷|きず}つけても', '就算在迷惘中傷害了你']] },
+          { t: 266.1, phrases: [['{離|はな}さない', '絕不放開'], ['{結|むす}んだ{絆|きずな}は', '結下的羈絆']] },
+          { t: 272.55, phrases: [['だから{躓|つまず}いても', '所以就算跌倒'], ['{何|なん}{度|ど}{傷|きず}ついても', '不管受傷幾次']] },
+          { t: 279.8, phrases: [['{飛|と}び{立|た}とう', '起飛吧'], ['{風|かぜ}', '風'], ['{翼|つばさ}にして', '當作翅膀']] },
         ]},
         { title: '第十段', lines: [
-          { phrases: [['{日|ひ}を{受|う}けて{輝|かがや}く', '沐浴陽光而閃耀的'], ['{金|きん}{色|いろ}の{翼|つばさ}は', '金色的翅膀']] },
-          { phrases: [['{空|そら}に{描|えが}く', '在天空描繪'], ['いのちの{軌|き}{跡|せき}を', '生命的軌跡']] },
+          { t: 286.65, phrases: [['{日|ひ}を{受|う}けて{輝|かがや}く', '沐浴陽光而閃耀的'], ['{金|きん}{色|いろ}の{翼|つばさ}は', '金色的翅膀']] },
+          { t: 293.65, e: 300.5, phrases: [['{空|そら}に{描|えが}く', '在天空描繪'], ['いのちの{軌|き}{跡|せき}を', '生命的軌跡']] },
         ]},
       ]},
       { id: 'vocab', title: '單字', desc: '歌詞裡出現的詞，動詞用原形（字典形）列出', kana: true, words: [
@@ -465,6 +485,7 @@
 
     // ---------- 畫面 ----------
     const items = [];
+    const songLines = [];   // 有影片時間的歌詞行 { t, el }，照時間排
     const sectionsEl = document.getElementById('sections');
     const catsEl = document.getElementById('cats');
     const chips = new Map();   // 分類 id → 篩選按鈕
@@ -556,6 +577,17 @@
           for (const line of st.lines) {
             const lineEl = document.createElement('div');
             lineEl.className = 'lyric';
+            if (line.t != null) {
+              // 有影片時才看得到：點了從這一行開始唱。
+              const sing = document.createElement('button');
+              sing.type = 'button';
+              sing.className = 'sing';
+              sing.textContent = '♪ ' + Math.floor(line.t / 60) + ':' + String(Math.floor(line.t % 60)).padStart(2, '0');
+              sing.setAttribute('aria-label', sing.textContent.slice(2) + '，影片從這一行開始唱');
+              sing.addEventListener('click', () => clipSeek(line.t));
+              lineEl.append(sing);
+              songLines.push({ t: line.t, e: line.e, el: lineEl });
+            }
             const row = document.createElement('div');
             row.className = 'phrases';
             for (const phrase of line.phrases) {
@@ -690,6 +722,7 @@
         return;
       }
       cancelSpeech();
+      clipPause();
       const u = new SpeechSynthesisUtterance(item.say);
       current = u;
       u.lang = 'ja-JP';
@@ -814,6 +847,99 @@
     document.addEventListener('visibilitychange', () => { if (document.hidden) pauseQueue(); });
     window.addEventListener('pagehide', stopQueue);
 
+    // ---------- 影片同步 ----------
+    // 有網路時把 YouTube 影片嵌進來；播放中依時間把唱到的那一行歌詞標出來。
+    // 每行的時間 t 是影片字幕出現的秒數（字幕燒在畫面上，逐格偵測出來的）。
+    const VIDEO_ID = '4yB45ULzTV8';
+    const clipBox = document.getElementById('clip-box');
+    const clipSlot = document.getElementById('clip-slot');
+    const clipHint = document.getElementById('clip-hint');
+    let ytPlayer = null;
+    let ytReady = false;
+    let syncTimer = null;
+    let singingEl = null;
+    let slotVisible = true;
+    const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function setSinging(el) {
+      if (el === singingEl) return;
+      if (singingEl) singingEl.classList.remove('singing');
+      singingEl = el;
+      if (!el) return;
+      el.classList.add('singing');
+      // 唱到的那一行不在畫面上（或被右下角的小視窗蓋住）就捲過去。
+      const r = el.getBoundingClientRect();
+      const bottom = innerHeight - (clipBox.classList.contains('float') ? clipBox.offsetHeight + 24 : 0);
+      if (r.top < 8 || r.bottom > bottom) {
+        window.scrollBy({ top: r.top - Math.max(16, (bottom - r.height) / 2.4), behavior: reducedMotion() ? 'auto' : 'smooth' });
+      }
+    }
+    function syncLyrics() {
+      if (!ytReady) return;
+      const now = ytPlayer.getCurrentTime();
+      let hit = null;
+      for (let i = 0; i < songLines.length; i++) {
+        const line = songLines[i];
+        const end = line.e ?? (songLines[i + 1] ? songLines[i + 1].t : Infinity);
+        if (now >= line.t && now < end) { hit = line.el; break; }
+      }
+      setSinging(hit);
+    }
+    // 播放中或暫停中都留著小視窗，才按得到「繼續」；還沒開始或播完就回到頁尾。
+    function updateFloat() {
+      const s = ytReady ? ytPlayer.getPlayerState() : -1;
+      const active = s === YT.PlayerState.PLAYING || s === YT.PlayerState.PAUSED || s === YT.PlayerState.BUFFERING;
+      clipBox.classList.toggle('float', active && !slotVisible);
+    }
+    function clipSeek(t) {
+      if (!ytReady) return;
+      stopQueue();
+      ytPlayer.seekTo(t, true);
+      ytPlayer.playVideo();
+      syncLyrics();
+    }
+    function clipPause() {
+      if (ytReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    }
+    function initClip() {
+      if (!navigator.onLine || !songLines.length) return;
+      window.onYouTubeIframeAPIReady = () => {
+        clipSlot.hidden = false;
+        ytPlayer = new YT.Player('yt', {
+          videoId: VIDEO_ID,
+          playerVars: { playsinline: 1, rel: 0 },
+          events: {
+            onReady: () => {
+              ytReady = true;
+              document.body.classList.add('has-clip');
+              clipHint.textContent = '播放影片時，唱到的那一行歌詞會亮起來；點歌詞左上角的「♪ 時間」可以從那一行開始唱。';
+            },
+            onStateChange: (e) => {
+              const playing = e.data === YT.PlayerState.PLAYING;
+              // 影片和語音朗讀不要同時出聲。
+              if (playing) stopQueue();
+              clearInterval(syncTimer);
+              if (playing) syncTimer = setInterval(syncLyrics, 150);
+              syncLyrics();
+              if (e.data === YT.PlayerState.ENDED) setSinging(null);
+              updateFloat();
+            },
+            onError: () => {
+              clipSlot.hidden = true;
+              document.body.classList.remove('has-clip');
+              clipHint.textContent = '';
+            },
+          },
+        });
+      };
+      const tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      tag.onerror = () => {};   // 載不到就維持原本的連結
+      document.head.append(tag);
+      new IntersectionObserver(([entry]) => { slotVisible = entry.isIntersecting; updateFloat(); }).observe(clipSlot);
+    }
+
+    initClip();
     loadVoices();
     if (supportsSpeech) {
       synth.addEventListener('voiceschanged', loadVoices);
