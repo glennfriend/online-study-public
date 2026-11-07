@@ -871,7 +871,11 @@
       const r = el.getBoundingClientRect();
       const bottom = innerHeight - (clipBox.classList.contains('float') ? clipBox.offsetHeight + 24 : 0);
       if (r.top < 8 || r.bottom > bottom) {
-        window.scrollBy({ top: r.top - Math.max(16, (bottom - r.height) / 2.4), behavior: reducedMotion() ? 'auto' : 'smooth' });
+        const delta = r.top - Math.max(16, (bottom - r.height) / 2.4);
+        // 捲到絕對位置：平滑捲動被打斷（Android Firefox 網址列伸縮時常發生）也不會越差越多，下一行會直接修正。
+        // 距離遠就直接跳過去；長距離的平滑捲動在手機上容易停在半路。
+        const far = Math.abs(delta) > innerHeight * 0.6;
+        window.scrollTo({ top: window.scrollY + delta, behavior: far || reducedMotion() ? 'auto' : 'smooth' });
       }
     }
     function syncLyrics() {
