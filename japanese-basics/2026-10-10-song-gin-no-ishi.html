@@ -100,18 +100,15 @@
     footer .video { margin: 0 0 10px; }
     footer .video a { display: inline-block; border-radius: 999px; padding: 6px 16px; background: var(--green); color: #fff; font-size: 15px; font-weight: 700; text-decoration: none; }
     footer ul { margin: 0; padding-left: 1.2em; }
-    /* 影片：有網路時嵌入播放器，播放時唱到的那一行歌詞會亮起來。 */
-    .clip { margin: 0 0 14px; }
-    .clip-hint { margin: 0 0 8px; font-size: 14px; color: var(--muted); }
-    .clip-hint:empty { display: none; }
-    .clip-slot { max-width: 560px; aspect-ratio: 16 / 9; }
-    .clip-box { width: 100%; height: 100%; border-radius: 12px; overflow: hidden; background: #000; }
-    .clip-box iframe { display: block; width: 100%; height: 100%; border: 0; }
-    /* 往上捲去看歌詞時，影片縮成右下角的小視窗繼續播（iframe 不搬位置，才不會重新載入）。 */
-    .clip-box.float { position: fixed; right: 12px; bottom: 12px; z-index: 6; width: min(320px, 46vw); height: auto; aspect-ratio: 16 / 9; box-shadow: 0 8px 26px #0005; }
-    body.has-clip main { margin-bottom: 220px; }
-    .sing { display: none; border: 1px solid #b9cdb9; background: var(--paper); color: var(--green); border-radius: 999px; padding: 0 10px; margin-bottom: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
-    body.has-clip .sing { display: inline-block; }
+    /* 歌曲播放列：放在歌詞區最後、貼著畫面底部（sticky），捲到歌詞時一直看得到；捲過歌詞區就跟著離開。 */
+    .song { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin-top: 22px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fffdf8f2; backdrop-filter: blur(6px); box-shadow: 0 -4px 16px #344e3b14; }
+    body.playing .song { bottom: 64px; }
+    .song[hidden] { display: none; }
+    #song-play { flex: none; min-width: 7.2em; min-height: 40px; border: 0; border-radius: 999px; padding: 6px 16px; background: #d48b38; color: #fff; font-size: 15px; font-weight: 700; }
+    #song-seek { flex: 1; min-width: 0; accent-color: #d48b38; }
+    #song-time { flex: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .sing { display: inline-block; border: 1px solid #b9cdb9; background: var(--paper); color: var(--green); border-radius: 999px; padding: 0 10px; margin-bottom: 6px; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+    body.no-song .sing { display: none; }
     .lyric { transition: background .2s, border-color .2s; }
     .lyric.singing { border-left-color: #d48b38; background: #fbf0dc; border-radius: 0 10px 10px 0; }
     .lyric.singing .sing { background: #d48b38; border-color: #d48b38; color: #fff; }
@@ -150,7 +147,7 @@
     @media print {
       body { background: #fff; }
       main { width: 100%; margin: 0; }
-      .player, .mini, nav.cats, .play-cat, .status, footer { display: none !important; }
+      .player, .mini, nav.cats, .play-cat, .status, .song, .sing, footer { display: none !important; }
       body.no-rt rt, body.no-kata rt.k, body.no-zh .zh, body.no-zh .note { visibility: visible; }
       .card { break-inside: avoid; min-height: 0; }
     }
@@ -193,16 +190,19 @@
     <nav class="cats" id="cats" aria-label="只顯示這個分類"></nav>
     <noscript><p>請啟用 JavaScript，才能顯示歌詞與播放發音。</p></noscript>
     <div id="sections"></div>
+    <!-- 歌曲播放列：程式會把它搬到歌詞區最後。 -->
+    <div class="song" id="song" role="group" aria-label="播放歌曲">
+      <button type="button" id="song-play">▶ 播放歌曲</button>
+      <input type="range" id="song-seek" min="0" max="336" step="0.1" value="0" aria-label="歌曲播放位置">
+      <span id="song-time">0:00 / –:––</span>
+      <audio id="song-audio" src="audio/song/gin-no-ishi.m4a" preload="metadata"></audio>
+    </div>
 
     <footer>
-      <div class="clip" id="clip">
-        <p class="video"><a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">▶ 看影片練習</a>（需要網路）</p>
-        <p class="clip-hint" id="clip-hint"></p>
-        <div class="clip-slot" id="clip-slot" hidden><div class="clip-box" id="clip-box"><div id="yt"></div></div></div>
-      </div>
+      <p class="video"><a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">▶ 在 YouTube 看影片</a>（需要網路）</p>
       <ul>
         <li>發音使用裝置內建的日語語音（Windows、macOS、iPhone、Android 通常都有），聲音好壞依裝置而異。</li>
-        <li>念的是語音朗讀，不是歌曲旋律。</li>
+        <li>點卡片念的是語音朗讀；要聽原曲，用歌詞最下面的「播放歌曲」，唱到哪一行會亮起來。</li>
         <li>漢字一律照標註的讀音念，以免語音念成別的讀法（例如「描く」念 えがく 而不是 かく）。</li>
         <li>中文翻譯是學習用的意譯。</li>
         <li>列印時讀音與中文會全部顯示。</li>
@@ -215,7 +215,7 @@
     // 標記方式：{漢字|讀音} 會加上平假名讀音；片假名會自動標上對應的平假名。
     // 單字：[標記, 中文, 補充說明, 念法]；文法：[句型, 例句標記, 中文, 說明]。
     // 歌詞：分段（stanzas）→ 每一行（lines）→ 每行切成幾小段（phrases：[標記, 中文]），一小段一張卡。
-    // 每一行的 t＝影片裡這行字幕出現的秒數；e＝後面接間奏時，這行字幕消失的秒數（沒有就到下一行開始為止）。
+    // 每一行的 t＝影片裡這行字幕出現的秒數；e＝後面接間奏時，這行唱完的秒數（沒有就到下一行開始為止）。
     // 念法：字串＝直接念這個字串。kana: true 的分類一律念讀音，漢字不會被念成別的讀法。
     const categories = [
       { id: 'lyrics', type: 'lyrics', title: '歌詞', desc: '每行歌詞切成幾小段，一段一張卡可以單獨聽', kana: true, stanzas: [
@@ -485,7 +485,7 @@
 
     // ---------- 畫面 ----------
     const items = [];
-    const songLines = [];   // 有影片時間的歌詞行 { t, el }，照時間排
+    const songLines = [];   // 有歌曲時間的歌詞行 { t, e, el }，照時間排
     const sectionsEl = document.getElementById('sections');
     const catsEl = document.getElementById('cats');
     const chips = new Map();   // 分類 id → 篩選按鈕
@@ -578,13 +578,13 @@
             const lineEl = document.createElement('div');
             lineEl.className = 'lyric';
             if (line.t != null) {
-              // 有影片時才看得到：點了從這一行開始唱。
+              // 點了歌曲從這一行開始唱。
               const sing = document.createElement('button');
               sing.type = 'button';
               sing.className = 'sing';
               sing.textContent = '♪ ' + Math.floor(line.t / 60) + ':' + String(Math.floor(line.t % 60)).padStart(2, '0');
-              sing.setAttribute('aria-label', sing.textContent.slice(2) + '，影片從這一行開始唱');
-              sing.addEventListener('click', () => clipSeek(line.t));
+              sing.setAttribute('aria-label', sing.textContent.slice(2) + '，歌曲從這一行開始唱');
+              sing.addEventListener('click', () => songFrom(line.t));
               lineEl.append(sing);
               songLines.push({ t: line.t, e: line.e, el: lineEl });
             }
@@ -613,6 +613,7 @@
         playQueue(catItems, btn, '播放這一類');
       });
       section.append(head, grid);
+      if (cat.stanzas) section.append(document.getElementById('song'));
       sectionsEl.append(section);
       cat.section = section;
       addChip(cat.id, cat.title, cat.words.length);
@@ -722,7 +723,7 @@
         return;
       }
       cancelSpeech();
-      clipPause();
+      songPause();
       const u = new SpeechSynthesisUtterance(item.say);
       current = u;
       u.lang = 'ja-JP';
@@ -847,19 +848,18 @@
     document.addEventListener('visibilitychange', () => { if (document.hidden) pauseQueue(); });
     window.addEventListener('pagehide', stopQueue);
 
-    // ---------- 影片同步 ----------
-    // 有網路時把 YouTube 影片嵌進來；播放中依時間把唱到的那一行歌詞標出來。
-    // 每行的時間 t 是影片字幕出現的秒數（字幕燒在畫面上，逐格偵測出來的）。
-    const VIDEO_ID = '4yB45ULzTV8';
-    const clipBox = document.getElementById('clip-box');
-    const clipSlot = document.getElementById('clip-slot');
-    const clipHint = document.getElementById('clip-hint');
-    let ytPlayer = null;
-    let ytReady = false;
+    // ---------- 歌曲同步 ----------
+    // 播放歌曲（m4a，跟著頁面一起快取，離線也能播）；播放中依時間把唱到的那一行歌詞標出來。
+    // 每行的時間 t 是 YouTube 影片字幕出現的秒數；音檔是同一支影片的音軌，時間一樣。
+    const song = document.getElementById('song-audio');
+    const songBar = document.getElementById('song');
+    const songPlay = document.getElementById('song-play');
+    const songSeek = document.getElementById('song-seek');
+    const songTime = document.getElementById('song-time');
     let syncTimer = null;
     let singingEl = null;
-    let slotVisible = true;
     const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mmss = (sec) => Math.floor(sec / 60) + ':' + String(Math.floor(sec % 60)).padStart(2, '0');
 
     function setSinging(el) {
       if (el === singingEl) return;
@@ -867,9 +867,10 @@
       singingEl = el;
       if (!el) return;
       el.classList.add('singing');
-      // 唱到的那一行不在畫面上（或被右下角的小視窗蓋住）就捲過去。
+      // 唱到的那一行不在畫面上（或被底部的播放列蓋住）就捲過去。
       const r = el.getBoundingClientRect();
-      const bottom = innerHeight - (clipBox.classList.contains('float') ? clipBox.offsetHeight + 24 : 0);
+      // 捲到歌詞時播放列會貼在畫面底部，所以一律扣掉它的高度（底部還有語音播放條時再往上扣）。
+      const bottom = innerHeight - songBar.offsetHeight - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 16;
       if (r.top < 8 || r.bottom > bottom) {
         const delta = r.top - Math.max(16, (bottom - r.height) / 2.4);
         // 捲到絕對位置：平滑捲動被打斷（Android Firefox 網址列伸縮時常發生）也不會越差越多，下一行會直接修正。
@@ -879,8 +880,7 @@
       }
     }
     function syncLyrics() {
-      if (!ytReady) return;
-      const now = ytPlayer.getCurrentTime();
+      const now = song.currentTime;
       let hit = null;
       for (let i = 0; i < songLines.length; i++) {
         const line = songLines[i];
@@ -888,62 +888,40 @@
         if (now >= line.t && now < end) { hit = line.el; break; }
       }
       setSinging(hit);
+      songTime.textContent = mmss(now) + ' / ' + (song.duration ? mmss(song.duration) : '–:––');
+      if (!seeking) songSeek.value = String(now);
     }
-    // 播放中或暫停中都留著小視窗，才按得到「繼續」；還沒開始或播完就回到頁尾。
-    function updateFloat() {
-      const s = ytReady ? ytPlayer.getPlayerState() : -1;
-      const active = s === YT.PlayerState.PLAYING || s === YT.PlayerState.PAUSED || s === YT.PlayerState.BUFFERING;
-      clipBox.classList.toggle('float', active && !slotVisible);
-    }
-    function clipSeek(t) {
-      if (!ytReady) return;
+    function songFrom(t) {
       stopQueue();
-      ytPlayer.seekTo(t, true);
-      ytPlayer.playVideo();
+      song.currentTime = t;
+      song.play().catch(() => {});
       syncLyrics();
     }
-    function clipPause() {
-      if (ytReady && ytPlayer.getPlayerState() === YT.PlayerState.PLAYING) ytPlayer.pauseVideo();
+    function songPause() {
+      if (!song.paused) song.pause();
     }
-    function initClip() {
-      if (!navigator.onLine || !songLines.length) return;
-      window.onYouTubeIframeAPIReady = () => {
-        clipSlot.hidden = false;
-        ytPlayer = new YT.Player('yt', {
-          videoId: VIDEO_ID,
-          playerVars: { playsinline: 1, rel: 0 },
-          events: {
-            onReady: () => {
-              ytReady = true;
-              document.body.classList.add('has-clip');
-              clipHint.textContent = '播放影片時，唱到的那一行歌詞會亮起來；點歌詞左上角的「♪ 時間」可以從那一行開始唱。';
-            },
-            onStateChange: (e) => {
-              const playing = e.data === YT.PlayerState.PLAYING;
-              // 影片和語音朗讀不要同時出聲。
-              if (playing) stopQueue();
-              clearInterval(syncTimer);
-              if (playing) syncTimer = setInterval(syncLyrics, 150);
-              syncLyrics();
-              if (e.data === YT.PlayerState.ENDED) setSinging(null);
-              updateFloat();
-            },
-            onError: () => {
-              clipSlot.hidden = true;
-              document.body.classList.remove('has-clip');
-              clipHint.textContent = '';
-            },
-          },
-        });
-      };
-      const tag = document.createElement('script');
-      tag.src = 'https://www.youtube.com/iframe_api';
-      tag.onerror = () => {};   // 載不到就維持原本的連結
-      document.head.append(tag);
-      new IntersectionObserver(([entry]) => { slotVisible = entry.isIntersecting; updateFloat(); }).observe(clipSlot);
+    let seeking = false;
+    function initSong() {
+      if (!songLines.length) return;
+      songPlay.addEventListener('click', () => { if (song.paused) { stopQueue(); song.play().catch(() => {}); } else song.pause(); });
+      songSeek.addEventListener('input', () => { seeking = true; songTime.textContent = mmss(Number(songSeek.value)) + ' / ' + mmss(song.duration || 0); });
+      songSeek.addEventListener('change', () => { seeking = false; song.currentTime = Number(songSeek.value); syncLyrics(); });
+      song.addEventListener('loadedmetadata', () => { songSeek.max = String(song.duration); syncLyrics(); });
+      song.addEventListener('play', () => {
+        // 歌曲和語音朗讀不要同時出聲。
+        stopQueue();
+        songPlay.textContent = '❚❚ 暫停';
+        clearInterval(syncTimer);
+        syncTimer = setInterval(syncLyrics, 100);
+      });
+      song.addEventListener('pause', () => { songPlay.textContent = '▶ 播放歌曲'; clearInterval(syncTimer); syncLyrics(); });
+      song.addEventListener('seeked', syncLyrics);
+      song.addEventListener('ended', () => setSinging(null));
+      // 音檔載不到（離線又還沒快取）就把播放列和「♪ 時間」藏起來。
+      song.addEventListener('error', () => { songBar.hidden = true; document.body.classList.add('no-song'); });
     }
 
-    initClip();
+    initSong();
     loadVoices();
     if (supportsSpeech) {
       synth.addEventListener('voiceschanged', loadVoices);
