@@ -884,8 +884,11 @@
         window.scrollTo({ top: window.scrollY + delta, behavior: far || reducedMotion() ? 'auto' : 'smooth' });
       }
     }
+    // 提早換行的秒數：捲動大約要 0.3～0.5 秒，眼睛再找到那一行也要一點時間，
+    // 提早 0.8 秒換過去，開口唱之前就看得到歌詞；上一行的尾音通常是拉長音，提早離開也不影響。
+    const LEAD = 0.8;
     function syncLyrics() {
-      const now = song.currentTime;
+      const now = song.currentTime + LEAD;
       let hit = null;
       for (let i = 0; i < songLines.length; i++) {
         const line = songLines[i];
@@ -893,8 +896,8 @@
         if (now >= line.t && now < end) { hit = line.el; break; }
       }
       setSinging(hit);
-      songTime.textContent = mmss(now) + ' / ' + (song.duration ? mmss(song.duration) : '–:––');
-      if (!seeking) songSeek.value = String(now);
+      songTime.textContent = mmss(song.currentTime) + ' / ' + (song.duration ? mmss(song.duration) : '–:––');
+      if (!seeking) songSeek.value = String(song.currentTime);
     }
     function songFrom(t) {
       stopQueue();
