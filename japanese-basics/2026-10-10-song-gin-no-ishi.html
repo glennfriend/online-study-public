@@ -97,13 +97,16 @@
     .status { margin: 10px 2px 0; font-size: 13px; color: #b3402f; }
     .status:empty { display: none; }
     footer { margin-top: 36px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 12px; color: var(--muted); }
-    footer .video { margin: 0 0 10px; }
-    footer .video a { display: inline-block; border-radius: 999px; padding: 6px 16px; background: var(--green); color: #fff; font-size: 15px; font-weight: 700; text-decoration: none; }
+    footer .video { margin: 0 0 10px; overflow-wrap: anywhere; }
+    footer a { color: var(--green); }
     footer ul { margin: 0; padding-left: 1.2em; }
     /* 歌曲播放列：放在歌詞區最後、貼著畫面底部（sticky），捲到歌詞時一直看得到；捲過歌詞區就跟著離開。 */
-    .song { position: sticky; bottom: 0; z-index: 4; display: flex; align-items: center; gap: 10px; margin-top: 22px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: #fffdf8f2; backdrop-filter: blur(6px); box-shadow: 0 -4px 16px #344e3b14; }
-    body.playing .song { bottom: 64px; }
+    .song { display: flex; align-items: center; gap: 10px; margin: 0 0 18px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); }
     .song[hidden] { display: none; }
+    /* 歌曲播到一半時，右下角只留一顆「暫停／繼續」，捲到哪裡都按得到。 */
+    #song-float { position: fixed; right: 16px; bottom: 16px; z-index: 6; min-height: 44px; border: 0; border-radius: 999px; padding: 8px 20px; background: #d48b38; color: #fff; font-size: 15px; font-weight: 700; box-shadow: 0 6px 18px #d48b3855; }
+    #song-float[hidden] { display: none; }
+    body.playing #song-float { bottom: 76px; }
     #song-play { flex: none; min-width: 7.2em; min-height: 40px; border: 0; border-radius: 999px; padding: 6px 16px; background: #d48b38; color: #fff; font-size: 15px; font-weight: 700; }
     #song-seek { flex: 1; min-width: 0; accent-color: #d48b38; }
     #song-time { flex: none; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -147,7 +150,7 @@
     @media print {
       body { background: #fff; }
       main { width: 100%; margin: 0; }
-      .player, .mini, nav.cats, .play-cat, .status, .song, .sing, footer { display: none !important; }
+      .player, .mini, nav.cats, .play-cat, .status, .song, .sing, #song-float, footer { display: none !important; }
       body.no-rt rt, body.no-kata rt.k, body.no-zh .zh, body.no-zh .note { visibility: visible; }
       .card { break-inside: avoid; min-height: 0; }
     }
@@ -190,19 +193,20 @@
     <nav class="cats" id="cats" aria-label="只顯示這個分類"></nav>
     <noscript><p>請啟用 JavaScript，才能顯示歌詞與播放發音。</p></noscript>
     <div id="sections"></div>
-    <!-- 歌曲播放列：程式會把它搬到歌詞區最後。 -->
+    <!-- 歌曲播放列：程式會把它搬到歌詞區標題下面。 -->
     <div class="song" id="song" role="group" aria-label="播放歌曲">
       <button type="button" id="song-play">▶ 播放歌曲</button>
       <input type="range" id="song-seek" min="0" max="336" step="0.1" value="0" aria-label="歌曲播放位置">
       <span id="song-time">0:00 / –:––</span>
       <audio id="song-audio" src="audio/song/gin-no-ishi.m4a" preload="metadata"></audio>
     </div>
+    <button type="button" id="song-float" hidden>❚❚ 暫停</button>
 
     <footer>
-      <p class="video"><a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">▶ 在 YouTube 看影片</a>（需要網路）</p>
+      <p class="video">YouTube 影片：<a href="https://www.youtube.com/watch?v=4yB45ULzTV8" target="_blank" rel="noopener">https://www.youtube.com/watch?v=4yB45ULzTV8</a></p>
       <ul>
         <li>發音使用裝置內建的日語語音（Windows、macOS、iPhone、Android 通常都有），聲音好壞依裝置而異。</li>
-        <li>點卡片念的是語音朗讀；要聽原曲，用歌詞最下面的「播放歌曲」，唱到哪一行會亮起來。</li>
+        <li>點卡片念的是語音朗讀；要聽原曲，按歌詞上方的「播放歌曲」，唱到哪一行會亮起來。</li>
         <li>漢字一律照標註的讀音念，以免語音念成別的讀法（例如「描く」念 えがく 而不是 かく）。</li>
         <li>中文翻譯是學習用的意譯。</li>
         <li>列印時讀音與中文會全部顯示。</li>
@@ -612,8 +616,9 @@
         if (queue && queue.button === btn) { stopQueue(); return; }
         playQueue(catItems, btn, '播放這一類');
       });
-      section.append(head, grid);
+      section.append(head);
       if (cat.stanzas) section.append(document.getElementById('song'));
+      section.append(grid);
       sectionsEl.append(section);
       cat.section = section;
       addChip(cat.id, cat.title, cat.words.length);
@@ -856,6 +861,7 @@
     const songPlay = document.getElementById('song-play');
     const songSeek = document.getElementById('song-seek');
     const songTime = document.getElementById('song-time');
+    const songFloat = document.getElementById('song-float');
     let syncTimer = null;
     let singingEl = null;
     const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -867,10 +873,9 @@
       singingEl = el;
       if (!el) return;
       el.classList.add('singing');
-      // 唱到的那一行不在畫面上（或被底部的播放列蓋住）就捲過去。
+      // 唱到的那一行不在畫面上（或被右下角的暫停鈕、底部的語音播放條蓋住）就捲過去。
       const r = el.getBoundingClientRect();
-      // 捲到歌詞時播放列會貼在畫面底部，所以一律扣掉它的高度（底部還有語音播放條時再往上扣）。
-      const bottom = innerHeight - songBar.offsetHeight - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 16;
+      const bottom = innerHeight - (songFloat.hidden ? 0 : songFloat.offsetHeight + 16) - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 16;
       if (r.top < 8 || r.bottom > bottom) {
         const delta = r.top - Math.max(16, (bottom - r.height) / 2.4);
         // 捲到絕對位置：平滑捲動被打斷（Android Firefox 網址列伸縮時常發生）也不會越差越多，下一行會直接修正。
@@ -903,22 +908,32 @@
     let seeking = false;
     function initSong() {
       if (!songLines.length) return;
-      songPlay.addEventListener('click', () => { if (song.paused) { stopQueue(); song.play().catch(() => {}); } else song.pause(); });
+      const toggle = () => { if (song.paused) { stopQueue(); song.play().catch(() => {}); } else song.pause(); };
+      songPlay.addEventListener('click', toggle);
+      songFloat.addEventListener('click', toggle);
+      // 按鈕文字：播放中＝暫停；停在半路＝繼續；還沒播或播完＝播放歌曲。右下角的鈕只在播到一半時出現。
+      const showState = () => {
+        const started = song.currentTime > 0 && !song.ended;
+        const label = !song.paused ? '❚❚ 暫停' : started ? '▶ 繼續' : '▶ 播放歌曲';
+        songPlay.textContent = label;
+        songFloat.textContent = label;
+        songFloat.hidden = !started;
+      };
       songSeek.addEventListener('input', () => { seeking = true; songTime.textContent = mmss(Number(songSeek.value)) + ' / ' + mmss(song.duration || 0); });
       songSeek.addEventListener('change', () => { seeking = false; song.currentTime = Number(songSeek.value); syncLyrics(); });
       song.addEventListener('loadedmetadata', () => { songSeek.max = String(song.duration); syncLyrics(); });
       song.addEventListener('play', () => {
         // 歌曲和語音朗讀不要同時出聲。
         stopQueue();
-        songPlay.textContent = '❚❚ 暫停';
+        showState();
         clearInterval(syncTimer);
         syncTimer = setInterval(syncLyrics, 100);
       });
-      song.addEventListener('pause', () => { songPlay.textContent = '▶ 播放歌曲'; clearInterval(syncTimer); syncLyrics(); });
-      song.addEventListener('seeked', syncLyrics);
-      song.addEventListener('ended', () => setSinging(null));
+      song.addEventListener('pause', () => { showState(); clearInterval(syncTimer); syncLyrics(); });
+      song.addEventListener('seeked', () => { showState(); syncLyrics(); });
+      song.addEventListener('ended', () => { showState(); setSinging(null); });
       // 音檔載不到（離線又還沒快取）就把播放列和「♪ 時間」藏起來。
-      song.addEventListener('error', () => { songBar.hidden = true; document.body.classList.add('no-song'); });
+      song.addEventListener('error', () => { songBar.hidden = true; songFloat.hidden = true; document.body.classList.add('no-song'); });
     }
 
     initSong();
