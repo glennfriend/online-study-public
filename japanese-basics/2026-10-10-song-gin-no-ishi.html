@@ -921,15 +921,18 @@
     let holdUntil = 0;        // 使用者自己捲畫面時，暫停跟隨到這個時間
     let touching = false;
     const lineBottomEdge = () => innerHeight - (songFloat.hidden ? 0 : songFloat.offsetHeight + 16) - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 16;
-    // 讓這一行停在畫面中間偏上（和原本一行一行跳的位置一樣）時，頁面要捲到的 scrollY。
+    // 這一行開唱時頁面要捲到的 scrollY：行的上緣放在可視範圍約 45% 的高度（行太高放不下就往上提，讓整行留在畫面裡）。
+    // 唱的過程中這一行會往上移一整行的高度；從 45% 開始移，唱完時整行通常還在畫面上半部，下一行也已經在下方等著。
     function lineScrollY(el) {
       const r = el.getBoundingClientRect();
-      return r.top + window.scrollY - Math.max(16, (lineBottomEdge() - r.height) / 2.4);
+      const bottom = lineBottomEdge();
+      return r.top + window.scrollY - Math.max(16, Math.min(bottom * 0.45, bottom - r.height));
     }
     let introFrom = null;     // 前奏結束前開始往第一行捲時，畫面原本的位置
     const ease = (p) => p * p * (3 - 2 * p);
     function followTarget() {
-      const now = song.currentTime + LEAD;
+      // 捲動不提早：下一行在唱目前這一行時就已經在畫面下方看得到，提早反而會把正在唱的行推上去。
+      const now = song.currentTime;
       const first = songLines[0];
       if (now < first.t) {
         // 前奏：停著不動，開唱前 GLIDE 秒才從目前的位置慢慢捲到第一行。
