@@ -883,6 +883,8 @@
       el.classList.add('singing');
       // 切到別的分類時歌詞是藏起來的：繼續播歌，但不捲動。
       if (!el.offsetParent) return;
+      // 一般情況由 followFrame 跟著時間慢慢捲；只有「減少動態效果」時才一行一行跳。
+      if (!reducedMotion()) return;
       // 唱到的那一行不在畫面上（或被右下角的暫停鈕、底部的語音播放條蓋住）就捲過去。
       const r = el.getBoundingClientRect();
       const bottom = innerHeight - (songFloat.hidden ? 0 : songFloat.offsetHeight + 16) - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 16;
@@ -909,7 +911,85 @@
       songTime.textContent = mmss(song.currentTime) + ' / ' + (song.duration ? mmss(song.duration) : '–:––');
       if (!seeking) songSeek.value = String(song.currentTime);
     }
+    // ---- 跟著時間慢慢捲 ----
+    // 每一行在它開唱（提早 LEAD 秒）時要捲到的位置當成關鍵點，兩行之間依時間慢慢捲過去，
+    // 不再一次跳一大段。下一行要隔很久才唱（間奏）時先停著，只在開唱前最後 GLIDE 秒才移過去。
+    const GLIDE = 6;
+    let followRaf = 0;
+    let lastFrame = 0;
+    let curY = null;          // 我們自己設的捲動位置（小數，避免每格捨入後停住）
+    let holdUntil = 0;        // 使用者自己捲畫面時，暫停跟隨到這個時間
+    let touching = false;
+    const lineBottomEdge = () => innerHeight - (songFloat.hidden ? 0 : songFloat.offsetHeight + 16) - (miniEl.hidden ? 0 : miniEl.offsetHeight) - 16;
+    // 讓這一行停在畫面中間偏上（和原本一行一行跳的位置一樣）時，頁面要捲到的 scrollY。
+    function lineScrollY(el) {
+      const r = el.getBoundingClientRect();
+      return r.top + window.scrollY - Math.max(16, (lineBottomEdge() - r.height) / 2.4);
+    }
+    let introFrom = null;     // 前奏結束前開始往第一行捲時，畫面原本的位置
+    const ease = (p) => p * p * (3 - 2 * p);
+    function followTarget() {
+      const now = song.currentTime + LEAD;
+      const first = songLines[0];
+      if (now < first.t) {
+        // 前奏：停著不動，開唱前 GLIDE 秒才從目前的位置慢慢捲到第一行。
+        if (now < first.t - GLIDE) { introFrom = null; return null; }
+        if (introFrom === null) introFrom = curY ?? window.scrollY;
+        const p = (now - (first.t - GLIDE)) / GLIDE;
+        return introFrom + (lineScrollY(first.el) - introFrom) * ease(p);
+      }
+      introFrom = null;
+      let i = 0;
+      while (i + 1 < songLines.length && songLines[i + 1].t <= now) i++;
+      const lineA = songLines[i];
+      const lineB = songLines[i + 1];
+      const yA = lineScrollY(lineA.el);
+      if (!lineB) return yA;
+      // 間奏（標了 e）或隔超過 10 秒才先停住；一般相鄰的兩行，整段時間都在等速往下移。
+      const pause = lineA.e != null || lineB.t - lineA.t > 10;
+      const start = pause ? Math.max(lineA.t, lineB.t - GLIDE) : lineA.t;
+      if (now <= start) return yA;
+      const p = Math.min(1, (now - start) / (lineB.t - start));
+      // 連續唱的行用等速（看起來一直穩定往下）；間奏後的移動用緩入緩出，起步不突兀。
+      return yA + (lineScrollY(lineB.el) - yA) * (start > lineA.t ? ease(p) : p);
+    }
+    function followFrame(ts) {
+      followRaf = requestAnimationFrame(followFrame);
+      const dt = lastFrame ? Math.min(100, ts - lastFrame) : 16;
+      lastFrame = ts;
+      if (!songLines[0].el.offsetParent || reducedMotion()) { curY = null; return; }
+      // 使用者自己捲了（拖捲軸等沒有觸控事件的情況）：畫面和我們上次設的位置差很多。
+      if (curY !== null && Math.abs(window.scrollY - curY) > 40) { holdUntil = performance.now() + 3000; curY = null; }
+      if (touching || performance.now() < holdUntil) { curY = null; return; }
+      let target = followTarget();
+      if (target === null) { curY = null; return; }
+      const maxY = document.documentElement.scrollHeight - innerHeight;
+      target = Math.max(0, Math.min(maxY, target));
+      if (curY === null) curY = window.scrollY;
+      const diff = target - curY;
+      if (Math.abs(diff) > innerHeight * 1.5) curY = target;            // 太遠（拖了播放位置）就直接跳過去
+      else curY += diff * (1 - Math.exp(-dt / 120));                   // 其餘平順地追上目標
+      if (Math.abs(window.scrollY - curY) >= 0.5) window.scrollTo(0, curY);
+    }
+    function startFollow() {
+      if (followRaf) return;
+      curY = null; lastFrame = 0;
+      followRaf = requestAnimationFrame(followFrame);
+    }
+    function stopFollow() {
+      cancelAnimationFrame(followRaf);
+      followRaf = 0; curY = null; introFrom = null;
+    }
+    // 手指或滑鼠滾輪動了畫面，就讓給使用者，停手幾秒後再接著跟。
+    const userScroll = () => { holdUntil = performance.now() + 3000; curY = null; };
+    window.addEventListener('touchstart', () => { touching = true; curY = null; }, { passive: true });
+    window.addEventListener('touchend', () => { touching = false; userScroll(); }, { passive: true });
+    window.addEventListener('touchcancel', () => { touching = false; userScroll(); }, { passive: true });
+    window.addEventListener('wheel', userScroll, { passive: true });
+    window.addEventListener('keydown', (e) => { if (['ArrowUp', 'ArrowDown', 'PageUp', 'PageDown', 'Home', 'End', ' '].includes(e.key) && e.target === document.body) userScroll(); });
+
     function songFrom(t) {
+      holdUntil = 0;
       stopQueue();
       song.currentTime = t;
       song.play().catch(() => {});
@@ -921,7 +1001,7 @@
     let seeking = false;
     function initSong() {
       if (!songLines.length) return;
-      const toggle = () => { if (song.paused) { stopQueue(); song.play().catch(() => {}); } else song.pause(); };
+      const toggle = () => { if (song.paused) { stopQueue(); holdUntil = 0; song.play().catch(() => {}); } else song.pause(); };
       songPlay.addEventListener('click', toggle);
       songFloat.addEventListener('click', toggle);
       // 按鈕文字：播放中＝暫停；停在半路＝繼續；還沒播或播完＝播放歌曲。右下角的鈕只在播到一半時出現。
@@ -941,10 +1021,11 @@
         showState();
         clearInterval(syncTimer);
         syncTimer = setInterval(syncLyrics, 100);
+        startFollow();
       });
-      song.addEventListener('pause', () => { showState(); clearInterval(syncTimer); syncLyrics(); });
-      song.addEventListener('seeked', () => { showState(); syncLyrics(); });
-      song.addEventListener('ended', () => { showState(); setSinging(null); });
+      song.addEventListener('pause', () => { showState(); clearInterval(syncTimer); stopFollow(); syncLyrics(); });
+      song.addEventListener('seeked', () => { showState(); holdUntil = 0; curY = null; syncLyrics(); });
+      song.addEventListener('ended', () => { showState(); stopFollow(); setSinging(null); });
       // 音檔載不到（離線又還沒快取）就把播放列和「♪ 時間」藏起來。
       song.addEventListener('error', () => { songBar.hidden = true; songFloat.hidden = true; document.body.classList.add('no-song'); });
     }
