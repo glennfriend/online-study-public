@@ -1,0 +1,1019 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>肌肉解剖與動作｜人體與復健</title>
+  <style>
+    :root {
+      --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc;
+      --skin: #f6e9de; --skin-line: #c9b3a1;
+      --muscle: #e8c3b2; --muscle-line: #b98571; --deep: #dcae9b; --bone: #f2ead6; --bone-line: #a89a78; --tendon: #efe4c8;
+      --pale: #f1e4db; --pale-line: #d8c2b5;
+      --sel: #e07b22;
+      --p: #c2410c; --s: #f4a259; --w: #7a5bc0; --x: #3b82b6;
+      --t: #23695c; --u: #8cc4a8; --i: #c0392b;
+    }
+    * { box-sizing: border-box; }
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.7; }
+    button { font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible, a:focus-visible { outline: 3px solid #d48b38; outline-offset: 2px; }
+    main { width: min(1160px, calc(100% - 32px)); margin: 20px auto 56px; }
+    .back { display: inline-block; padding: 6px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    .back:hover { color: var(--green); }
+    h1 { margin: 0; font-size: clamp(26px, 4vw, 40px); letter-spacing: .03em; line-height: 1.3; }
+    .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; }
+    .disclaimer { margin: 10px 0 0; padding: 8px 12px; border-left: 3px solid #d9b36c; background: #fbf4e3; color: #6b5a33; font-size: 13.5px; border-radius: 0 8px 8px 0; }
+
+    .tabs { display: flex; gap: 6px; margin: 18px 0 14px; border-bottom: 2px solid var(--line); }
+    .tabs button { border: 0; background: none; color: var(--muted); padding: 8px 14px 10px; font-size: 16px; font-weight: 600; border-bottom: 3px solid transparent; margin-bottom: -2px; }
+    .tabs button[aria-selected="true"] { color: var(--green); border-bottom-color: var(--green); }
+
+    .layout { display: grid; gap: 18px; }
+    @media (min-width: 900px) {
+      .layout { grid-template-columns: minmax(360px, 460px) 1fr; align-items: start; }
+      .figure-wrap { position: sticky; top: 12px; }
+    }
+    .figure-wrap { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 10px 10px 8px; }
+    .figs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+    .figs figure { margin: 0; text-align: center; }
+    .figs figcaption { font-size: 13px; color: var(--muted); margin-top: -4px; }
+    svg.body { width: 100%; height: auto; display: block; }
+    svg.body .r { cursor: pointer; stroke-width: .6; transition: fill .15s; }
+    svg.body .r:hover { filter: brightness(.93); }
+    svg.body .deco { fill: none; stroke: #00000026; stroke-width: .5; pointer-events: none; }
+    svg.body .ghost { opacity: .45; }
+    .layers { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; }
+    .layers button, .pill { border: 1px solid #ced8cc; background: var(--paper); color: var(--ink); border-radius: 999px; padding: 4px 12px; font-size: 14px; }
+    .layers[hidden] { display: none; }
+    .layers button[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 12px; justify-content: center; margin-top: 8px; font-size: 13px; color: var(--muted); }
+    .legend i { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 4px; vertical-align: -1px; }
+    .legend i.dash { background: repeating-linear-gradient(45deg, var(--w) 0 2px, #fff 2px 4px) !important; }
+    .hint { text-align: center; font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+
+    .panel { min-width: 0; }
+    .group { margin: 0 0 12px; }
+    .group h3 { margin: 0 0 6px; font-size: 14px; color: var(--muted); font-weight: 600; letter-spacing: .05em; }
+    .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+    .chip { border: 1px solid var(--line); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 3px 11px; font-size: 14px; line-height: 1.6; }
+    .chip:hover { border-color: #a9c2ad; }
+    .chip[aria-pressed="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+    .chip small { color: var(--muted); margin-left: 3px; font-size: 11.5px; }
+    .chip[aria-pressed="true"] small { color: #ffffffc0; }
+    .chip.c-p { border-color: var(--p); background: #fbe3d6; } .chip.c-s { border-color: var(--s); background: #fdf0e2; }
+    .chip.c-w { border-color: var(--w); background: #efeafa; } .chip.c-x { border-color: var(--x); background: #e4f0f8; }
+    .chip.c-t { border-color: var(--t); background: #dcefe6; } .chip.c-u { border-color: var(--u); background: #eef7f2; }
+    .chip.c-i { border-color: var(--i); background: #f9e1dd; }
+
+    .card { background: var(--paper); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; margin-top: 14px; }
+    .card h2 { margin: 0; font-size: 22px; line-height: 1.4; }
+    .card h2 .en { font-size: 14px; color: var(--muted); font-weight: 500; margin-left: 8px; }
+    .badge { display: inline-block; font-size: 12px; padding: 0 8px; border-radius: 999px; background: #e3efe9; color: var(--green); font-weight: 600; margin-left: 6px; vertical-align: 3px; }
+    .card dl { margin: 10px 0 0; }
+    .card dt { font-weight: 700; font-size: 14px; color: var(--green); margin-top: 10px; }
+    .card dd { margin: 2px 0 0; }
+    .card ul { margin: 4px 0 0; padding-left: 1.2em; }
+    .card li { margin: 2px 0; }
+    .sub { font-size: 14px; color: var(--muted); }
+    .note { margin-top: 12px; padding: 8px 12px; background: #f2f6ef; border-radius: 8px; font-size: 14px; }
+    .empty { color: var(--muted); padding: 18px 4px; }
+
+    .problems { display: grid; gap: 10px; margin-top: 8px; }
+    .problem { text-align: left; border: 1px solid var(--line); background: #fff; border-radius: 12px; padding: 10px 14px; color: var(--ink); width: 100%; }
+    .problem:hover { border-color: #e3a59b; }
+    .problem[aria-pressed="true"] { border-color: var(--i); box-shadow: 0 0 0 3px #c0392b22; background: #fff8f6; }
+    .problem .bad { font-weight: 700; }
+    .problem .hurt { color: var(--i); font-weight: 700; }
+    .problem p { margin: 4px 0 0; font-size: 14.5px; }
+    .problem .fix { color: var(--green); }
+    .peek { margin-top: 10px; padding: 10px 12px; border: 1px dashed #b9cdb9; border-radius: 10px; background: #fbfdf9; font-size: 14.5px; }
+    .peek b { color: var(--green); }
+    .src { margin-top: 28px; font-size: 13px; color: var(--muted); }
+    .src a { color: var(--muted); }
+    [hidden] { display: none !important; }
+    .lead, .sub, .hint, .src, .disclaimer { font-size: .95rem; }
+    .figure-modes { display: flex; gap: 8px; margin-bottom: 12px; }
+    .figure-modes button, .atlas-tools button, .atlas-tools a { border: 1px solid var(--line); border-radius: 8px; background: #fff; padding: 6px 12px; color: var(--green); font: inherit; text-decoration: none; }
+    .figure-modes button[aria-pressed="true"] { background: var(--green); color: #fff; }
+    .atlas-label { display: block; font-weight: 650; }
+    #atlas-select { display: block; width: 100%; font: inherit; color: var(--ink); padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; margin: 5px 0 10px; }
+    .atlas-scroll { overflow: auto; max-height: 64vh; background: #fff; border: 1px solid var(--line); border-radius: 8px; }
+    .atlas-scroll img { display: block; width: 100%; height: auto; max-width: none; }
+    .atlas-scroll.zoomed img { width: 220%; }
+    .atlas-tools { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+    .atlas-credit { font-size: .875rem; color: var(--muted); margin: 8px 0 0; }
+    .atlas-credit a, .evidence a, .sources a { color: var(--green); text-underline-offset: 3px; }
+    .atlas-note { font-size: .95rem; margin: 8px 0; }
+    .evidence { border: 1px solid #bad0c3; background: #edf5f0; border-radius: 12px; padding: 12px 16px; margin-top: 16px; }
+    .evidence summary { cursor: pointer; font-weight: 650; color: var(--green); }
+    .evidence p { margin: 8px 0; }
+    .search-label { display: block; font-weight: 650; margin: 0 0 6px; }
+    #anatomy-search { width: 100%; font: inherit; border: 1px solid #b8cbbb; border-radius: 8px; padding: 8px 12px; margin-bottom: 14px; background: #fff; color: var(--ink); }
+    .knowledge { border-top: 1px solid var(--line); margin-top: 12px; padding-top: 4px; }
+    .knowledge .sources { margin-top: 16px; font-size: .9rem; }
+    .knowledge .sources ul { margin-bottom: 4px; }
+    .member-list { font-size: .95rem; }
+    .card .en { overflow-wrap: anywhere; }
+    .card { scroll-margin-top: 16px; }
+    .chip small { font-size: .8rem; }
+    .figure-wrap > h2 { margin: 0 0 8px; font-size: 1rem; }
+    @media (max-width: 599px) { main { width: calc(100% - 24px); } .card { padding: 14px; } .atlas-scroll { max-height: 55vh; } }
+  </style>
+</head>
+<body>
+<main>
+  <a class="back" href="index.html">← 人體與復健</a>
+  <h1>肌肉解剖與動作</h1>
+  <p class="lead">從教材圖譜辨認形態，再核對肌肉的起點、止點、神經支配與作用。選擇肌肉名稱，連結構造與動作。</p>
+  <details class="evidence">
+    <summary>如何閱讀這份解剖教材與資料來源</summary>
+    <p>教材圖譜採用 OpenStax《Anatomy &amp; Physiology》歷史版本的開放授權圖，保留原始輪廓、走向與英文標籤。部分左右側是不同剝離深度，請依各小圖標示判讀。肌肉卡片以醫學院解剖表與專章資料整理，逐項附來源。</p>
+    <p>肌束走向、肌腹、肌腱及腱膜是不同構造；卡通化可以簡化細節，但需保留附著關係、相對位置與層次。宏觀肌束走向也與顯微鏡下的肌節橫紋不同。</p>
+    <p>起點／止點採常用解剖描述；閉鎖鏈動作中可由不同端固定。動作功能會隨關節角度、負荷與協同肌改變。神經欄列主要運動神經，未涵蓋所有神經根與解剖變異。</p>
+    <p>本頁涵蓋所列的主要肌肉，尚非完整解剖圖譜。公開資料核對日期：2026-11-26；尚未經解剖學教師逐項審訂。骨骼、傷害與復健區保留概略衛教內容，與肌肉解剖卡片的核對範圍不同。</p>
+  </details>
+  <p class="disclaimer">內容為一般衛教參考，不能取代醫師或物理治療師的評估。實際的動作、角度、次數與能不能做，請依你的治療師指示；做的時候若疼痛加劇請停止。</p>
+
+  <div class="tabs" role="tablist">
+    <button role="tab" data-tab="explore" aria-selected="true">認識部位</button>
+    <button role="tab" data-tab="exercise" aria-selected="false">復健運動</button>
+    <button role="tab" data-tab="sport" aria-selected="false">運動與傷害</button>
+  </div>
+
+  <div class="layout">
+    <div class="figure-wrap">
+      <h2>構造參照</h2>
+      <div class="figure-modes" id="figure-modes" aria-label="圖像用途">
+        <button data-figure-mode="atlas" aria-pressed="true">教材圖譜</button>
+        <button data-figure-mode="map" aria-pressed="false">部位導覽</button>
+      </div>
+      <div id="atlas-view"></div>
+      <div id="map-view" hidden>
+      <div class="figs">
+        <figure><svg class="body" id="fig-front" viewBox="0 0 200 440" role="img" aria-label="人體正面"></svg><figcaption>正面</figcaption></figure>
+        <figure><svg class="body" id="fig-back" viewBox="0 0 200 440" role="img" aria-label="人體背面"></svg><figcaption>背面</figcaption></figure>
+      </div>
+      <div class="layers" id="layers">
+        <button data-layer="s" aria-pressed="true">淺層肌肉</button>
+        <button data-layer="d" aria-pressed="false">深部定位</button>
+        <button data-layer="b" aria-pressed="false">骨骼・韌帶</button>
+      </div>
+      <div class="legend" id="legend"></div>
+      <p class="hint" id="hint">部位導覽是簡化的定位投影；精確形態、附著與遮蓋關係請對照教材圖譜。</p>
+      </div>
+    </div>
+    <div class="panel" id="panel"></div>
+  </div>
+
+  <p class="src">肌肉解剖資料：<a href="https://medicine.uams.edu/neuroscience/education/medical-school-courses/human-structure-module/anatomy-tables/muscle-tables/" target="_blank" rel="noopener noreferrer">UAMS 醫學院</a>、<a href="https://anatomy.ttuhscep.edu/anatomytables/muscles_alpha.html" target="_blank" rel="noopener noreferrer">TTUHSC El Paso</a> 與各卡片列出的 NCBI Bookshelf 專章。圖譜逐張標示作者、原始出處與授權；本機圖檔包含 Wikimedia 等比例縮圖，保留原始構造與標籤、未重繪。圖檔可離線閱讀，外部來源連結需連線。</p>
+</main>
+
+<script src="anatomy-data.js"></script>
+<script>
+// ───────────────────────── 人體結構 ─────────────────────────
+// 座標：viewBox 200×440，正面與背面各一張。圖的中線 x=100，只畫右半邊（x≥100），程式自動鏡射到左半邊；
+// mid:true 的形狀在中線上（胸骨、脊椎），不鏡射。
+// 每個結構依圖層放形狀：s 淺層肌肉、d 深層肌肉、b 骨骼・韌帶；f 正面、k 背面。陣列順序就是繪圖順序（後畫的蓋在上面）。
+const STRUCTS = [
+  // ── 骨骼 ──
+  { id: 'ribs', name: '肋骨', en: 'Ribs', kind: '骨骼', group: '骨骼',
+    where: '胸廓兩側共 12 對，後面接胸椎，前面上 7 對經各自的肋軟骨直接接到胸骨，第 8–10 對的肋軟骨先接到上一條肋軟骨、再間接連到胸骨（第 11、12 對是浮肋）。',
+    does: '保護心肺，呼吸時跟著起伏；前鋸肌、腹外斜肌、胸小肌等都附著在肋骨上。',
+    tips: '肩胛骨是「浮」在背面肋骨上滑動的，肩胛胸廓關節沒有真正的關節面，要靠肌肉把它穩住。',
+    b: { f: ['M103,88 C118,88 128,96 130,110 C132,126 130,144 124,156 C118,160 110,156 103,150 Z'],
+         k: ['M103,88 C118,88 128,96 130,110 C132,126 130,144 124,156 C118,160 110,156 103,150 Z'] },
+    deco: { b: { f: ['M103,100 C114,99 124,103 128,110', 'M103,112 C115,111 126,116 130,124', 'M103,124 C115,124 126,130 129,138', 'M103,136 C114,137 122,142 126,148'],
+                 k: ['M103,100 C114,99 124,103 128,110', 'M103,112 C115,111 126,116 130,124', 'M103,124 C115,124 126,130 129,138', 'M103,136 C114,137 122,142 126,148'] } } },
+  { id: 'sternum', name: '胸骨', en: 'Sternum', kind: '骨骼', group: '骨骼', mid: true,
+    where: '胸口正中央的扁平骨，上端有胸骨柄（兩側接鎖骨），下端是劍突。',
+    does: '連接鎖骨與肋骨，構成胸廓前面；胸大肌、胸鎖乳突肌、腹直肌都有附著在胸骨。',
+    tips: '胸鎖關節是整隻手臂和軀幹唯一的骨頭接點。',
+    b: { f: ['M97,84 L103,84 L103,126 L100,134 L97,126 Z'] } },
+  { id: 'clavicle', name: '鎖骨', en: 'Clavicle', kind: '骨骼', group: '骨骼',
+    where: '肩膀前面、脖子下方摸得到的橫向長骨，內側接胸骨，外側接肩胛骨的肩峰。',
+    does: '像撐竿一樣把肩膀撐在身體外側；手臂上舉時鎖骨也會跟著上抬、旋轉。',
+    tips: '跌倒手撐地或肩膀著地常見骨折的部位；肩鎖關節（AC joint）就在鎖骨外端。',
+    b: { f: ['M102,82 C114,84 126,83 143,87 L143,90 C126,87 114,88 102,86 Z'] } },
+  { id: 'scapula', name: '肩胛骨', en: 'Scapula', kind: '骨骼', group: '骨骼',
+    where: '背部上方兩側的三角形扁骨，大約在第 2 到第 7 肋骨的高度，貼在肋骨後面。後面有一條橫的骨脊叫「肩胛棘」，往外延伸成肩峰。',
+    does: '關節盂和肱骨頭組成盂肱關節。肩胛骨能上提／下壓、前伸／後收、上旋／下旋及前後傾；手臂上舉時會與肱骨協調運動。常見的 2:1 肩肱節律是概略描述，不是全程固定比例。',
+    tips: '肩胛骨的動作控制是肩膀復健的一環。翼狀肩胛可能涉及前鋸肌、斜方肌等不同肌肉或神經，不能只依外觀判定原因。',
+    b: { k: ['M121,93 C128,91 136,90 142,92 L144,100 C142,106 141,110 140,114 C136,124 130,136 126,148 L123,146 C122,130 121,112 121,93 Z'] },
+    deco: { b: { k: ['M121,104 L147,92'] } } },
+  { id: 'acromion', name: '肩峰', en: 'Acromion', kind: '骨骼', group: '骨骼',
+    where: '肩胛棘往外延伸到肩膀最頂端的骨突，摸肩膀最外上方硬硬的那一塊就是。',
+    does: '和鎖骨組成肩鎖關節；三角肌中束從這裡出發。肩峰下方的空間（肩峰下空間）有棘上肌肌腱和滑液囊通過。',
+    tips: '手臂上舉時如果肱骨頭往上頂、肩胛骨沒有好好上旋，肩峰下空間的組織可能較容易受刺激，就是常聽到的「肩夾擠」（現在也常稱為「肩峰下疼痛症候群」）。',
+    b: { f: ['M138,86 L147,88 L148,93 L139,91 Z'], k: ['M140,88 L148,89 L149,94 L141,94 Z'] } },
+  { id: 'humerus', name: '肱骨', en: 'Humerus', kind: '骨骼', group: '骨骼',
+    where: '上臂的長骨，上端圓圓的肱骨頭接在肩胛骨的關節盂，下端接前臂組成手肘。',
+    does: '肩關節（盂肱關節）是球窩關節：球大、窩淺，所以活動度最大，但也最需要旋轉肌袖把肱骨頭穩在關節盂裡。',
+    tips: '肱骨頭上的大結節是棘上肌、棘下肌、小圓肌的附著處；小結節是肩胛下肌的附著處。',
+    b: { f: ['M137,96 C141,93 146,94 147,99 C148,120 150,148 152,168 L147,170 C144,148 142,122 140,104 C137,103 136,99 137,96 Z'],
+         k: ['M137,96 C141,93 146,94 147,99 C148,120 150,148 152,168 L147,170 C144,148 142,122 140,104 C137,103 136,99 137,96 Z'] } },
+  { id: 'forearm-bones', name: '橈骨・尺骨', en: 'Radius & Ulna', kind: '骨骼', group: '骨骼',
+    where: '前臂的兩根骨頭：大拇指側是橈骨，小指側是尺骨。',
+    does: '橈骨繞著尺骨轉動，讓手掌可以翻上（旋後）、翻下（旋前）。',
+    tips: '肱骨外上髁（手肘外側）是伸腕肌群的共同起點，網球肘痛的位置就在這附近；內上髁是屈腕肌群的起點（高爾夫球肘）。',
+    b: { f: ['M147,174 L153,173 C157,190 160,206 161,224 L156,225 C153,206 150,190 147,174 Z'],
+         k: ['M147,174 L153,173 C157,190 160,206 161,224 L156,225 C153,206 150,190 147,174 Z'] } },
+  { id: 'cervical', name: '頸椎', en: 'Cervical spine (C1–C7)', kind: '骨骼', group: '骨骼', mid: true,
+    where: '脖子的 7 節脊椎（C1–C7），低頭時後頸最突出的那一節通常是 C7。',
+    does: '支撐頭部並讓頭轉動、點頭、側彎；正常有往前凸的弧度（頸椎前凸）。',
+    tips: '長時間低頭、頭往前伸會增加頸椎與後頸肌肉的負擔。',
+    b: { k: ['M98,58 L102,58 L102,84 L98,84 Z'] },
+    deco: { b: { k: ['M98,64 L102,64', 'M98,70 L102,70', 'M98,76 L102,76'] } } },
+  { id: 'thoracic', name: '胸椎', en: 'Thoracic spine (T1–T12)', kind: '骨骼', group: '骨骼', mid: true,
+    where: '背部中段的 12 節脊椎（T1–T12），每一節都接一對肋骨。',
+    does: '主要負責旋轉，正常有往後凸的弧度（胸椎後凸）。',
+    tips: '胸椎太僵硬、駝背時，手臂要舉高會比較困難，肩膀也比較容易代償。',
+    b: { k: ['M98,86 L102,86 L102,170 L98,170 Z'] },
+    deco: { b: { k: ['M98,96 L102,96', 'M98,107 L102,107', 'M98,118 L102,118', 'M98,129 L102,129', 'M98,140 L102,140', 'M98,151 L102,151', 'M98,162 L102,162'] } } },
+  { id: 'lumbar', name: '腰椎', en: 'Lumbar spine (L1–L5)', kind: '骨骼', group: '骨骼', mid: true,
+    where: '下背的 5 節脊椎（L1–L5），是最粗、承重最多的脊椎。',
+    does: '主要負責彎腰、後仰；正常有往前凸的弧度（腰椎前凸）。',
+    tips: '下背痛最常見的部位。搬重物時腰椎反覆彎曲＋負重，會增加椎間盤和下背肌肉的負擔。',
+    b: { k: ['M97.5,172 L102.5,172 L102.5,208 L97.5,208 Z'] },
+    deco: { b: { k: ['M97.5,179 L102.5,179', 'M97.5,186 L102.5,186', 'M97.5,193 L102.5,193', 'M97.5,200 L102.5,200'] } } },
+  { id: 'pelvis', name: '骨盆（髂骨）', en: 'Pelvis / Ilium', kind: '骨骼', group: '骨骼',
+    where: '腰下方像臉盆的骨頭，由兩側的髖骨（髂骨、坐骨、恥骨）和後面的薦骨、尾骨組成。叉腰時摸到的骨頭邊緣是髂嵴，前面突出的是髂前上棘（ASIS）。',
+    does: '把上半身的重量傳到兩腳，臀肌、髂腰肌、腹肌、大腿肌都附著在骨盆上。',
+    tips: '「骨盆前傾／後傾」是指骨盆往前或往後轉，會連動腰椎的弧度。單腳站時，抬起那一側的骨盆往下掉，通常代表「支撐腳那一側」的臀中肌控制不足。',
+    b: { f: ['M104,184 C112,178 126,178 133,184 C137,190 136,196 133,200 L128,206 C127,212 125,216 122,218 L114,224 C108,226 104,226 100,226 L100,216 C104,214 108,210 110,206 C108,200 105,194 104,190 Z'],
+         k: ['M104,190 C112,184 124,182 132,186 C137,192 137,202 134,210 C128,216 120,220 112,222 L105,222 Z'] } },
+  { id: 'sacrum', name: '薦椎（薦骨）', en: 'Sacrum', kind: '骨骼', group: '骨骼', mid: true,
+    where: '腰椎下方、骨盆後面中間的倒三角形骨頭，由 5 節薦椎癒合而成。',
+    does: '和兩側髂骨組成薦髂關節，是脊椎和骨盆的連接點。',
+    tips: '臀大肌、梨狀肌、多裂肌都有附著在薦骨。',
+    b: { k: ['M95,210 L105,210 L102,232 L100,236 L98,232 Z'] } },
+  { id: 'femur', name: '股骨', en: 'Femur', kind: '骨骼', group: '骨骼',
+    where: '大腿骨，全身最長最粗的骨頭；上端股骨頭接骨盆（髖關節），外側突出的是大轉子，下端接脛骨（膝關節）。',
+    does: '支撐體重；臀中肌、梨狀肌附著在大轉子，髂腰肌附著在小轉子。',
+    tips: '大轉子附近外側痛常和臀中肌肌腱或滑液囊有關。',
+    b: { f: ['M121,214 C125,212 129,212 132,216 C130,246 126,280 124,306 L118,308 C120,280 122,246 124,222 C121,222 120,218 121,214 Z'],
+         k: ['M121,214 C125,212 129,212 132,216 C130,246 126,280 124,306 L118,308 C120,280 122,246 124,222 C121,222 120,218 121,214 Z'] } },
+  { id: 'patella', name: '髕骨（膝蓋骨）', en: 'Patella', kind: '骨骼', group: '骨骼',
+    where: '膝蓋前面那塊可以推動的小骨頭，包在股四頭肌肌腱裡。',
+    does: '像滑輪一樣增加股四頭肌伸直膝蓋的力臂；屈膝時在股骨前面的溝槽裡上下滑動。',
+    tips: '「髕骨股骨疼痛症候群」（俗稱跑者膝）就是膝蓋骨周圍、後方的疼痛，上下樓梯、蹲、久坐後站起來特別明顯。',
+    s: { f: ['M118,309 C122,309 124,313 124,316 C124,320 121,323 118,323 C115,323 112,320 112,316 C112,312 115,309 118,309 Z'] },
+    b: { f: ['M118,309 C122,309 124,313 124,316 C124,320 121,323 118,323 C115,323 112,320 112,316 C112,312 115,309 118,309 Z'] } },
+  { id: 'tibia', name: '脛骨', en: 'Tibia', kind: '骨骼', group: '骨骼',
+    where: '小腿內側較粗的骨頭，小腿正前方摸得到的硬骨（脛骨前緣）就是它，內側面幾乎直接在皮膚下。',
+    does: '小腿主要的承重骨。',
+    tips: '「內側脛骨壓力症候群」（俗稱脛前痛）是沿著脛骨內側下段的痠痛；負荷太大還可能變成脛骨壓力性骨折。',
+    s: { f: ['M110,336 C113,335 116,336 117,338 C118,360 119,384 118,402 L112,402 C112,380 111,356 110,336 Z'] },
+    b: { f: ['M109,322 C114,320 120,320 124,323 C122,350 120,378 119,402 L111,404 C111,378 110,350 109,322 Z'],
+         k: ['M109,322 C114,320 120,320 124,323 C122,350 120,378 119,402 L111,404 C111,378 110,350 109,322 Z'] } },
+  { id: 'fibula', name: '腓骨', en: 'Fibula', kind: '骨骼', group: '骨骼',
+    where: '小腿外側較細的骨頭，下端是腳踝外側突出的外踝。',
+    does: '承重不多，主要提供肌肉附著（腓骨肌群）並組成踝關節外側。',
+    tips: '外踝前下方就是最常扭傷的前距腓韌帶。',
+    b: { f: ['M126,326 L129,326 C128,352 127,380 126,402 L123,402 C124,380 125,352 126,326 Z'],
+         k: ['M126,326 L129,326 C128,352 127,380 126,402 L123,402 C124,380 125,352 126,326 Z'] } },
+  { id: 'calcaneus', name: '跟骨', en: 'Calcaneus', kind: '骨骼', group: '骨骼',
+    where: '腳後跟的骨頭。',
+    does: '阿基里斯腱附著在跟骨後面，足底筋膜從跟骨底部往前延伸到腳趾。',
+    tips: '早上下床第一步腳跟底部刺痛，常見於足底筋膜炎。',
+    b: { k: ['M111,410 L121,410 L122,424 L110,424 Z'] } },
+  // ── 韌帶 ──
+  { id: 'acl', name: '前十字韌帶', en: 'Anterior cruciate ligament (ACL)', kind: '韌帶', group: '韌帶',
+    where: '在膝關節裡面，從股骨連到脛骨前方，和後十字韌帶交叉（圖中用虛線表示它在關節內部）。',
+    does: '防止脛骨相對股骨往前滑出去，也幫忙控制膝蓋的旋轉。',
+    tips: '常見於非接觸性受傷：急停、轉向、跳躍落地時膝蓋往內夾（膝外翻）加上旋轉。斷裂時常聽到「啪」一聲、很快腫起來。',
+    b: { f: ['M120,317 L123,319 L115,329 L112,327 Z'] }, dashed: true },
+  { id: 'knee-mcl', name: '膝內側副韌帶', en: 'Medial collateral ligament (MCL)', kind: '韌帶', group: '韌帶',
+    where: '膝蓋內側，從股骨內上髁連到脛骨內側。',
+    does: '防止膝蓋被往內壓（外翻）。',
+    tips: '膝蓋外側被撞、或膝蓋往內夾的動作，會拉扯到內側副韌帶。',
+    b: { f: ['M105,308 L109,308 L110,334 L106,334 Z'] } },
+  { id: 'ankle-lat-lig', name: '踝外側韌帶', en: 'Lateral ankle ligaments (ATFL…)', kind: '韌帶', group: '韌帶',
+    where: '腳踝外側，外踝連到距骨、跟骨的幾條韌帶，最前面的是前距腓韌帶（ATFL）。',
+    does: '防止腳踝往內翻。',
+    tips: '腳踝扭傷最常見的是「內翻扭傷」，最先受傷的通常是前距腓韌帶。研究顯示扭傷後做平衡訓練可以減少再次扭傷，腓骨肌肌力訓練也常一起做。',
+    b: { f: ['M123,402 L129,404 L129,410 L123,410 Z'] } },
+
+  // ── 肌肉（順序＝繪圖順序）──
+  { id: 'erector', name: '豎脊肌', en: 'Erector spinae', kind: '肌肉', group: '軀幹・核心',
+    s: { k: ['M101,150 L111,148 C112,170 112,190 112,206 L102,214 L101,214 Z'] },
+    d: { k: ['M101,86 L109,86 C111,120 112,170 112,206 L103,218 L101,218 Z'] } },
+  { id: 'multifidus', name: '多裂肌', en: 'Multifidus', kind: '肌肉', group: '軀幹・核心',
+    d: { k: ['M100.5,160 L105,160 L105.5,214 L100.5,218 Z'] } },
+  { id: 'quadratus', name: '腰方肌', en: 'Quadratus lumborum', kind: '肌肉', group: '軀幹・核心',
+    d: { k: ['M111,172 C116,172 122,174 126,176 L128,198 C122,198 116,200 112,202 Z'] } },
+  { id: 'lats', name: '闊背肌', en: 'Latissimus dorsi', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M112,140 C118,138 126,138 132,140 C136,136 140,132 144,128 L146,132 C142,140 136,150 132,160 C130,174 130,188 132,200 C124,204 116,206 111,206 C112,184 112,160 112,140 Z'] } },
+  { id: 'triceps', name: '肱三頭肌', en: 'Triceps brachii', kind: '肌肉', group: '手臂',
+    s: { k: ['M138,112 C142,108 146,110 150,116 C152,126 153,140 153,152 C153,162 151,170 149,174 L143,174 C141,162 139,146 139,132 C138,124 138,118 138,112 Z'] } },
+  { id: 'biceps', name: '肱二頭肌', en: 'Biceps brachii', kind: '肌肉', group: '手臂',
+    s: { f: ['M139,114 C144,118 148,126 150,138 C151,150 150,162 148,172 L145,173 C143,162 141,150 140,138 C139,128 139,120 139,114 Z'] } },
+  { id: 'rhomboids', name: '菱形肌', en: 'Rhomboids', kind: '肌肉', group: '肩頸・上背',
+    d: { k: ['M101,84 C108,88 114,92 121,96 L123,138 C116,134 108,130 101,126 Z'] } },
+  { id: 'levator', name: '提肩胛肌', en: 'Levator scapulae', kind: '肌肉', group: '肩頸・上背',
+    d: { k: ['M105,56 C108,56 111,58 112,62 C116,74 120,86 124,94 L120,96 C116,86 110,72 105,62 Z'] } },
+  { id: 'supraspinatus', name: '棘上肌', en: 'Supraspinatus', kind: '肌肉', group: '肩頸・上背',
+    d: { k: ['M121,95 C128,92 136,90 144,90 L147,93 C140,96 130,100 121,103 Z'] } },
+  { id: 'infraspinatus', name: '棘下肌', en: 'Infraspinatus', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M120,108 C126,104 132,100 136,100 C138,108 140,116 140,124 C134,128 128,132 124,136 C122,126 121,116 120,108 Z'] },
+    d: { k: ['M121,107 C130,103 138,100 144,98 C142,108 139,116 136,122 C131,128 126,134 124,138 C122,128 121,118 121,107 Z'] } },
+  { id: 'teres-minor', name: '小圓肌', en: 'Teres minor', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M136,112 C138,116 140,120 141,125 L137,128 C136,123 135,118 136,112 Z'] },
+    d: { k: ['M136,122 C138,116 141,108 144,102 L146,106 C144,114 142,122 140,128 Z'] } },
+  { id: 'teres-major', name: '大圓肌', en: 'Teres major', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M124,138 C130,134 136,130 141,126 L145,130 C140,134 132,140 127,144 Z'] },
+    d: { k: ['M124,140 C130,136 138,130 145,126 L147,130 C141,136 132,144 126,148 Z'] } },
+  { id: 'subscapularis', name: '肩胛下肌', en: 'Subscapularis', kind: '肌肉', group: '肩頸・上背',
+    d: { f: ['M124,94 C130,94 136,98 138,104 C137,112 134,118 130,120 L124,118 C123,110 123,100 124,94 Z'] }, dashed: true },
+  { id: 'trap-lower', name: '斜方肌（下束）', en: 'Lower trapezius', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M100,116 C106,114 112,112 118,112 L121,104 C116,124 110,150 100,186 Z'] } },
+  { id: 'trap-middle', name: '斜方肌（中束）', en: 'Middle trapezius', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M100,82 C104,84 108,88 112,92 C120,92 130,92 140,92 L138,96 C130,98 124,102 120,106 L118,112 C112,112 106,114 100,116 Z'] } },
+  { id: 'trap-upper', name: '斜方肌（上束）', en: 'Upper trapezius', kind: '肌肉', group: '肩頸・上背',
+    s: { f: ['M109,66 C111,72 114,76 120,79 C128,82 136,85 142,88 L134,89 C124,87 115,84 110,80 Z'],
+         k: ['M100,50 C104,57 108,66 112,76 C122,80 134,84 144,88 L140,92 C130,92 120,92 112,92 C108,88 104,84 100,82 Z'] } },
+  { id: 'scm', name: '胸鎖乳突肌', en: 'Sternocleidomastoid (SCM)', kind: '肌肉', group: '肩頸・上背',
+    s: { f: ['M111,50 L115,54 C112,64 109,74 107,82 L101,83 C103,72 106,60 111,50 Z'] } },
+  { id: 'deep-neck-flexors', name: '頸深屈肌', en: 'Deep neck flexors', kind: '肌肉', group: '肩頸・上背',
+    d: { f: ['M100.5,60 L105,60 L105,82 L100.5,82 Z'] } },
+  { id: 'pec-minor', name: '胸小肌', en: 'Pectoralis minor', kind: '肌肉', group: '肩頸・上背',
+    d: { f: ['M116,108 C118,114 119,120 120,126 L124,124 C127,112 131,102 134,94 L131,93 C126,98 121,104 116,108 Z'] } },
+  { id: 'pec-major', name: '胸大肌', en: 'Pectoralis major', kind: '肌肉', group: '肩頸・上背',
+    s: { f: ['M101,86 C112,86 124,88 132,90 C134,98 137,106 140,114 C134,120 124,126 114,128 C108,129 103,128 101,126 Z'] } },
+  { id: 'serratus', name: '前鋸肌', en: 'Serratus anterior', kind: '肌肉', group: '肩頸・上背',
+    s: { f: ['M120,124 L130,121 L128,128 L131,130 L128,136 L130,139 L127,146 L121,146 L124,140 L121,136 L124,132 L120,128 Z'] } },
+  { id: 'transversus', name: '腹橫肌', en: 'Transversus abdominis', kind: '肌肉', group: '軀幹・核心',
+    d: { f: ['M102,138 C110,136 120,138 127,142 C128,158 129,172 130,184 C124,192 112,200 102,204 Z'] } },
+  { id: 'ext-oblique', name: '腹外斜肌', en: 'External oblique', kind: '肌肉', group: '軀幹・核心',
+    s: { f: ['M114,130 L121,130 L124,136 L121,140 L124,146 C126,154 127,164 128,176 C131,186 134,194 135,200 C128,204 120,208 114,208 C115,190 116,170 115,150 Z'] } },
+  { id: 'rectus-abd', name: '腹直肌', en: 'Rectus abdominis', kind: '肌肉', group: '軀幹・核心',
+    s: { f: ['M101,130 L113,130 C115,150 115,172 114,196 C112,206 108,214 101,218 Z'] },
+    deco: { s: { f: ['M101,146 L114,146', 'M101,162 L114.5,162', 'M101,178 L114.5,178'] } } },
+  { id: 'iliopsoas', name: '髂腰肌', en: 'Iliopsoas', kind: '肌肉', group: '髖・臀',
+    d: { f: ['M105,166 L111,166 C113,180 116,190 120,196 C124,190 128,186 131,190 C130,200 126,212 122,224 L120,236 L115,234 C114,222 111,206 107,194 C105,184 105,174 105,166 Z'] } },
+  { id: 'delt-ant', name: '三角肌（前束）', en: 'Anterior deltoid', kind: '肌肉', group: '肩頸・上背',
+    s: { f: ['M132,88 C138,87 142,88 144,90 C146,100 146,112 147,128 L145,132 C141,122 137,112 134,104 C132,98 131,92 132,88 Z'] } },
+  { id: 'delt-post', name: '三角肌（後束）', en: 'Posterior deltoid', kind: '肌肉', group: '肩頸・上背',
+    s: { k: ['M138,94 C142,92 146,90 148,90 C150,96 151,106 150,118 C149,126 147,132 146,136 C143,128 140,118 136,108 C134,102 135,97 138,94 Z'] } },
+  { id: 'delt-mid', name: '三角肌（中束）', en: 'Middle deltoid', kind: '肌肉', group: '肩頸・上背',
+    s: { f: ['M144,90 C151,92 155,100 155,112 C155,120 152,128 148,134 L147,128 C146,112 146,100 144,90 Z'],
+         k: ['M148,90 C153,93 155,101 155,112 C155,120 152,128 148,134 L146,136 C147,132 149,126 150,118 C151,106 150,96 148,90 Z'] } },
+  { id: 'forearm-flex', name: '前臂屈肌群', en: 'Wrist & finger flexors', kind: '肌肉', group: '手臂',
+    s: { f: ['M146,178 C152,176 158,176 160,180 C163,192 164,208 163,222 L153,224 C151,210 148,194 146,178 Z'] } },
+  { id: 'forearm-ext', name: '前臂伸肌群', en: 'Wrist & finger extensors', kind: '肌肉', group: '手臂',
+    s: { k: ['M146,178 C152,176 158,176 160,180 C163,192 165,208 164,222 L153,224 C151,210 148,194 146,178 Z'] } },
+  { id: 'glute-med', name: '臀中肌', en: 'Gluteus medius', kind: '肌肉', group: '髖・臀',
+    s: { k: ['M110,200 C118,194 128,192 134,196 C137,200 138,206 138,212 C130,210 120,210 112,212 Z'] },
+    d: { k: ['M110,198 C118,190 130,188 137,194 C139,200 139,206 138,212 C128,210 118,210 110,212 Z'] } },
+  { id: 'piriformis', name: '梨狀肌', en: 'Piriformis', kind: '肌肉', group: '髖・臀',
+    d: { k: ['M104,216 C114,214 126,212 136,212 L137,218 C126,220 114,222 105,224 Z'] } },
+  { id: 'glute-max', name: '臀大肌', en: 'Gluteus maximus', kind: '肌肉', group: '髖・臀',
+    s: { k: ['M101,214 C110,208 124,208 138,212 C140,222 139,234 136,244 C128,250 114,252 102,250 Z'] } },
+  { id: 'hamstrings', name: '膕旁肌（大腿後肌群）', en: 'Hamstrings', kind: '肌肉', group: '大腿・膝',
+    s: { k: ['M104,254 C114,252 126,252 136,250 C135,274 132,296 128,316 L122,318 L120,300 L116,318 L110,318 C108,300 106,276 104,254 Z'] },
+    deco: { s: { k: ['M120,256 L120,300'] } } },
+  { id: 'tfl', name: '闊筋膜張肌', en: 'Tensor fasciae latae (TFL)', kind: '肌肉', group: '髖・臀',
+    s: { f: ['M131,196 C135,198 138,204 138,212 L137,228 L132,226 C131,216 130,206 131,196 Z'] } },
+  { id: 'adductors', name: '內收肌群', en: 'Hip adductors', kind: '肌肉', group: '髖・臀',
+    s: { f: ['M101,230 C106,226 112,222 116,218 C114,236 112,254 108,270 C106,276 105,280 105,282 C104,268 103,250 101,230 Z'] } },
+  { id: 'quadriceps', name: '股四頭肌', en: 'Quadriceps', kind: '肌肉', group: '大腿・膝',
+    s: { f: ['M118,212 C124,222 128,240 128,260 C128,280 125,296 121,306 L115,306 C112,290 111,270 112,250 C113,234 115,222 118,212 Z',
+             'M128,232 C132,240 134,256 133,276 C132,292 129,304 125,310 L122,306 C126,294 128,278 128,260 C128,248 128,240 128,232 Z',
+             'M108,268 C113,276 116,290 116,306 L110,310 C107,302 106,290 106,278 Z'] } },
+  { id: 'it-band', name: '髂脛束', en: 'Iliotibial band (IT band)', kind: '筋膜', group: '大腿・膝',
+    where: '大腿外側一條很厚的筋膜帶（不是肌肉），上面接闊筋膜張肌和臀大肌，往下到膝蓋外側的脛骨（Gerdy 結節）。',
+    does: '穩定髖和膝的外側。',
+    tips: '「髂脛束症候群」是膝蓋外側痛，常見於跑者、自行車騎士。髂脛束很堅韌，本身幾乎拉不長，處理重點通常是調整訓練量和加強臀部肌力。',
+    s: { f: ['M133,228 L137,228 C136,260 133,292 131,316 L129,324 L126,322 L128,316 C130,292 132,260 133,228 Z'] } },
+  { id: 'patellar-tendon', name: '髕腱', en: 'Patellar tendon', kind: '肌腱', group: '大腿・膝',
+    where: '膝蓋骨下緣到脛骨粗隆之間的粗肌腱（因為連接兩塊骨頭，也叫髕韌帶）。',
+    does: '把股四頭肌的力量傳到小腿，伸直膝蓋。',
+    tips: '大量跳躍會造成「跳躍膝」（髕腱病變），痛點在膝蓋骨正下方。',
+    s: { f: ['M115,322 L121,322 L120,334 L116,334 Z'] } },
+  { id: 'tibialis-ant', name: '脛前肌', en: 'Tibialis anterior', kind: '肌肉', group: '小腿・足',
+    s: { f: ['M118,336 C122,340 125,352 125,366 C125,380 123,392 121,402 L118,402 C119,388 120,372 119,358 C118,350 117,342 118,336 Z'] } },
+  { id: 'peroneals', name: '腓骨肌群', en: 'Peroneals (Fibularis longus & brevis)', kind: '肌肉', group: '小腿・足',
+    s: { f: ['M126,336 C130,346 131,362 129,380 C128,388 126,396 124,402 L122,400 C125,388 127,372 127,356 Z'] } },
+  { id: 'soleus', name: '比目魚肌', en: 'Soleus', kind: '肌肉', group: '小腿・足',
+    s: { f: ['M107,364 L110,360 C111,372 111,384 109,394 L107,392 C106,382 106,372 107,364 Z'],
+         k: ['M107,360 C110,366 116,366 120,362 C123,366 127,364 130,356 C130,372 127,386 122,396 L111,396 C108,386 106,372 107,360 Z'] } },
+  { id: 'gastroc', name: '腓腸肌', en: 'Gastrocnemius', kind: '肌肉', group: '小腿・足',
+    s: { f: ['M106,330 C109,336 110,346 109,360 L106,364 C105,352 105,340 106,330 Z'],
+         k: ['M106,320 C110,318 116,318 119,322 C120,336 119,350 116,362 C112,366 108,364 106,358 C105,346 105,332 106,320 Z',
+             'M121,322 C125,318 130,320 132,326 C133,340 131,352 127,360 C124,362 121,360 120,356 C121,344 121,332 121,322 Z'] } },
+  { id: 'achilles', name: '阿基里斯腱（跟腱）', en: 'Achilles tendon', kind: '肌腱', group: '小腿・足',
+    where: '腳跟後面那條粗肌腱，是腓腸肌和比目魚肌共同的肌腱，附著在跟骨。',
+    does: '把小腿肌肉的力量傳到腳跟，讓你踮腳、跳躍、推蹬。',
+    tips: '人體最粗壯的肌腱，但突然增加跑量會造成肌腱病變；中年人打球突然起跳、蹬地，可能斷裂。',
+    s: { k: ['M112,394 L120,394 C119,402 119,408 119,414 L114,414 C113,408 113,402 112,394 Z'] } },
+  { id: 'plantar-fascia', name: '足底筋膜', en: 'Plantar fascia', kind: '筋膜', group: '小腿・足',
+    where: '腳底一層厚的筋膜，從腳跟（跟骨底部）呈扇形延伸到五根腳趾（圖中標在腳跟底部）。',
+    does: '撐住足弓，走路推蹬時繃緊，幫忙把力量傳出去。',
+    tips: '「足底筋膜炎」最典型的症狀是早上下床第一步、或久坐後站起來時腳跟底部刺痛，走一走會稍微緩解。',
+    s: { k: ['M110,420 L122,420 L121,427 L111,427 Z'] } },
+];
+// The map remains a locator. Deep structures are shown individually, not as a
+// fictional single dissection plane. Scientific content lives in ANATOMY.
+STRUCTS.push({ id: 'int-oblique', name: '腹內斜肌', en: 'Internal oblique', kind: '肌肉', group: '軀幹・核心',
+  d: { f: ['M115,144 C120,142 125,143 128,148 L132,193 C124,198 118,203 113,206 Z'] } });
+delete STRUCTS.find(st => st.id === 'erector').s;
+const soleus = STRUCTS.find(st => st.id === 'soleus');
+delete soleus.s.f;
+soleus.d = { k: ['M106,328 C113,324 126,324 131,331 C133,352 127,381 121,396 L112,396 C107,377 104,350 106,328 Z'] };
+for (const st of STRUCTS) {
+  const a = ANATOMY[st.id];
+  if (a) Object.assign(st, { where: a.relations, does: a.action, tips: a.distinction });
+}
+const BY_ID = Object.fromEntries(STRUCTS.map(s => [s.id, s]));
+const GROUPS = ['肩頸・上背', '手臂', '軀幹・核心', '髖・臀', '大腿・膝', '小腿・足', '骨骼', '韌帶'];
+
+// ───────────────────────── 復健運動 ─────────────────────────
+// p 主要用到、s 協同幫忙、w 需留意動作控制（參與不等於有錯）、x 伸展到。
+const EXERCISES = [
+  { id: 'scap-retract', group: '肩膀・肩胛', name: '坐姿夾背（肩胛後收）',
+    how: '坐直，雙手自然放在身側或大腿上。把兩側肩胛骨往後、往脊椎中間靠攏（有點往下），停 5–10 秒再慢慢放鬆。',
+    p: ['trap-middle', 'rhomboids'], s: ['trap-lower'], w: ['trap-upper'],
+    cues: ['想像把肩胛骨「往後、往下」收進後褲口袋，而不是往耳朵方向聳起來。', '脖子放鬆，下巴不要往前伸。', '動作來自肩胛骨，不是只把手肘往後拉。'],
+    mistakes: ['以明顯肩帶上提取代後收，或伴隨頸部不適。', '把腰往前凹來取代肩胛後收。'] },
+  { id: 'scaption', group: '肩膀・肩胛', name: '肩胛平面上舉（拇指朝上）',
+    how: '站或坐，手臂放在「肩胛平面」：介於正前方和正側面之間、往前大約 30°。拇指朝上，慢慢把手臂舉起（常見先到肩膀高度，或依治療師指定的高度與重量），再慢慢放下。',
+    p: ['supraspinatus', 'delt-ant', 'delt-mid'], s: ['serratus', 'trap-upper', 'trap-lower', 'infraspinatus', 'teres-minor'],
+    cues: ['可採拇指朝上的姿勢，依舒適度與治療目標調整。', '讓肩胛骨隨手臂自然上旋；上斜方肌會正常參與，不需要刻意壓住肩胛骨。', '在適合的活動範圍內做，放下時控制速度。'],
+    mistakes: ['以明顯頸部用力或身體後仰取代手臂上舉。', '重量超過可控制的範圍而甩動。'],
+    note: '肩胛骨本身就斜斜地貼在胸廓上（朝前大約 30–45°），在這個平面上舉時肱骨頭與關節盂對得比較正，一般認為比較不容易夾擠，所以常用在肩痛復健。' },
+  { id: 'retract-scaption', group: '肩膀・肩胛', name: '坐姿夾背 ＋ 肩胛平面上舉',
+    how: '先輕輕把肩胛骨往後收一點（約 2–3 成力，只要肩膀不往前塌、不聳起來就好），再做拇指朝上的肩胛平面上舉；手舉高時讓肩胛骨自然往上轉，慢慢放下後再放鬆。',
+    p: ['supraspinatus', 'delt-ant', 'delt-mid', 'serratus', 'trap-lower'], s: ['trap-upper', 'trap-middle', 'rhomboids', 'infraspinatus', 'teres-minor'],
+    cues: ['夾背的目的是讓肩胛骨先「穩住」，手舉起時肩膀不聳、不往前塌。', '不要把肩胛骨夾死不動：手臂舉高時肩胛骨本來就要跟著往上轉（上旋），夾得太用力反而會卡住。', '整個過程脖子放鬆、肋骨不要往前翻（不要挺腰）。'],
+    mistakes: ['手一舉起來，夾背就鬆掉、肩膀往上聳。', '夾太用力，手臂舉不高或肩膀卡卡的。'],
+    note: '這個組合把「肩胛控制（下斜方肌、前鋸肌負責讓肩胛骨上旋，中斜方肌、菱形肌輕輕穩住不往前塌）」和「手臂上舉（棘上肌、三角肌）」串在一起，練的是肩胛骨和手臂的協調，常用在肩夾擠、旋轉肌袖肌腱病變的復健。' },
+  { id: 'ext-rot', group: '肩膀・肩胛', name: '彈力帶肩外旋（手肘貼身）',
+    how: '彈力帶固定在身體內側（另一手那邊）、手肘高度。站著，手肘彎 90° 貼在身體側邊（可以在手臂和身體之間夾一條捲起來的毛巾），手握彈力帶，前臂從肚子前面往外轉開，再慢慢回來。',
+    p: ['infraspinatus', 'teres-minor'], s: ['delt-post', 'trap-middle', 'trap-lower'],
+    cues: ['手肘全程貼住身體，像門軸一樣只有前臂在轉。', '手腕打直，不要用手腕去勾。', '回來的速度要比出去更慢。'],
+    mistakes: ['手肘離開身體、整隻手臂往外甩。', '身體跟著轉。'] },
+  { id: 'int-rot', group: '肩膀・肩胛', name: '彈力帶肩內旋（手肘貼身）',
+    how: '彈力帶綁在外側，手肘彎 90° 貼在身體側邊，前臂從外側往肚子方向轉進來，再慢慢回去。',
+    p: ['subscapularis'], s: ['pec-major', 'lats', 'teres-major'],
+    cues: ['手肘貼住身體不動。', '肩膀不要往前捲。'],
+    mistakes: ['用身體轉動代替手臂內轉。'] },
+  { id: 'row', group: '肩膀・肩胛', name: '彈力帶划船',
+    how: '彈力帶固定在前方胸口高度，雙手握住，先把肩胛骨往後收，再把手肘往後拉到身體兩側，停一下再慢慢回去。',
+    p: ['trap-middle', 'rhomboids', 'lats'], s: ['delt-post', 'biceps', 'teres-major', 'trap-lower'], w: ['trap-upper'],
+    cues: ['先動肩胛、再動手臂。', '手肘靠近身體往後拉。', '頭不要往前伸、肩膀不要聳。'],
+    mistakes: ['只用手臂拉，肩胛骨沒動。', '身體往後倒借力。'] },
+  { id: 'prone-y', group: '肩膀・肩胛', name: '俯臥 Y 字上舉',
+    how: '趴在床上（可以額頭墊毛巾），雙手往頭頂斜前方伸出成 Y 字形，拇指朝上，把手臂抬離床面幾公分，停 2–3 秒再放下。',
+    p: ['trap-lower'], s: ['trap-upper', 'trap-middle', 'delt-mid', 'delt-post', 'infraspinatus', 'supraspinatus'],
+    cues: ['手臂伸成舒適的 Y 字方向。', '讓肩胛骨隨上舉自然上旋，不要持續往下夾住。', '使用可控制的小幅度，保持頭頸與軀幹穩定。'],
+    mistakes: ['聳肩、頭抬起來。', '拱腰把胸口抬高。'],
+    note: '此動作需要肩胛帶與肩關節肌肉協同，無法只憑姿勢證明單獨訓練到下斜方肌。' },
+  { id: 'pushup-plus', group: '肩膀・肩胛', name: '伏地挺身加強版（推牆）',
+    how: '面對牆做推牆伏地挺身，手肘伸直後，再多做一個「把胸口往後推離牆面、讓兩片肩胛骨往前分開」的動作，然後慢慢回來。',
+    p: ['serratus'], s: ['pec-major', 'triceps', 'delt-ant'], w: ['trap-upper', 'pec-minor'],
+    cues: ['最後那一下是肩胛骨往前滑，不是聳肩也不是拱背。', '身體從頭到腳保持一直線。'],
+    mistakes: ['做最後一下時肩膀往耳朵聳。', '只彎手肘，沒有做「加強」那一步。'],
+    note: '「加強」那一步就是肩胛前伸，是前鋸肌的主要動作。可以從推牆、推桌子進階到地板。' },
+  { id: 'wall-angel', group: '肩膀・肩胛', name: '牆壁天使',
+    how: '背靠牆站，頭、上背、臀部貼牆，手臂成「W」貼在牆上，慢慢往上滑成「Y」，再滑回來。',
+    p: ['trap-lower', 'trap-middle', 'serratus'], s: ['trap-upper', 'rhomboids', 'delt-mid'], x: ['pec-major', 'pec-minor', 'lats'],
+    cues: ['只滑到手臂還能貼牆、腰沒有離開牆的高度。', '肋骨往下收，不要挺腰。'],
+    mistakes: ['腰拱起來離開牆面去換高度。', '手肘、手腕離開牆。'] },
+  { id: 'chin-tuck', group: '頸部', name: '顱頸屈曲（輕點頭）',
+    how: '仰躺並支撐好頭部，做小幅度、輕柔的點頭，像低聲說「是」，再放鬆；頭部保持支撐、不抬離床面。幅度與時間依個別評估調整。',
+    p: ['deep-neck-flexors'], w: ['scm'],
+    cues: ['動作集中在頭與上頸段的小幅屈曲，與整個頭向後平移不同。', '避免頸前表層肌過度用力；肌肉是否參與不能僅由外觀判定。', '動作輕柔，正常呼吸。'],
+    mistakes: ['用力把頭壓向床面或將頭抬離床面。', '動作引起疼痛或屏氣仍持續用力。'] },
+  { id: 'bridge', group: '核心・下背', name: '橋式',
+    how: '躺著，雙膝彎曲、腳掌踩地與髖同寬。先收一點小腹，用臀部把骨盆往上抬，直到肩、髖、膝大約一直線，停 2–3 秒再慢慢放下。',
+    p: ['glute-max'], s: ['hamstrings', 'erector', 'transversus'],
+    cues: ['想像用臀部推高，不是用腰往上頂。', '頂端時臀部夾緊、肋骨不要往前翻。', '大腿後側容易抽筋的話，把腳跟靠近屁股一點。'],
+    mistakes: ['抬太高、腰拱起來，變成豎脊肌主導、臀部反而沒出力。', '膝蓋往內倒或往外開。'] },
+  { id: 'clamshell', group: '核心・下背', name: '蚌殼式',
+    how: '側躺，髖和膝彎曲（大腿約 45°），兩腳跟貼在一起。保持骨盆不動，把上面的膝蓋像蚌殼一樣打開，再慢慢合起來。',
+    p: ['glute-med'], s: ['glute-max', 'piriformis'], w: ['tfl'],
+    cues: ['骨盆和身體不要往後翻，只有大腿在轉。', '動作小、慢，感覺臀部外上方在出力。', '可以把一手放在髖骨上確認骨盆沒動。'],
+    mistakes: ['骨盆往後倒，用身體翻轉代替臀部出力。', '打得太開、太快。'] },
+  { id: 'side-abd', group: '核心・下背', name: '側躺抬腿（髖外展）',
+    how: '側躺，下面的腿彎曲保持穩定，上面的腿伸直並和身體同一直線（或稍微往後），腳尖朝前，把腿往上抬再慢慢放下。',
+    p: ['glute-med'], s: ['glute-max'], w: ['tfl', 'quadratus'],
+    cues: ['腿稍微往後、腳尖朝前（不要朝天花板），才能用到臀中肌。', '只抬到骨盆不會跟著動的高度。'],
+    mistakes: ['腿往前飄，改由闊筋膜張肌、屈髖肌出力。', '腳尖轉向天花板（髖外旋），變成屈髖肌在抬。', '用腰把腿往上「提」（腰方肌代償）。'] },
+  { id: 'bird-dog', group: '核心・下背', name: '鳥狗式',
+    how: '四足跪姿，手在肩膀正下方、膝在髖正下方。保持背部平穩，同時把一手往前伸、對側腳往後伸直，停 2–3 秒再換邊。',
+    p: ['erector', 'multifidus', 'glute-max'], s: ['transversus', 'ext-oblique', 'int-oblique', 'glute-med', 'delt-ant', 'trap-lower'],
+    cues: ['背像一張桌子，上面放一杯水也不會灑。', '腳往後「伸長」，不是往上抬高。', '骨盆不要歪向一邊。'],
+    mistakes: ['腳抬太高造成腰往下塌、拱起。', '骨盆跟著轉。'] },
+  { id: 'dead-bug', group: '核心・下背', name: '死蟲式',
+    how: '仰躺，雙手朝天花板，髖和膝都彎 90° 抬起。下背輕輕貼住地面，慢慢把一手往頭後方、對側腳往遠處伸直（腳跟接近地面但不碰地），再收回換邊。',
+    p: ['transversus', 'rectus-abd', 'ext-oblique', 'int-oblique'], s: ['iliopsoas', 'quadriceps', 'delt-ant'],
+    cues: ['下背全程不要離開地面，離開就是伸太遠了。', '伸出去時吐氣。'],
+    mistakes: ['腳伸太低，腰拱起來。', '憋氣。'] },
+  { id: 'plank', group: '核心・下背', name: '棒式',
+    how: '用前臂和腳尖撐地，身體從頭到腳成一直線，維持數秒到數十秒。',
+    p: ['transversus', 'rectus-abd', 'ext-oblique', 'int-oblique'], s: ['serratus', 'delt-ant', 'glute-max', 'quadriceps', 'pec-major'], w: ['erector'],
+    cues: ['肚子微收、臀部微夾，不要塌腰也不要屁股翹太高。', '手肘在肩膀正下方，把地板推遠（肩胛不要塌陷）。'],
+    mistakes: ['塌腰：腰椎過度後凹，下背會痠。', '憋氣。'] },
+  { id: 'quad-set', group: '膝・髖', name: '股四頭肌等長收縮',
+    how: '坐或躺，腿伸直，膝蓋下面墊一條毛巾捲。用大腿前側的力量把膝蓋往下壓毛巾，停 5–10 秒再放鬆。',
+    p: ['quadriceps'],
+    cues: ['用力時大腿前面會變硬、膝蓋骨會往上移動。', '摸摸膝蓋內上方（股內側肌）也要有收縮。'],
+    mistakes: ['憋氣或用屁股出力。'],
+    note: '膝蓋受傷或手術後常常最先開始的運動，用來喚醒、維持股四頭肌。' },
+  { id: 'slr', group: '膝・髖', name: '直膝抬腿',
+    how: '躺著，一腳彎曲踩床，另一腳伸直。先把伸直那條腿的大腿繃緊（像做股四頭肌等長收縮），保持膝蓋打直抬到對側膝蓋的高度，再慢慢放下。',
+    p: ['quadriceps', 'iliopsoas'], s: ['transversus', 'rectus-abd', 'tfl'],
+    cues: ['先繃緊再抬，抬的過程膝蓋不能彎。', '另一腳彎曲是為了保護下背。'],
+    mistakes: ['膝蓋彎著抬（股四頭肌沒鎖住）。', '腰拱起來。'] },
+  { id: 'wall-squat', group: '膝・髖', name: '靠牆深蹲',
+    how: '背靠牆，雙腳往前站一步、與肩同寬，沿著牆慢慢往下蹲到治療師指定的角度（常從小角度、不痛的範圍開始），停留後再站起來。',
+    p: ['quadriceps', 'glute-max'], s: ['adductors', 'glute-med', 'hamstrings'],
+    cues: ['膝蓋對準第 2、3 根腳趾的方向。', '重量平均在整個腳掌。', '只蹲到膝蓋不痛的角度。'],
+    mistakes: ['膝蓋往內夾（臀中肌控制不足）。', '腳站得離牆太近，膝蓋負擔變大。'] },
+  { id: 'sit-to-stand', group: '膝・髖', name: '坐到站',
+    how: '坐在椅子前半部，雙腳踩穩在膝蓋正下方或稍後，身體往前傾、把重心移到腳上，再用腿和臀部站起來；坐下時慢慢控制。',
+    p: ['quadriceps', 'glute-max'], s: ['hamstrings', 'adductors', 'soleus', 'gastroc', 'tibialis-ant', 'erector'],
+    cues: ['先「鼻子超過腳尖」把重心往前，再站。', '膝蓋對準腳尖方向。', '坐下時慢慢放，不要「跌」回椅子上。'],
+    mistakes: ['手撐大腿或椅子把自己推起來（需要時可以，但進步後要減少）。', '膝蓋往內夾。'],
+    note: '日常生活最重要的功能動作之一，常用在長輩、術後的下肢肌力訓練。' },
+  { id: 'lunge', group: '膝・髖', name: '弓箭步',
+    how: '一腳往前跨一大步，雙膝彎曲讓身體垂直往下，前膝大約在腳踝上方，再用前腳推回來。',
+    p: ['quadriceps', 'glute-max'], s: ['hamstrings', 'adductors', 'glute-med', 'gastroc', 'soleus'],
+    cues: ['身體直直往下，不是往前衝。', '前膝對準第 2、3 根腳趾。', '骨盆保持水平。'],
+    mistakes: ['前膝往內夾。', '步伐太窄、站不穩。'] },
+  { id: 'calf-raise', group: '小腿・踝', name: '提踵（踮腳）',
+    how: '扶著牆或椅背，雙腳（進階單腳）慢慢踮起腳跟，停 1–2 秒再慢慢放下。',
+    p: ['gastroc', 'soleus'], s: ['peroneals'],
+    cues: ['膝蓋伸直時腓腸肌參與較多；膝蓋明顯彎曲（例如坐姿提踵）時腓腸肌出力變少，相對以比目魚肌為主。', '往上時重量放在大拇趾、第二趾附近，腳踝不要往外翻。', '放下要慢，慢慢放下也是訓練跟腱的重要部分。'],
+    mistakes: ['彈上彈下，太快。', '腳踝往外歪。'] },
+  { id: 'ankle-df', group: '小腿・踝', name: '彈力帶勾腳（踝背屈）',
+    how: '坐著腿伸直，彈力帶套在腳背、另一端固定在前方，把腳板往身體方向勾起來，再慢慢放回去。',
+    p: ['tibialis-ant'],
+    cues: ['動作在腳踝，膝蓋不要動。', '慢慢放回。'],
+    mistakes: ['用腳趾翹起來代替整個腳板勾起。'] },
+  { id: 'ankle-eversion', group: '小腿・踝', name: '彈力帶腳踝外翻',
+    how: '坐著，彈力帶套在腳掌外側、另一端固定在內側，把腳底往外轉開，再慢慢回來。',
+    p: ['peroneals'],
+    cues: ['只有腳踝在動，小腿和膝蓋不要轉。'],
+    mistakes: ['用整條腿往外轉代替。'],
+    note: '腳踝內翻扭傷後常用的復健動作。研究顯示預防再次扭傷最有效的是平衡訓練（例如單腳站），外翻肌力訓練通常會一起做。' },
+];
+
+// ───────────────────────── 運動與傷害 ─────────────────────────
+// t 主要練到、u 也會用到；problems: 錯誤姿勢 → 可能傷到（areas 高亮）。
+const SPORTS = [
+  { id: 'run', name: '跑步',
+    t: ['quadriceps', 'hamstrings', 'glute-max', 'gastroc', 'soleus'], u: ['glute-med', 'iliopsoas', 'tibialis-ant', 'transversus', 'ext-oblique', 'adductors'],
+    summary: '推進主要靠臀大肌、小腿（腓腸肌、比目魚肌）；股四頭肌在落地時吸收衝擊；臀中肌負責單腳支撐時穩住骨盆與膝蓋。',
+    problems: [
+      { bad: '跨步太大，腳落在身體前方很遠的地方（像在煞車）', hurt: '膝前痛（髕骨股骨疼痛症候群）、小腿骨的負擔', areas: ['patella', 'tibia'],
+        why: '腳落在重心前方太遠，每一步都在「踩煞車」，膝蓋與小腿承受的衝擊、負荷變大。',
+        fix: '把步頻提高大約 5–10%，步伐自然變小，讓腳落在身體下方附近。研究顯示這樣可以降低膝蓋的負荷（提高約 10% 時髖部負荷也會下降）。' },
+      { bad: '落地時膝蓋往內夾、對側骨盆往下掉', hurt: '髂脛束症候群（膝外側痛）、髕骨股骨疼痛症候群（膝前痛）', areas: ['it-band', 'patella'],
+        why: '臀中肌等髖部肌肉控制不足時，單腳支撐的瞬間骨盆會往下掉、大腿往內收，膝蓋外側和膝蓋骨周圍壓力增加。',
+        fix: '加強臀中肌、臀大肌（蚌殼式、側躺抬腿、單腳站、單腳深蹲），練習時注意膝蓋對準腳尖。' },
+      { bad: '跑量、速度突然增加，或突然改成前腳掌著地', hurt: '阿基里斯腱病變、小腿拉傷、足底筋膜炎、內側脛骨壓力症候群（俗稱脛前痛）、壓力性骨折', areas: ['achilles', 'soleus', 'gastroc', 'plantar-fascia', 'tibia'],
+        why: '肌腱和骨頭適應負荷的速度比心肺慢。前腳掌著地會把更多負荷轉移到小腿與阿基里斯腱，突然改變容易超出它們能承受的程度。',
+        fix: '循序漸進增加跑量（不要一次加太多），改變跑姿要慢慢來；平常做提踵訓練小腿與跟腱。' },
+    ],
+    note: '訓練量或強度增加太快，常被認為是跑步傷害的重要原因之一；姿勢只是其中一個因素。有疼痛持續或越跑越痛，就應該休息並就醫。' },
+  { id: 'swim', name: '游泳（以自由式為主）',
+    t: ['lats', 'pec-major', 'delt-ant', 'delt-mid', 'delt-post', 'triceps'], u: ['supraspinatus', 'infraspinatus', 'subscapularis', 'serratus', 'trap-lower', 'transversus', 'rectus-abd', 'glute-max', 'quadriceps', 'hamstrings'],
+    summary: '划水主要靠闊背肌、胸大肌、三角肌與肱三頭肌；旋轉肌袖和肩胛穩定肌在每一次划水中都要穩住肩膀；打水用到臀部與大腿。',
+    problems: [
+      { bad: '手入水越過身體中線、大拇指先入水（手臂過度內旋）、身體滾動不足', hurt: '游泳肩（肩峰下夾擠、棘上肌肌腱病變、二頭肌長頭肌腱炎）', areas: ['supraspinatus', 'acromion', 'biceps'],
+        why: '游泳肩膀要反覆數千次上舉轉動；入水位置不對、手臂內旋時舉高，會讓肩峰下空間更擠，旋轉肌袖肌腱反覆被壓迫、過度使用。',
+        fix: '手在肩膀延長線入水、以指尖入水；雙邊換氣增加身體滾動；加強旋轉肌袖外旋與下斜方肌、前鋸肌；循序增加游泳量。' },
+      { bad: '蛙式踢腿時兩膝張得太開（或太窄），小腿用力往外甩', hurt: '蛙式膝（膝內側痛，常與膝內側副韌帶反覆受拉有關）', areas: ['knee-mcl'],
+        why: '鞭狀踢腿時膝蓋同時受到往內壓（外翻）和小腿往外轉的力量，膝蓋內側被反覆拉扯。',
+        fix: '調整踢腿寬度與時機、改善髖關節活動度，循序增加蛙式的量。' },
+      { bad: '蛙式、蝶式換氣時頭抬太高、腰過度後仰', hurt: '下背痛', areas: ['lumbar', 'erector'],
+        why: '腰椎反覆過度伸展，下背肌肉與關節負擔增加。',
+        fix: '換氣時頭不要抬太高，加強核心控制。' },
+    ] },
+  { id: 'bike', name: '騎自行車',
+    t: ['quadriceps', 'glute-max', 'gastroc', 'soleus'], u: ['hamstrings', 'iliopsoas', 'tibialis-ant', 'transversus', 'erector'],
+    summary: '踩下去主要靠股四頭肌與臀大肌，小腿把力量傳到踏板；膝蓋承受的衝擊比跑步小，常被用在膝關節復健。',
+    problems: [
+      { bad: '座墊太低，踩到最低點時膝蓋還彎很多', hurt: '膝前痛（髕骨股骨疼痛症候群）', areas: ['patella'],
+        why: '膝蓋在彎曲較多的角度下反覆出力，膝蓋骨後方的壓力增加。',
+        fix: '調整座墊高度：踩到最低點時膝蓋大約彎 25–35°（不是完全打直）。' },
+      { bad: '座墊太高（騎的時候骨盆左右晃、腳尖往下去找踏板），或卡鞋位置不對', hurt: '膝外側痛（髂脛束症候群）、膝後側痛', areas: ['it-band', 'hamstrings'],
+        why: '膝蓋在接近伸直時反覆拉扯外側與後側組織；卡鞋角度不對會讓膝蓋一直被扭著踩。',
+        fix: '降低座墊到合適高度，找專業 Bike Fitting 調整卡鞋。' },
+      { bad: '把手太遠太低、長時間撐在手上', hurt: '頸部、肩頸、下背痠痛；手麻（小指、無名指麻多是尺神經，拇指到中指麻多是正中神經在手腕受壓）', areas: ['cervical', 'trap-upper', 'lumbar'],
+        why: '身體要一直往前趴、抬頭看路，頸部與下背長時間維持在極端姿勢；手掌持續壓在把手上可能壓迫神經。',
+        fix: '調整把手的高度與距離，常換手的位置，戴有墊的手套。' },
+    ] },
+  { id: 'squat', name: '深蹲（重訓）',
+    t: ['quadriceps', 'glute-max', 'adductors'], u: ['hamstrings', 'erector', 'transversus', 'rectus-abd', 'ext-oblique', 'soleus', 'gastroc', 'glute-med'],
+    summary: '股四頭肌、臀大肌、內收肌群（尤其內收大肌）是主力；豎脊肌與核心要撐住軀幹；膕旁肌主要在穩定。',
+    problems: [
+      { bad: '站起來時膝蓋往內夾（膝外翻）', hurt: '可能增加膝前痛、膝內側的壓力', areas: ['patella', 'knee-mcl'],
+        why: '膝蓋往內夾時，膝蓋骨的軌跡和膝內側的受力都會改變。',
+        fix: '膝蓋對準腳尖方向；加強臀中肌、臀大肌；先減輕重量把動作做對。' },
+      { bad: '大重量時下背拱圓（蹲到底骨盆往後捲）', hurt: '可能增加下背拉傷的風險', areas: ['lumbar', 'erector'],
+        why: '大重量時腰椎明顯彎曲，負荷可能集中在下背組織；不過研究並未證實「圓背」本身一定會造成下背痛，重點是重量循序增加、在能控制的範圍內進行。',
+        fix: '只蹲到還能維持背部中立的深度；改善髖與腳踝的活動度；核心先收緊再下蹲。' },
+      { bad: '腳跟離地、重心跑到腳尖', hurt: '膝前方負擔增加、站不穩', areas: ['patella', 'patellar-tendon'],
+        why: '重心太前面，膝蓋前方承受更多力量。常和腳踝活動度不足有關。',
+        fix: '重心放在整個腳掌中間；改善腳踝背屈活動度。' },
+    ],
+    note: '「膝蓋絕對不能超過腳尖」是常見的誤解。膝蓋往前會增加膝蓋的負荷、但能減少髖部和下背的負荷，依身形與目標調整即可；重點是膝蓋方向對準腳尖、背部維持中立。' },
+  { id: 'deadlift', name: '硬舉（重訓）',
+    t: ['glute-max', 'hamstrings', 'erector'], u: ['adductors', 'quadriceps', 'lats', 'trap-upper', 'trap-middle', 'forearm-flex', 'transversus', 'rectus-abd'],
+    summary: '以髖關節為軸（髖鉸鏈）把重量拉起：臀大肌、膕旁肌伸髖，豎脊肌撐住背部，闊背肌把槓壓近身體，前臂負責握力。',
+    problems: [
+      { bad: '圓背拉起', hurt: '可能增加下背拉傷的風險', areas: ['lumbar', 'erector'],
+        why: '大重量時腰椎明顯彎曲，負荷可能集中在下背組織；不過研究並未證實「圓背」本身一定會造成下背痛，重點是重量循序增加、在能控制的範圍內進行。',
+        fix: '先學好髖鉸鏈（屁股往後推），背部維持中立，重量循序增加。' },
+      { bad: '槓離身體太遠', hurt: '下背負擔變大', areas: ['lumbar', 'erector'],
+        why: '重量離身體越遠，下背要承受的力矩越大。',
+        fix: '用闊背肌把槓「拉近」，讓槓沿著腿往上。' },
+      { bad: '站到頂端時過度後仰', hurt: '腰椎過度伸展、下背痛', areas: ['lumbar'],
+        why: '動作最後用腰往後頂，腰椎關節受到擠壓。',
+        fix: '站直時用臀部夾緊完成，身體成一直線即可。' },
+    ] },
+  { id: 'racket', name: '羽球・網球（揮拍運動）',
+    t: ['delt-ant', 'delt-mid', 'pec-major', 'forearm-ext', 'forearm-flex', 'ext-oblique'], u: ['supraspinatus', 'infraspinatus', 'subscapularis', 'lats', 'serratus', 'quadriceps', 'glute-max', 'gastroc', 'soleus'],
+    summary: '揮拍的力量其實是從腳蹬地、髖與軀幹旋轉，一路傳到肩膀、手臂與手腕；前臂肌群負責握拍與穩住手腕。',
+    problems: [
+      { bad: '反拍時用手腕甩、手肘先出去，或一直握拍太緊', hurt: '網球肘（肱骨外上髁肌腱病變）', areas: ['forearm-ext'],
+        why: '伸腕肌群（主要是橈側伸腕短肌）的肌腱在手肘外側反覆承受過大拉力。',
+        fix: '用身體轉動帶動揮拍；擊球後放鬆握力；握把選順手的大小即可；做伸腕肌群的漸進式肌力訓練。' },
+      { bad: '殺球、發球只靠手臂甩，肩胛骨控制不足', hurt: '肩夾擠、旋轉肌袖肌腱病變', areas: ['supraspinatus', 'infraspinatus', 'acromion'],
+        why: '下肢與軀幹沒有把力量傳上來，肩膀被迫承擔大部分的力量；肩胛骨若沒有跟著上旋，肩峰下空間被擠壓。',
+        fix: '練習用腳和軀幹發力；加強肩外旋與肩胛穩定肌（下斜方肌、前鋸肌）。' },
+      { bad: '急停、側移落地時腳踝往內翻', hurt: '腳踝扭傷（外側韌帶，最常是前距腓韌帶）', areas: ['ankle-lat-lig'],
+        why: '腳踝在踮腳、內翻的姿勢下受力，外側韌帶被拉扯。',
+        fix: '平衡訓練（單腳站）、腓骨肌群肌力訓練、穿合適的球鞋；扭傷後要完成復健再回到球場。' },
+      { bad: '沒熱身就突然起跳、用力蹬地（中年族群尤其要注意）', hurt: '阿基里斯腱斷裂、小腿拉傷', areas: ['achilles', 'gastroc'],
+        why: '突然的爆發性推蹬讓跟腱承受極大拉力；中年後肌腱常已有退化，較容易在這時斷裂。',
+        fix: '平常做提踵（尤其慢慢放下）訓練小腿與跟腱，運動前熱身。若突然像被人從後面踢到、無法踮腳，應盡快就醫。' },
+    ] },
+  { id: 'jump', name: '籃球・排球（跳躍運動）',
+    t: ['quadriceps', 'glute-max', 'gastroc', 'soleus'], u: ['hamstrings', 'glute-med', 'adductors', 'transversus', 'ext-oblique', 'delt-ant', 'delt-mid'],
+    summary: '起跳靠臀大肌、股四頭肌、小腿爆發；落地時這些肌肉要「吸收」衝擊；急停轉向需要臀中肌與核心控制。',
+    problems: [
+      { bad: '落地時膝蓋往內夾、膝蓋打太直（落地很「硬」）', hurt: '前十字韌帶受傷、膝內側副韌帶受傷', areas: ['acl', 'knee-mcl'],
+        why: '膝外翻加上旋轉，是非接觸性前十字韌帶受傷最常見的機轉。',
+        fix: '落地時屈髖屈膝「軟著陸」，膝蓋對準腳尖；做包含跳躍落地、平衡、肌力的神經肌肉預防訓練（例如 FIFA 11+ 這類計畫），研究顯示可以降低約一半的前十字韌帶受傷風險。' },
+      { bad: '大量重複跳躍，訓練量增加太快', hurt: '跳躍膝（髕腱病變）', areas: ['patellar-tendon'],
+        why: '起跳和落地時髕腱反覆承受很大的拉力。',
+        fix: '控制跳躍的量；做股四頭肌的漸進式肌力訓練（例如等長、慢速深蹲）。' },
+      { bad: '落地踩到別人的腳、腳踝往內翻', hurt: '腳踝扭傷（外側韌帶）', areas: ['ankle-lat-lig'],
+        why: '腳踝突然內翻，外側韌帶被拉扯。',
+        fix: '平衡與腓骨肌訓練；曾經扭傷的人可考慮護踝或貼紮。' },
+    ] },
+  { id: 'hike', name: '爬山・登階',
+    t: ['quadriceps', 'glute-max', 'gastroc', 'soleus'], u: ['hamstrings', 'glute-med', 'transversus', 'erector'],
+    summary: '上坡主要靠臀大肌、股四頭肌、小腿往上推；下坡則是股四頭肌「邊拉長邊出力」（離心收縮）來煞車，膝蓋負擔比上坡更大。',
+    problems: [
+      { bad: '下坡步伐太大、膝蓋直直衝下去', hurt: '膝前痛（髕骨股骨疼痛）、隔天大腿前側很痠', areas: ['patella', 'quadriceps'],
+        why: '下坡時股四頭肌要做大量離心收縮來控制速度，膝蓋骨後方壓力也大。',
+        fix: '下坡步伐縮小、膝蓋微彎；使用登山杖可以分擔腿部負荷；平常加強股四頭肌和臀肌。' },
+      { bad: '背包太重、腰帶沒有扣好，重量全掛在肩膀', hurt: '肩頸痠痛、下背痛', areas: ['trap-upper', 'lumbar'],
+        why: '重量壓在肩膀，上斜方肌長時間出力；身體往前傾，下背負擔增加。',
+        fix: '扣好腰帶讓骨盆承重，調整肩帶，減輕背包重量。' },
+      { bad: '崎嶇路面、疲勞時腳步不穩', hurt: '腳踝扭傷', areas: ['ankle-lat-lig'],
+        why: '疲勞時肌肉反應變慢，踩到不平的地方腳踝容易內翻。',
+        fix: '穿包覆性好的登山鞋，平常做平衡訓練，累了就放慢速度。' },
+    ] },
+  { id: 'desk', name: '久坐・滑手機（日常姿勢）',
+    t: [], u: [],
+    summary: '不是運動，但卻是肩頸、下背痛最常見的來源之一。長時間維持同一個姿勢，有些肌肉一直被拉長、有些一直縮短或持續出力。',
+    problems: [
+      { bad: '頭往前伸、低頭看螢幕或手機，而且很久不動', hurt: '肩頸痠痛（和姿勢的關聯仍有爭議）', areas: ['trap-upper', 'levator', 'cervical'],
+        why: '頭往前伸時頸後肌肉要多出力；不過研究顯示姿勢和疼痛的關係並不強，「久不動」可能比「姿勢不標準」更重要。',
+        fix: '調整螢幕到舒適高度、定時變換姿勢；顱頸屈曲等練習依個別評估選用。' },
+      { bad: '圓肩、駝背', hurt: '可能與肩膀不適有關（研究結果不一致）', areas: ['acromion', 'supraspinatus'],
+        why: '常見的說法是胸小肌、胸大肌偏緊，下斜方肌、前鋸肌偏弱，肩胛骨被往前拉、上舉時不容易好好上旋與後傾，肩峰下空間變擠；但圓肩和肩痛的關聯在研究中並不一致。',
+        fix: '牆角伸展胸肌；練習坐姿夾背、俯臥 Y 字、伏地挺身加強版。' },
+      { bad: '久坐不動、坐姿往下滑', hurt: '下背痠痛、髖前側緊繃感', areas: ['lumbar'],
+        why: '長時間坐著，腰椎維持彎曲、屈髖肌維持在縮短的位置，身體長時間沒有變換姿勢。',
+        fix: '每 30–60 分鐘起身走動；練習橋式、伸展屈髖肌。' },
+    ] },
+];
+
+// ───────────────────────── 畫圖 ─────────────────────────
+const SVGNS = 'http://www.w3.org/2000/svg';
+const SILHOUETTE = 'M100,58 L108,58 C109,66 110,72 112,77 C122,81 134,84 143,88 C151,91 155,100 155,112 C155,122 154,130 154,138 C156,150 158,162 159,172 C162,186 165,204 165,224 C168,232 170,246 167,258 C165,266 158,268 155,262 C152,252 151,240 152,228 C150,212 147,196 145,180 C144,172 143,164 142,156 C141,144 139,132 136,122 L131,120 C130,136 128,150 127,164 C127,176 132,190 137,204 C139,216 139,232 137,252 C135,276 132,298 131,316 C131,326 134,338 134,352 C133,370 128,388 125,404 C127,412 130,420 129,426 C124,430 112,431 107,428 C105,420 106,412 107,404 C106,388 104,370 104,352 C104,340 106,330 106,320 C105,300 104,270 103,250 C102,240 101,232 100,228';
+const MIRROR = 'matrix(-1 0 0 1 200 0)';
+const FILL = { s: 'var(--muscle)', d: 'var(--deep)', b: 'var(--bone)' };
+const LINE = { s: 'var(--muscle-line)', d: 'var(--muscle-line)', b: 'var(--bone-line)' };
+const HL_COLOR = { sel: 'var(--sel)', p: 'var(--p)', s: 'var(--s)', w: 'url(#hatch)', x: 'var(--x)', t: 'var(--t)', u: 'var(--u)', i: 'var(--i)' };
+
+function fillOf(st, layer) {
+  if (st.kind === '肌腱' || st.kind === '筋膜') return 'var(--tendon)';
+  if (st.kind === '韌帶') return '#e9dcae';
+  if (st.kind === '骨骼') return 'var(--bone)';
+  return FILL[layer];
+}
+
+function addPath(g, d, attrs, mirror, mid) {
+  const make = transform => {
+    const p = document.createElementNS(SVGNS, 'path');
+    p.setAttribute('d', d);
+    for (const [k, v] of Object.entries(attrs)) p.setAttribute(k, v);
+    if (transform) p.setAttribute('transform', transform);
+    g.appendChild(p);
+  };
+  make(null);
+  if (mirror && !mid) make(MIRROR);
+}
+
+function drawLayer(g, view, layer, opts) {
+  // opts: { hl: Map id→class, pale: bool, ghost: bool, selected }
+  for (const st of STRUCTS) {
+    if (opts.only && st.id !== opts.only) continue;
+    const shapes = st[layer]?.[view];
+    if (!shapes) continue;
+    const cls = opts.hl?.get(st.id) || (opts.selected === st.id ? 'sel' : null);
+    const fill = cls ? HL_COLOR[cls] : (opts.pale ? 'var(--pale)' : fillOf(st, layer));
+    const stroke = cls ? '#00000055' : (opts.pale ? 'var(--pale-line)' : LINE[layer]);
+    const attrs = { class: 'r' + (opts.ghost && !cls ? ' ghost' : ''), 'data-id': st.id, 'aria-label': st.name, fill, stroke };
+    if (st.dashed) Object.assign(attrs, { 'stroke-dasharray': '2 1.2', 'stroke-width': '.8' });
+    for (const d of shapes) addPath(g, d, attrs, true, st.mid);
+    for (const d of st.deco?.[layer]?.[view] || []) addPath(g, d, { class: 'deco' }, true, st.mid);
+  }
+}
+
+// 高亮模式：先畫淺層（淡色），再把「不在淺層」的高亮結構用虛線疊在上面，標示它在深處。
+function drawOverlay(g, view, hl) {
+  for (const st of STRUCTS) {
+    const cls = hl.get(st.id);
+    if (!cls || st.s?.[view]) continue;
+    const layer = st.d?.[view] ? 'd' : st.b?.[view] ? 'b' : null;
+    if (!layer) continue;
+    const attrs = { class: 'r', 'data-id': st.id, fill: HL_COLOR[cls], 'fill-opacity': '.85', stroke: '#00000088', 'stroke-dasharray': '2 1.2', 'stroke-width': '.8' };
+    for (const d of st[layer][view]) addPath(g, d, attrs, true, st.mid);
+  }
+}
+
+function renderFigure(svg, view) {
+  svg.textContent = '';
+  const defs = document.createElementNS(SVGNS, 'defs');
+  const hatchId = `hatch-${view}`;
+  defs.innerHTML = `<pattern id="${hatchId}" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="3" height="3" fill="#efeafa"/><rect width="1.4" height="3" fill="#7a5bc0"/></pattern>`;
+  svg.appendChild(defs);
+  const g = document.createElementNS(SVGNS, 'g');
+  svg.appendChild(g);
+  // 身體外形與頭
+  addPath(g, SILHOUETTE, { fill: 'var(--skin)', stroke: 'none' }, true);
+  addPath(g, SILHOUETTE, { fill: 'none', stroke: 'var(--skin-line)', 'stroke-width': '.8' }, true);
+  const head = document.createElementNS(SVGNS, 'ellipse');
+  Object.entries({ cx: 100, cy: 34, rx: 18, ry: 24, fill: view === 'k' ? '#d9c6b5' : 'var(--skin)', stroke: 'var(--skin-line)', 'stroke-width': '.8' }).forEach(([k, v]) => head.setAttribute(k, v));
+  g.appendChild(head);
+
+  if (state.tab === 'explore') {
+    if (state.layer === 's') drawLayer(g, view, 's', { selected: state.selected });
+    if (state.layer === 'd') { drawLayer(g, view, 'b', { ghost: true }); if (state.selected) drawLayer(g, view, 'd', { selected: state.selected, only: state.selected }); }
+    if (state.layer === 'b') drawLayer(g, view, 'b', { selected: state.selected });
+  } else {
+    const hl = currentHighlights();
+    drawLayer(g, view, 's', { hl, pale: true });
+    drawOverlay(g, view, hl);
+  }
+  svg.querySelectorAll('[fill="url(#hatch)"]').forEach(p => p.setAttribute('fill', `url(#${hatchId})`));
+}
+
+// ───────────────────────── 狀態與介面 ─────────────────────────
+const state = { tab: 'explore', layer: 's', selected: 'pec-major', exercise: 'retract-scaption', sport: 'run', problem: null, peek: null,
+  figureMode: 'atlas', atlas: 'front', zoom: false, search: '' };
+const panel = document.getElementById('panel');
+const $ = (sel, root = document) => root.querySelector(sel);
+
+function layersOf(st) { return ['s', 'd', 'b'].filter(l => st[l]); }
+function layerName(l) { return { s: '淺層', d: '深層', b: '骨骼' }[l]; }
+
+function currentHighlights() {
+  const hl = new Map();
+  const put = (ids, cls) => (ids || []).forEach(id => { if (!hl.has(id)) hl.set(id, cls); });
+  if (state.tab === 'exercise') {
+    const ex = EXERCISES.find(e => e.id === state.exercise);
+    put(ex.p, 'p'); put(ex.s, 's'); put(ex.w, 'w'); put(ex.x, 'x');
+  } else if (state.tab === 'sport') {
+    const sp = SPORTS.find(s => s.id === state.sport);
+    if (state.problem != null) put(sp.problems[state.problem].areas, 'i');
+    else { put(sp.t, 't'); put(sp.u, 'u'); }
+  }
+  return hl;
+}
+
+function render() {
+  document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === state.tab)));
+  document.getElementById('layers').hidden = state.tab !== 'explore';
+  const atlasVisible = state.figureMode === 'atlas';
+  document.getElementById('atlas-view').hidden = !atlasVisible;
+  document.getElementById('map-view').hidden = atlasVisible;
+  document.querySelectorAll('[data-figure-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.figureMode === state.figureMode)));
+  renderAtlas();
+  document.getElementById('hint').textContent = state.tab === 'explore' && state.layer === 'd'
+    ? '深部定位為所選單一結構相對骨骼的投影，不代表一次剝離能看見的表面；請由名稱選擇肌肉。'
+    : '部位導覽是簡化的定位投影；虛線為深部投影。精確形態、附著與遮蓋關係請對照教材圖譜。';
+  document.querySelectorAll('#layers button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.layer === state.layer)));
+  renderFigure(document.getElementById('fig-front'), 'f');
+  renderFigure(document.getElementById('fig-back'), 'k');
+  renderLegend();
+  if (state.tab === 'explore') renderExplore();
+  if (state.tab === 'exercise') renderExercise();
+  if (state.tab === 'sport') renderSport();
+}
+
+function renderLegend() {
+  const items = state.tab === 'exercise'
+    ? [['var(--p)', '主要用到'], ['var(--s)', '協同幫忙'], ['dash', '需留意控制'], ['var(--x)', '伸展到']]
+    : state.tab === 'sport'
+      ? (state.problem != null ? [['var(--i)', '可能受傷的部位']] : [['var(--t)', '主要練到'], ['var(--u)', '也會用到']])
+      : [];
+  const legend = document.getElementById('legend');
+  legend.innerHTML = items.map(([c, t]) => c === 'dash' ? `<span><i class="dash"></i>${t}</span>` : `<span><i style="background:${c}"></i>${t}</span>`).join('')
+    + (state.tab !== 'explore' ? '<span>虛線＝在深處／骨骼</span>' : '');
+}
+
+function renderAtlas() {
+  const plate = ATLAS.find(a => a.id === state.atlas);
+  const box = document.getElementById('atlas-view');
+  // Keep the image and scroll position stable while selecting other UI controls.
+  if (box.dataset.plate === plate.id) return;
+  box.dataset.plate = plate.id;
+  state.zoom = false;
+  box.innerHTML = `<label class="atlas-label" for="atlas-select">教材圖譜範圍</label>
+    <select id="atlas-select">${ATLAS.map(a => `<option value="${a.id}"${a.id === plate.id ? ' selected' : ''}>${a.label}</option>`).join('')}</select>
+    <div class="atlas-scroll" id="atlas-scroll" tabindex="0" aria-label="${plate.label}圖譜，可捲動檢視">
+      <img src="assets/anatomy/${plate.id}.jpg" alt="${plate.label}解剖教材圖，含英文肌肉名稱、肌腱與骨性標誌；${plate.note}" decoding="async">
+    </div>
+    <p id="atlas-image-error" class="note" hidden>圖檔無法載入。可用下方「原始出處」開啟來源，並檢查 assets/anatomy 圖檔是否已一併部署。</p>
+    <div class="atlas-tools"><button id="atlas-zoom" aria-pressed="false" aria-controls="atlas-scroll">放大圖譜</button><a href="assets/anatomy/${plate.id}.jpg" target="_blank" rel="noopener noreferrer">開啟完整圖</a></div>
+    <p class="atlas-note">${plate.note}</p>
+    <p class="atlas-credit">${plate.author} · <a href="${plate.source}" target="_blank" rel="noopener noreferrer">原始出處與高解析圖</a> · <a href="${plate.licenseUrl}" target="_blank" rel="noopener noreferrer">${plate.license}</a><br>保留原始構造與英文標籤，部分為等比例縮圖，未重繪。選擇名稱查看解剖資料。</p>`;
+  box.querySelector('img').addEventListener('error', () => { document.getElementById('atlas-image-error').hidden = false; });
+}
+
+function anatomyHtml(st) {
+  const a = ANATOMY[st.id];
+  if (!a) return '';
+  const sources = [...new Set(a.sources)].map(key => ANATOMY_SOURCES[key]);
+  return `<div class="knowledge"><dl>
+    <dt>起點 Origin</dt><dd>${a.origin}</dd>
+    <dt>止點 Insertion</dt><dd>${a.insertion}</dd>
+    <dt>主要神經支配 Innervation</dt><dd>${a.nerve}</dd>
+    <dt>肌束走向與排列</dt><dd>${a.fibers}</dd>
+    ${a.members.length ? `<dt>成員／分部（此導覽合併顯示）</dt><dd><ul class="member-list">${a.members.map(m => `<li>${m}</li>`).join('')}</ul></dd>` : ''}
+    </dl>${a.atlasNote ? `<p class="note">${a.atlasNote}</p>` : ''}<div class="sources"><b>本卡片解剖資料來源</b><ul>${sources.map(([label, url]) => `<li><a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a></li>`).join('')}</ul><span>公開資料核對：2026-11-26；主要附著與作用摘要，完整變異請查原文。</span></div></div>`;
+}
+
+function chip(id, cls, pressed) {
+  const st = BY_ID[id];
+  return `<button class="chip${cls ? ' c-' + cls : ''}" data-id="${id}"${pressed != null ? ` aria-pressed="${pressed}"` : ''}>${st.name}</button>`;
+}
+
+function infoHtml(st, full) {
+  const exs = EXERCISES.filter(e => [e.p, e.s, e.x].some(l => l?.includes(st.id)));
+  const sps = SPORTS.filter(s => [s.t, s.u].some(l => l?.includes(st.id)));
+  const hurts = SPORTS.flatMap(s => s.problems.map((p, i) => ({ s, p, i }))).filter(({ p }) => p.areas.includes(st.id));
+  return `<h2>${st.name}<span class="en">${st.en}</span><span class="badge">${st.kind}</span></h2>
+    <dl><dt>位置與層次</dt><dd>${st.where}</dd><dt>主要作用</dt><dd>${st.does}</dd><dt>${ANATOMY[st.id] ? '辨認與理解重點' : '衛教重點'}</dt><dd>${st.tips}</dd></dl>
+    ${anatomyHtml(st)}<dl>
+    ${full && exs.length ? `<dt>會用到它的復健運動</dt><dd class="chips">${exs.map(e => `<button class="chip" data-go-ex="${e.id}">${e.name}</button>`).join('')}</dd>` : ''}
+    ${full && sps.length ? `<dt>會練到它的運動</dt><dd class="chips">${sps.map(s => `<button class="chip" data-go-sp="${s.id}">${s.name}</button>`).join('')}</dd>` : ''}
+    ${full && hurts.length ? `<dt>相關運動傷害衛教</dt><dd class="chips">${hurts.map(({ s, p, i }) => `<button class="chip c-i" data-go-sp="${s.id}" data-go-pr="${i}">${s.name}：${p.hurt.split('、')[0]}</button>`).join('')}</dd>` : ''}
+    </dl>`;
+}
+
+function anatomyGroupsHtml() {
+  const query = state.search.trim().toLocaleLowerCase();
+  return GROUPS.map(g => {
+    const items = STRUCTS.filter(s => s.group === g && (!query || [s.name, s.en, ...(ANATOMY[s.id]?.members || [])].join(' ').toLocaleLowerCase().includes(query)));
+    if (!items.length) return '';
+    return `<div class="group"><h3>${g}</h3><div class="chips">${items.map(st => {
+      const tag = ANATOMY[st.id]?.members.length ? '<small>肌群／分部</small>' : '';
+      return `<button class="chip" data-id="${st.id}" aria-pressed="${state.selected === st.id}">${st.name}${tag}</button>`;
+    }).join('')}</div></div>`;
+  }).join('') || '<p class="empty">沒有符合的名稱，請換一個關鍵字。</p>';
+}
+
+function renderExplore() {
+  const st = BY_ID[state.selected];
+  panel.innerHTML = `<label class="search-label" for="anatomy-search">找肌肉或構造（中文／英文）</label><input id="anatomy-search" type="search" placeholder="例如：棘上肌、股中間肌、soleus" autocomplete="off"><div id="anatomy-groups">${anatomyGroupsHtml()}</div>`
+    + (st ? `<div class="card" id="anatomy-card">${infoHtml(st, true)}</div>` : `<p class="empty">選擇名稱或點部位導覽，查看位置、附著與作用。深部定位採單一結構投影，請與圖譜的剝離層次對照。</p>`);
+  document.getElementById('anatomy-search').value = state.search;
+}
+
+function renderExercise() {
+  const ex = EXERCISES.find(e => e.id === state.exercise);
+  const groups = [...new Set(EXERCISES.map(e => e.group))].map(g => `<div class="group"><h3>${g}</h3><div class="chips">${EXERCISES.filter(e => e.group === g).map(e => `<button class="chip" data-ex="${e.id}" aria-pressed="${e.id === state.exercise}">${e.name}</button>`).join('')}</div></div>`).join('');
+  const list = (label, ids, cls) => ids?.length ? `<dt>${label}</dt><dd class="chips">${ids.map(id => chip(id, cls)).join('')}</dd>` : '';
+  panel.innerHTML = groups + `<div class="card">
+    <h2>${ex.name}</h2><p class="sub">${ex.group}</p>
+    <dl><dt>怎麼做</dt><dd>${ex.how}</dd>
+    ${list('主要用到', ex.p, 'p')}${list('協同幫忙', ex.s, 's')}${list('需留意動作控制（參與不代表有錯）', ex.w, 'w')}${list('伸展到', ex.x, 'x')}
+    </dl><div id="peek"></div>
+    <dl><dt>動作要點</dt><dd><ul>${ex.cues.map(c => `<li>${c}</li>`).join('')}</ul></dd>
+    <dt>常見錯誤</dt><dd><ul>${ex.mistakes.map(c => `<li>${c}</li>`).join('')}</ul></dd></dl>
+    ${ex.note ? `<div class="note">${ex.note}</div>` : ''}
+    <p class="sub" style="margin:10px 0 0">這些分類是動作的概略參與情形，並非個人的肌電量測或固定出力排名；共同收縮也可能是正常的穩定策略。點肌肉名稱查看解剖資料。</p></div>`;
+  renderPeek();
+}
+
+function renderSport() {
+  const sp = SPORTS.find(s => s.id === state.sport);
+  const list = (label, ids, cls) => ids?.length ? `<dt>${label}</dt><dd class="chips">${ids.map(id => chip(id, cls)).join('')}</dd>` : '';
+  panel.innerHTML = `<div class="group"><div class="chips">${SPORTS.map(s => `<button class="chip" data-sp="${s.id}" aria-pressed="${s.id === state.sport}">${s.name}</button>`).join('')}</div></div>
+    <div class="card"><h2>${sp.name}</h2>
+    <dl><dd style="margin-top:6px">${sp.summary}</dd>${list('主要練到', sp.t, 't')}${list('也會用到', sp.u, 'u')}</dl>
+    <div id="peek"></div>
+    <dl><dt>姿勢不正確，可能傷到哪裡？<span class="sub" style="font-weight:400">（點一下在圖上看位置）</span></dt></dl>
+    <div class="problems">${sp.problems.map((p, i) => `<button class="problem" data-pr="${i}" aria-pressed="${state.problem === i}">
+      <div class="bad">✗ ${p.bad}</div><p>→ <span class="hurt">${p.hurt}</span></p><p>${p.why}</p><p class="fix">✓ ${p.fix}</p></button>`).join('')}</div>
+    ${sp.note ? `<div class="note">${sp.note}</div>` : ''}</div>`;
+  renderPeek();
+}
+
+function renderPeek() {
+  const box = document.getElementById('peek');
+  if (!box) return;
+  const st = BY_ID[state.peek];
+  box.className = st ? 'peek' : '';
+  box.innerHTML = st ? `<b>${st.name}</b>（${st.en}）<br>${st.where}<br><b>主要作用：</b>${st.does}<p><button class="chip" data-go-anatomy="${st.id}">查看完整解剖資料與來源</button></p>` : '';
+}
+
+function select(id) {
+  const st = BY_ID[id];
+  if (!st) return;
+  if (state.tab === 'explore') {
+    if (!st[state.layer]) state.layer = layersOf(st)[0];
+    state.selected = state.selected === id ? null : id;
+    if (state.selected && ANATOMY[id]) state.atlas = ANATOMY[id].atlas;
+    render();
+    if (state.selected) document.getElementById('anatomy-card')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } else {
+    state.peek = state.peek === id ? null : id;
+    renderPeek();
+  }
+}
+
+document.querySelector('.tabs').addEventListener('click', e => {
+  const b = e.target.closest('button[data-tab]');
+  if (!b) return;
+  state.tab = b.dataset.tab; state.peek = null; state.problem = null;
+  state.figureMode = state.tab === 'explore' ? 'atlas' : 'map';
+  render();
+});
+document.getElementById('layers').addEventListener('click', e => {
+  const b = e.target.closest('button[data-layer]');
+  if (!b) return;
+  state.layer = b.dataset.layer;
+  if (state.selected && !BY_ID[state.selected][state.layer]) state.selected = null;
+  if (state.layer === 'd' && !state.selected) state.selected = 'supraspinatus';
+  render();
+});
+document.querySelector('.figs').addEventListener('click', e => {
+  const p = e.target.closest('[data-id]');
+  if (p) select(p.dataset.id);
+});
+panel.addEventListener('click', e => {
+  const t = e.target.closest('button');
+  if (!t) return;
+  if (t.dataset.goAnatomy) { state.tab = 'explore'; state.selected = null; state.figureMode = 'atlas'; select(t.dataset.goAnatomy); return; }
+  if (t.dataset.goEx) { state.tab = 'exercise'; state.figureMode = 'map'; state.exercise = t.dataset.goEx; state.peek = null; render(); scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (t.dataset.goSp) { state.tab = 'sport'; state.figureMode = 'map'; state.sport = t.dataset.goSp; state.problem = t.dataset.goPr != null ? Number(t.dataset.goPr) : null; state.peek = null; render(); scrollTo({ top: 0, behavior: 'smooth' }); return; }
+  if (t.dataset.ex) { state.exercise = t.dataset.ex; state.peek = null; render(); return; }
+  if (t.dataset.sp) { state.sport = t.dataset.sp; state.problem = null; state.peek = null; render(); return; }
+  if (t.dataset.pr != null) { const i = Number(t.dataset.pr); state.problem = state.problem === i ? null : i; render(); if (state.problem != null && matchMedia('(max-width: 899px)').matches) document.querySelector('.figure-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  if (t.dataset.id) select(t.dataset.id);
+});
+
+document.getElementById('figure-modes').addEventListener('click', e => {
+  const b = e.target.closest('[data-figure-mode]');
+  if (b) { state.figureMode = b.dataset.figureMode; render(); }
+});
+document.getElementById('atlas-view').addEventListener('change', e => {
+  if (e.target.id === 'atlas-select') { state.atlas = e.target.value; renderAtlas(); }
+});
+document.getElementById('atlas-view').addEventListener('click', e => {
+  if (e.target.closest('#atlas-zoom')) {
+    state.zoom = !state.zoom;
+    document.getElementById('atlas-scroll').classList.toggle('zoomed', state.zoom);
+    const button = document.getElementById('atlas-zoom');
+    button.setAttribute('aria-pressed', String(state.zoom));
+    button.textContent = state.zoom ? '縮回全圖' : '放大圖譜';
+  }
+});
+panel.addEventListener('input', e => {
+  if (e.target.id !== 'anatomy-search') return;
+  state.search = e.target.value;
+  // Preserve the input DOM node and IME composition while filtering Chinese text.
+  document.getElementById('anatomy-groups').innerHTML = anatomyGroupsHtml();
+});
+
+render();
+</script>
+<script src="offline-cache.js"></script>
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>大腿解剖定位試作｜來源模型版</title>
+<style>
+:root{--ink:#263e3b;--muted:#65736e;--green:#23695c;--line:#dce4de;--paper:#fffefa;--accent:#c66d21}
+*{box-sizing:border-box}body{margin:0;background:#f3f5f1;color:var(--ink);font-family:system-ui,-apple-system,"Noto Sans TC",sans-serif;line-height:1.65}main{max-width:1280px;margin:20px auto 48px;padding:0 20px}a{color:var(--green);text-underline-offset:3px}h1{font-size:clamp(1.5rem,3vw,2.2rem);margin:0}h2{font-size:1.15rem;margin:0 0 10px}h3{font-size:1rem;margin:0}.lead{margin:4px 0 14px;color:var(--muted)}.pilot{display:inline-block;border:1px solid #e3c7a9;background:#fff4e5;color:#82521e;border-radius:6px;padding:3px 10px;font-size:.875rem;margin-bottom:8px}.layout{display:grid;grid-template-columns:minmax(320px,1fr) minmax(300px,1fr);gap:18px;align-items:start}.map{position:sticky;top:12px}.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:16px}.bodies{display:grid;grid-template-columns:1fr 1fr;gap:10px}figure{margin:0}figcaption{text-align:center;font-size:.9rem;color:var(--muted)}canvas{display:block;max-width:100%;height:auto}.body-canvas{width:100%;aspect-ratio:5/11;background:#f8f8f3;border-radius:10px;cursor:crosshair}.small{font-size:.9rem;color:var(--muted)}.map .small{margin:8px 0 0}.status{font-size:.9rem;min-height:1.6em;color:var(--green);margin-top:8px}.controls{display:flex;gap:7px;flex-wrap:wrap;margin:8px 0 12px}button{font:inherit;font-size:.95rem;cursor:pointer;border:1px solid #b8cbbf;color:var(--green);background:#fff;border-radius:8px;padding:6px 10px}button[aria-pressed="true"]{background:var(--green);border-color:var(--green);color:white}button:focus-visible,a:focus-visible,canvas:focus-visible{outline:3px solid #d49442;outline-offset:3px}.layer-button{width:100%;text-align:left;background:#eef5f0}.zoom-wrap{background:#f8f8f3;border:1px solid var(--line);border-radius:10px;margin:10px 0;overflow:hidden}#local-canvas{width:100%;max-height:430px;object-fit:contain;cursor:crosshair}.selected-title{font-size:1.3rem;margin:10px 0 0}.en{font-size:.9rem;color:var(--muted);font-weight:400;display:block}.side-label{font-size:.9rem;color:var(--accent);margin:4px 0}dl{margin:0}dt{font-weight:650;color:var(--green);font-size:.9rem;margin-top:10px}dd{margin:2px 0 0}details{margin-top:14px;border-top:1px solid var(--line);padding-top:10px}summary{cursor:pointer;font-weight:650;color:var(--green)}.sources{font-size:.9rem}.source-code{overflow-wrap:anywhere}.notice{padding:10px 12px;border-left:3px solid #bc9755;background:#fbf6e9;margin:12px 0;font-size:.9rem}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.85rem;color:var(--muted);margin-top:8px}.dot{display:inline-block;width:10px;height:10px;margin-right:5px;border-radius:3px;background:#b98a7e}.bone-dot{background:#e7e0cd}.selected-dot{background:#dc893c}#load-error{color:#8e341f}[hidden]{display:none!important}@media(min-width:600px)and(max-width:899px){main{padding:0 12px}.layout{grid-template-columns:minmax(240px,.85fr) minmax(270px,1.15fr);gap:12px}.card{padding:12px}}@media(max-width:599px){main{padding:0 12px}.layout{grid-template-columns:1fr}.map{z-index:2;top:0;box-shadow:0 3px 15px #183a3220}.body-canvas{max-height:31vh;object-fit:contain}#local-canvas{max-height:350px}.map h2{font-size:1rem;margin-bottom:3px}.map .small{font-size:.8rem}.legend{display:none}}
+/* Preserve the exact raster aspect ratio, including pointer coordinates. */
+#local-canvas{width:min(100%,344px);height:auto;max-height:none;object-fit:fill;margin:0 auto}
+@media(max-width:599px){.body-canvas{width:auto;height:31vh;max-height:none;max-width:100%;margin:0 auto;object-fit:fill}#local-canvas{width:min(100%,280px);max-height:none}}
+</style>
+</head>
+<body>
+<main>
+<div class="pilot">大腿前側 · 獨立試作，待確認</div>
+<h1>從全身，找到每一條肌肉</h1>
+<p class="lead">全身正反面與大腿放大圖使用同一份解剖模型。點選大腿肌肉，對照位置與深淺關係。</p>
+<div class="layout">
+  <section class="card map" aria-label="全身解剖地圖">
+    <h2>全身位置</h2>
+    <div class="bodies">
+      <figure><canvas id="front-canvas" class="body-canvas" width="1000" height="2200" role="img" aria-label="全身前視圖，可點選大腿四頭肌"></canvas><figcaption>前視 · 人體右側在畫面左邊</figcaption></figure>
+      <figure><canvas id="back-canvas" class="body-canvas" width="1000" height="2200" role="img" aria-label="全身後視圖，可點選可見的大腿四頭肌"></canvas><figcaption>後視</figcaption></figure>
+    </div>
+    <div class="legend"><span><i class="dot selected-dot"></i>選取肌肉</span><span><i class="dot"></i>周圍肌肉</span><span><i class="dot bone-dot"></i>骨骼</span></div>
+    <p class="small">本次開放大腿四頭肌的點選與層次切換；全身其他構造保留作定位。也可用右側名稱選擇。</p>
+    <div id="hover-label" class="status" aria-live="polite">正在載入模型視圖…</div>
+    <p id="load-error" hidden>視圖載入失敗，請確認圖檔已下載並透過本機預覽伺服器開啟。</p>
+    <details class="sources"><summary>模型出處與準確性範圍</summary>
+      <p><a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" target="_blank" rel="noopener noreferrer">BodyParts3D 4.0</a> 成年男性參考模型。原始構造使用共同座標，本試作沒有個別移動、拉伸或重畫肌肉。</p>
+      <p>本次使用來源提供的「99% polygon-reduction」下載版本，非原始影像解析度。顏色、光影及選取色用於辨識，表面光影不代表肌纖維走向。</p>
+      <p>來源<a href="https://lifesciencedb.jp/bp3d/info_en/index.html" target="_blank" rel="noopener noreferrer">明確提醒可能存在解剖及概念對應錯誤</a>；目前是可追溯來源的定位試作，尚未經解剖教師審訂，也未涵蓋所有個體變異。</p>
+      <p>BodyParts3D, © The Database Center for Life Science licensed under <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/lic.html" target="_blank" rel="noopener noreferrer">CC Attribution 4.0 International</a>.</p>
+      <p>本試作改動：選取骨骼及肌肉構造、投影成前後視圖、套用光影及示意色。深面視圖僅省略雙側股直肌，其餘構造保留。</p>
+      <p><a href="assets/thigh-source/manifest.json" target="_blank" rel="noopener noreferrer">查看來源識別碼、模型校驗及產製紀錄</a></p>
+    </details>
+  </section>
+  <section class="card" aria-label="大腿局部解剖">
+    <h2>大腿前側放大</h2>
+    <div id="part-controls" class="controls" aria-label="選擇肌肉"></div>
+    <div class="controls" aria-label="選擇人體側別"><button data-side="right" aria-pressed="true">人體右側</button><button data-side="left" aria-pressed="false">人體左側</button></div>
+    <button id="layer-toggle" class="layer-button" aria-pressed="false">顯露深面：隱藏雙側股直肌</button>
+    <p id="layer-status" class="small">表層視圖；股中間肌主要被股直肌覆蓋。</p>
+    <div class="zoom-wrap"><canvas id="local-canvas" width="640" height="800" role="img" aria-label="與全身圖同源的大腿前側放大圖"></canvas></div>
+    <div id="detail" aria-live="polite"></div>
+    <details class="sources"><summary>附著與作用的核對來源</summary><p><a href="https://medicine.uams.edu/neuroscience/education/medical-school-courses/human-structure-module/anatomy-tables/muscle-tables/muscles-of-the-lower-limb/" target="_blank" rel="noopener noreferrer">UAMS 醫學院 · 下肢肌肉表</a><br><a href="https://www.ncbi.nlm.nih.gov/books/NBK513334/" target="_blank" rel="noopener noreferrer">StatPearls · 股四頭肌</a><br><a href="https://www.ncbi.nlm.nih.gov/books/NBK539897/" target="_blank" rel="noopener noreferrer">StatPearls · 股直肌</a></p><p>文字為主要附著與作用的摘要，核對日期 2026-11-26。顯示的模型識別碼對應目前選取側別。</p></details>
+  </section>
+</div>
+</main>
+<script src="assets/thigh-source/model-data.js"></script>
+<script>
+const INFO = {
+  'rectus-femoris':{where:'大腿前側較淺處，位於股中間肌前方。',origin:'髂前下棘及髖臼上方。',action:'伸膝，並參與屈髖；四頭之中只有股直肌跨過髖、膝兩個關節。',relation:'縫匠肌從前外上方向內下方斜跨大腿；本視圖保留它的遮擋，不把四頭肌全部當成一個平面。'},
+  'vastus-lateralis':{where:'大腿前外側，位於股直肌的外側。',origin:'股骨大轉子、粗線外側唇等處。',action:'伸膝，不跨髖關節。',relation:'外側是遠離人體中線的方向。前、後視圖中能看見的範圍會隨周圍構造遮擋而不同。'},
+  'vastus-medialis':{where:'大腿前內側，遠端肌腹延伸至髕骨內上方。',origin:'股骨轉子間線及粗線內側唇等處。',action:'伸膝，不跨髖關節。',relation:'內側是靠近人體中線的方向。股內側肌與深面的股中間肌為不同構造。'},
+  'vastus-intermedius':{where:'在股直肌深面，鄰近股骨前外側。',origin:'股骨幹前面與外側面。',action:'伸膝，不跨髖關節。',relation:'選擇本肌會顯露深面。模型只隱藏雙側股直肌，縫匠肌等周圍構造仍然保留，因此不會無條件露出整條肌肉。'},
+};
+const state = {part:'rectus-femoris',side:'right',layer:'surface',ready:false};
+const records = new Map(THIGH_MODEL.meshes.map(mesh=>[mesh.objectId,mesh]));
+const frames = new Map();
+let localTransform;
+const $=id=>document.getElementById(id);
+const imageRoot='assets/thigh-source/';
+const controls=$('part-controls');
+controls.innerHTML=THIGH_MODEL.targets.map(part=>`<button data-part="${part.key}" aria-pressed="false">${part.zh}</button>`).join('');
+async function loadImage(path) {const image=new Image();image.src=imageRoot+path;await image.decode();return image;}
+async function loadFrame(frame) {
+  const [image,ids]=await Promise.all([loadImage(frame.image),loadImage(frame.ids)]);
+  const canvas=document.createElement('canvas');canvas.width=THIGH_MODEL.width;canvas.height=THIGH_MODEL.height;
+  const context=canvas.getContext('2d',{willReadFrequently:true});context.drawImage(ids,0,0);
+  const pixels=context.getImageData(0,0,canvas.width,canvas.height).data;
+  return {...frame,image,pixels};
+}
+function selectedMesh() {return THIGH_MODEL.meshes.find(mesh=>mesh.target===state.part&&mesh.side===state.side);}
+function renderControls() {
+  document.querySelectorAll('[data-part]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.part===state.part)));
+  document.querySelectorAll('[data-side]').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.side===state.side)));
+  $('layer-toggle').setAttribute('aria-pressed',String(state.layer==='deep'));
+  $('layer-toggle').textContent=state.layer==='deep'?'回到表層：放回雙側股直肌':'顯露深面：隱藏雙側股直肌';
+  $('layer-status').textContent=state.layer==='deep'?'深面視圖：雙側股直肌已隱藏，縫匠肌及其他周圍構造仍保留。':'表層視圖；股中間肌主要被股直肌覆蓋。';
+  const mesh=selectedMesh(),part=THIGH_MODEL.targets.find(p=>p.key===state.part),info=INFO[state.part];
+  $('detail').innerHTML=`<h3 class="selected-title">${part.zh}<span class="en">${part.en}</span></h3><p class="side-label">人體${state.side==='right'?'右':'左'}側 · ${state.layer==='surface'?'表層視圖':'顯露深面'}</p><dl>
+    <dt>位置</dt><dd>${info.where}</dd><dt>起點</dt><dd>${info.origin}</dd><dt>止點與神經</dt><dd>經股四頭肌腱至髕骨，再經髕韌帶連至脛骨粗隆；由股神經支配。</dd><dt>主要作用</dt><dd>${info.action}</dd><dt>相鄰與遮擋關係</dt><dd>${info.relation}</dd></dl><p class="small source-code">來源構造：${mesh.fma} · ${mesh.meshId}<br>${mesh.name}</p>`;
+}
+function drawBody(view) {
+  const canvas=$(view+'-canvas'),context=canvas.getContext('2d');
+  const frame=frames.get(view+'-'+state.layer);
+  context.clearRect(0,0,canvas.width,canvas.height);context.drawImage(frame.image,0,0);
+  const overlay=document.createElement('canvas');overlay.width=canvas.width;overlay.height=canvas.height;
+  const overlayContext=overlay.getContext('2d'),pixels=overlayContext.createImageData(canvas.width,canvas.height);
+  const id=selectedMesh().objectId;
+  for(let offset=0;offset<frame.pixels.length;offset+=4)if(frame.pixels[offset]+frame.pixels[offset+1]*256===id){pixels.data[offset]=239;pixels.data[offset+1]=151;pixels.data[offset+2]=38;pixels.data[offset+3]=115;}
+  overlayContext.putImageData(pixels,0,0);context.drawImage(overlay,0,0);
+}
+function thighCrop() {
+  const meshes=THIGH_MODEL.meshes.filter(mesh=>mesh.target),p=THIGH_MODEL.projection;
+  let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+  for(const mesh of meshes){minX=Math.min(minX,THIGH_MODEL.width/2+(mesh.bounds[0][0]-p.centerX)*p.scale);maxX=Math.max(maxX,THIGH_MODEL.width/2+(mesh.bounds[1][0]-p.centerX)*p.scale);minY=Math.min(minY,THIGH_MODEL.height/2-(mesh.bounds[1][2]-p.centerZ)*p.scale);maxY=Math.max(maxY,THIGH_MODEL.height/2-(mesh.bounds[0][2]-p.centerZ)*p.scale);}
+  return {x:minX-40,y:minY-24,width:maxX-minX+80,height:maxY-minY+65};
+}
+function drawLocal() {
+  const canvas=$('local-canvas'),context=canvas.getContext('2d'),crop=thighCrop();
+  const scale=Math.min(canvas.width/crop.width,canvas.height/crop.height);
+  const dest={x:(canvas.width-crop.width*scale)/2,y:(canvas.height-crop.height*scale)/2,width:crop.width*scale,height:crop.height*scale};
+  context.clearRect(0,0,canvas.width,canvas.height);context.drawImage($('front-canvas'),crop.x,crop.y,crop.width,crop.height,dest.x,dest.y,dest.width,dest.height);
+  localTransform={crop,dest,scale};
+}
+function render() {
+  renderControls();if(!state.ready)return;
+  drawBody('front');drawBody('back');drawLocal();
+  $('hover-label').textContent='可點選全身圖或放大圖中的大腿肌肉。';
+}
+function pointRecord(event,view) {
+  if(!state.ready)return null;
+  const canvas=event.currentTarget,rect=canvas.getBoundingClientRect();
+  let x=(event.clientX-rect.left)/rect.width*canvas.width,y=(event.clientY-rect.top)/rect.height*canvas.height;
+  if(view==='local') {const {crop,dest,scale}=localTransform;if(x<dest.x||y<dest.y||x>=dest.x+dest.width||y>=dest.y+dest.height)return null;x=crop.x+(x-dest.x)/scale;y=crop.y+(y-dest.y)/scale;view='front';}
+  x=Math.floor(x);y=Math.floor(y);if(x<0||y<0||x>=THIGH_MODEL.width||y>=THIGH_MODEL.height)return null;
+  const pixels=frames.get(view+'-'+state.layer).pixels,offset=(y*THIGH_MODEL.width+x)*4;
+  return records.get(pixels[offset]+pixels[offset+1]*256)||null;
+}
+function choose(part,side=state.side) {
+  state.part=part;state.side=side;
+  if(part==='vastus-intermedius')state.layer='deep';
+  if(part==='rectus-femoris')state.layer='surface';
+  render();
+}
+for(const view of ['front','back','local']) {
+  const canvas=$(view+'-canvas');
+  canvas.addEventListener('pointermove',event=>{const record=pointRecord(event,view);const target=THIGH_MODEL.targets.find(part=>part.key===record?.target);$('hover-label').textContent=target?`人體${record.side==='right'?'右':'左'}側 · ${target.zh}`:record?`周圍構造：${record.name}`:'移到大腿肌肉上查看名稱。';canvas.style.cursor=target?'pointer':'crosshair';});
+  canvas.addEventListener('click',event=>{const record=pointRecord(event,view);if(record?.target)choose(record.target,record.side);});
+}
+controls.addEventListener('click',event=>{const button=event.target.closest('[data-part]');if(button)choose(button.dataset.part);});
+document.querySelectorAll('[data-side]').forEach(button=>button.addEventListener('click',()=>choose(state.part,button.dataset.side)));
+$('layer-toggle').addEventListener('click',()=>{state.layer=state.layer==='surface'?'deep':'surface';if(state.layer==='deep'&&state.part==='rectus-femoris')state.part='vastus-intermedius';if(state.layer==='surface'&&state.part==='vastus-intermedius')state.part='rectus-femoris';render();});
+renderControls();
+Promise.all(THIGH_MODEL.frames.map(loadFrame)).then(loaded=>{for(const frame of loaded)frames.set(frame.view+'-'+frame.layer,frame);state.ready=true;render();}).catch(error=>{$('load-error').hidden=false;$('hover-label').textContent='模型載入未完成';console.error(error);});
+</script>
+</body>
+</html>

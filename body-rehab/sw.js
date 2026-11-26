@@ -1,0 +1,7 @@
+const CACHE='body-rehab-map-v2';
+const SHELL=['./','index.html','2026-11-26-body-map.html','body-map.css','body-map.js','body-renderer.js','muscle-catalogue.mjs','anatomy-data.js','offline-cache.js','movement-reference.html','assets/body-model/manifest.json','assets/body-model/knowledge.json',...['front','back','neck','scapula','shoulder','arm','abdomen','hip','leg'].map(id=>`assets/anatomy/${id}.jpg`)];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
+self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>(k.startsWith('body-rehab-map-')&&k!==CACHE)||k==='body-rehab-anatomy-v1').map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
+self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==location.origin||!url.pathname.startsWith(new URL('./',self.location.href).pathname))return;
+ event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));}return response;}).catch(async()=>await (await caches.open(CACHE)).match(event.request,{ignoreSearch:true})||new Response('這個檔案尚未下載；請連線後重新開啟。',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}})));
+});
