@@ -2,6 +2,8 @@
 // retain regional attachments rather than inventing a single universal range.
 // [origin, insertion, nerve, action, optional additional source key]
 export const parts={
+ 'humeral head of extensor carpi ulnaris':['肱骨外上髁的共同伸肌起點。','第五掌骨底背側。','橈神經的後骨間神經。','伸腕及尺偏。'],
+ 'ulnar head of extensor carpi ulnaris':['尺骨後緣及鄰近筋膜。','第五掌骨底背側。','橈神經的後骨間神經。','伸腕及尺偏。'],
  'iliocostalis lumborum':['後髂嵴、薦骨與腰薦部共同腱。','下位肋骨肋角及相關腰椎附著。','脊神經後支。','雙側伸展軀幹；單側同側側彎。','back'],
  'iliocostalis thoracis':['下位肋骨肋角。','上位肋骨肋角與第七頸椎橫突。','脊神經後支。','伸展胸段、同側側彎。','back'],
  'iliocostalis cervicis':['上位肋骨肋角。','中下位頸椎橫突後結節。','頸脊神經後支。','伸展頸部、同側側彎。','back'],

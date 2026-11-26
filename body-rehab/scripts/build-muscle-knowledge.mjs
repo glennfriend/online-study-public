@@ -4,6 +4,7 @@ import {createHash} from 'node:crypto';
 import {readMuscleTable} from './read-muscle-table.mjs';
 import {identify} from '../muscle-catalogue.mjs';
 import {parts} from '../part-anatomy.mjs';
+import {applyReview} from './apply-anatomy-review.mjs';
 const root=new URL('../',import.meta.url),manifest=JSON.parse(await readFile(new URL('assets/body-model/manifest.json',root)));
 const tablePath=new URL('.anatomy-cache/knowledge/ttuhsc.html',root),table=await readMuscleTable(tablePath);
 if(createHash('sha256').update(await readFile(tablePath)).digest('hex')!=='9f92c332bf6e16706133bed539d88fdeb5558b0f5aca53343dee8798c2263005')throw Error('Anatomy reference changed; review before rebuilding');
@@ -57,5 +58,6 @@ for(const r of manifest.records.filter(r=>r.kind==='muscle')){
  knowledge[key]=entry;
 }
 const content={version:1,table:{url:refs.tables[1],sha256:createHash('sha256').update(await readFile(tablePath)).digest('hex'),extracted:'Factual attachment, action and motor-nerve fields only; no notes, illustrations or arterial columns',parserRows:table.length},sources:refs,entries:knowledge};
+await applyReview(content);
 await writeFile(new URL('assets/body-model/knowledge.json',root),JSON.stringify(content));
 console.log(`${Object.keys(knowledge).length} named muscle/part/group entries with four anatomical fields and sources`);

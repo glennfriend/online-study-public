@@ -42,7 +42,7 @@ export class BodyRenderer {
    for(const r of this.records){if(!this.visible(r))continue;
     gl.vertexAttribPointer(this.p,3,gl.FLOAT,false,16,r.gpuVertexOffset);gl.vertexAttribPointer(this.n,3,gl.BYTE,true,16,r.gpuVertexOffset+12);
     const selected=this.selected.has(r.id),shade=((r.id*17)%13)/160;
-    gl.uniform3fv(this.u.color,picking?[(r.id&255)/255,(r.id>>8)/255,0]:selected?[.91,.43,.13]:r.kind==='bone'?[.90,.88,.81]:r.kind==='context'?[.86,.83,.71]:[.75+shade,.47+shade,.40+shade]);
+    gl.uniform3fv(this.u.color,picking?[(r.id&255)/255,(r.id>>8)/255,0]:selected?[.91,.43,.13]:this.emphasis?.get(r.id)||(r.kind==='bone'?[.90,.88,.81]:r.kind==='context'?[.86,.83,.71]:[.75+shade,.47+shade,.40+shade]));
     gl.drawElements(gl.TRIANGLES,r.indexCount,gl.UNSIGNED_INT,r.gpuIndexOffset);
    }
   }

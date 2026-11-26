@@ -5,6 +5,7 @@ import { gzipSync } from 'node:zlib';
 import { zipEntries, unzipEntry, parseOBJ } from './bp3d-utils.mjs';
 import { identify } from '../muscle-catalogue.mjs';
 import { readMuscleTable } from './read-muscle-table.mjs';
+import {modelConceptCorrections,correctionEvidence} from '../model-concept-corrections.mjs';
 const root=new URL('../',import.meta.url), cache=new URL('.anatomy-cache/bp3d/',root), out=new URL('assets/body-model/',root);
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -27,10 +28,12 @@ const relationBytes=await readFile(new URL('.anatomy-cache/bp3d3/composite_parts
 const relations=relationBytes.toString('utf8').trim().split(/\r?\n/).slice(1).map(l=>l.split('\t'));
 let grew=true;while(grew){grew=false;for(const [parent,,child]of relations)if(muscleConcepts.has(parent)&&!muscleConcepts.has(child)){muscleConcepts.add(child);grew=true;}}
 const boneConcepts=new Set([...concepts.values()].filter(c=>c.meshes.every(id=>bones.has(id))).map(c=>c.fma));
+// The source represents the sternum as three bone parts, not a single organ.
+for(const id of ['FMA7486','FMA7487','FMA7488'])boneConcepts.add(id);
 const tableNames=new Set((await readMuscleTable(new URL('.anatomy-cache/knowledge/ttuhsc.html',root))).map(row=>row.name));
 // Several standalone source objects (e.g. rectus abdominis) are absent from
 // composite relationships. Include exact, explicitly aliased muscle names too.
-const items=[...zip3.values()].flatMap(e=>{const id=e.name.match(/(FMA\d+)\.obj$/)?.[1],name=names3.get(id),kind=boneConcepts.has(id)?'bone':name&&(muscleConcepts.has(id)||tableNames.has(identify(name).base))?(/\b(tendon|aponeurosis|fascia|retinaculum|iliotibial|ligament|tendinous)\b|linea alba/.test(name)?'context':'muscle'):null;return name&&kind?[{id,c:{fma:id,name},bytes:unzipEntry(archive3,e),release:'3.0',kind}]:[];});
+const items=[...zip3.values()].flatMap(e=>{const id=e.name.match(/((?:FMA|BP)\d+)\.obj$/)?.[1],name=names3.get(id),kind=boneConcepts.has(id)?'bone':['BP24','BP28'].includes(id)?'context':name&&(muscleConcepts.has(id)||tableNames.has(identify(name).base))?(/\b(tendon|aponeurosis|fascia|retinaculum|iliotibial|ligament|tendinous)\b|linea alba/.test(name)?'context':'muscle'):null;const genericPart={BP24:'FMA7591',BP28:'FMA7591',BP44:'FMA77260',BP45:'FMA77260',BP46:'FMA77261',BP47:'FMA77261'}[id];return name&&kind?[{id,c:{fma:genericPart||id,name},bytes:unzipEntry(archive3,e),release:'3.0',kind,genericPart}]:[];}).sort((a,b)=>Number(a.id.startsWith('BP'))-Number(b.id.startsWith('BP')));
 let offset=0,maxRounding=0,totalTriangles=0;
 for(const [i,item]of items.entries()){
   const {id,release}=item;
@@ -40,6 +43,8 @@ for(const [i,item]of items.entries()){
   const vb=Buffer.alloc(v.length/3*16),ib=Buffer.from(m.faces.buffer);
   for(let p=0;p<v.length;p+=3){const length=Math.hypot(...normals.subarray(p,p+3))||1;for(let j=0;j<3;j++){vb.writeFloatLE(v[p+j],p/3*16+j*4);vb.writeInt8(Math.round(normals[p+j]/length*127),p/3*16+12+j);maxRounding=Math.max(maxRounding,Math.abs(v[p+j]-vb.readFloatLE(p/3*16+j*4)));}}
   const r={id:i+1,mesh:id,fma:c.fma,name:c.name,release,kind:item.kind,side:/\bright\b/.test(c.name)?'right':/\bleft\b/.test(c.name)?'left':'midline',bounds:[m.min,m.max],vertexOffset:offset,vertexCount:v.length/3,indexOffset:offset+vb.length,indexCount:m.faces.length,sha256:sha(bytes)};
+  if(item.genericPart)r.conceptMapping='Official source leaf uses BP ID; FMA is the name-matched, non-sided generic anatomical concept, not a claimed sided FMA leaf.';
+  if(modelConceptCorrections[id]){r.sourceFma=r.fma;r.sourceName=r.name;Object.assign(r,modelConceptCorrections[id]);r.conceptCorrection={reason:'Corrected reversed orbital/palpebral concept assignment after spatial/literature review; vertices unchanged.',evidence:correctionEvidence};}
   records.push(r);chunks.push(vb,ib);offset+=vb.length+ib.length;totalTriangles+=m.faces.length/3;
 }
 const binary=Buffer.concat(chunks),packed=gzipSync(binary,{level:9});
