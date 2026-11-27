@@ -3,8 +3,10 @@ import {reviewPositions,baseCorrections,partCorrections,reviewNotes} from '../an
 import {matchingReferences} from './review-reference-map.mjs';
 import {execFileSync} from 'node:child_process';
 import {correctionEvidence} from '../model-concept-corrections.mjs';
-const root=new URL('../',import.meta.url),date='2026-11-26';
+const root=new URL('../',import.meta.url),date='2026-11-27';
 const extras={
+ cuff2008:['屍體解剖・棘上／棘下肌足印（2008）','https://pubmed.ncbi.nlm.nih.gov/18451386/'],
+ cuff2015:['屍體解剖・棘上／棘下肌附著面（2015）','https://pubmed.ncbi.nlm.nih.gov/25914209/'],
  subclavius:['Washington University in St. Louis・Subclavius','https://nervesurgery.wustl.edu/upper-extremity/brachial-plexus/subclavius/'],
  psoasStudy:['屍體解剖研究・Psoas muscle innervation（2017）','https://pubmed.ncbi.nlm.nih.gov/28321940/'],
  serratusStudy:['解剖與功能研究・Serratus posterior muscles（2001）','https://pubmed.ncbi.nlm.nih.gov/11424195/'],
@@ -20,7 +22,7 @@ const extras={
  brachialisStudy:['解剖研究・Brachialis 雙重神經支配（1998）','https://pubmed.ncbi.nlm.nih.gov/9711030/'],
  thumbStudy:['屍體解剖研究・Flexor Pollicis Brevis（2017）','https://pmc.ncbi.nlm.nih.gov/articles/PMC5721304/'],
 };
-const extraByBase={subclavius:['subclavius'],'psoas major':['psoasStudy'],'serratus posterior superior':['serratusStudy'],'serratus posterior inferior':['serratusStudy'],'adductor minimus':['minimusStudy'],occipitalis:['scalp'],'depressor septi':['nose','noseStudy'],'extensor digitorum brevis':['footTable'],'external intercostal':['intercostals'],'internal intercostal':['intercostals'],'innermost intercostal':['intercostals'],'levatores costarum':['levatores'],puborectalis:['pelvic','pelvicStudy'],pubococcygeus:['pelvic','pelvicStudy'],iliococcygeus:['pelvic','pelvicStudy'],brachialis:['brachialisStudy']};
+const extraByBase={supraspinatus:['cuff2008','cuff2015'],infraspinatus:['cuff2008','cuff2015'],subclavius:['subclavius'],'psoas major':['psoasStudy'],'serratus posterior superior':['serratusStudy'],'serratus posterior inferior':['serratusStudy'],'adductor minimus':['minimusStudy'],occipitalis:['scalp'],'depressor septi':['nose','noseStudy'],'extensor digitorum brevis':['footTable'],'external intercostal':['intercostals'],'internal intercostal':['intercostals'],'innermost intercostal':['intercostals'],'levatores costarum':['levatores'],puborectalis:['pelvic','pelvicStudy'],pubococcygeus:['pelvic','pelvicStudy'],iliococcygeus:['pelvic','pelvicStudy'],brachialis:['brachialisStudy']};
 export async function applyReview(content){
  const references=JSON.parse(await readFile(new URL('.anatomy-cache/review/references.json',root))),baseline=await readFile(new URL('.anatomy-cache/review/before-knowledge.json',root),'utf8').catch(()=>execFileSync('git',['show','dc93f41:body-rehab/assets/body-model/knowledge.json'],{cwd:root,encoding:'utf8'})),before=JSON.parse(baseline),audit=[];
  for(const [id,ref]of Object.entries(extras))content.sources['review-'+id]=ref;
@@ -46,7 +48,7 @@ export async function applyReview(content){
   if(e.base==='occipitalis'){const r=references.find(r=>r.file==='lumen-fron.htm');content.sources['review-occipitalis-lumen']=[r.publisher+'・Frontalis/Occipitalis',r.url];ids.push('review-occipitalis-lumen');}
   if(!ids.length&&e.base==='opponens digiti minimi of foot')ids.push('foot','footVariant');
   if(!ids.length)throw Error(`No cross-check source ${e.key}`);
-  e.sources=[...new Set([...ids,...e.sources])];
+  e.sources=[...new Set([...ids,...e.sources])].filter((id,index,all)=>all.findIndex(other=>content.sources[other][1]===content.sources[id][1])===index);
   const old=before.entries[e.key],changes=[];for(const f of ['origin','insertion','nerve','action']){const oldValue=old?(old.scope==='part'?old['part'+f[0].toUpperCase()+f.slice(1)]:old[f]):null;if(oldValue!==e[f])changes.push({field:f,before:oldValue,after:e[f]});}
   const limitations=e.base==='adductor minimus'||e.base==='opponens digiti minimi of foot'||e.base==='temporoparietalis'?'存在／分部變異；不能把模型視為每人的固定形態。':'此為文獻位置核對；尚未完成模型每一附著面的專業審定。';
   e.fieldSources=Object.fromEntries(['position','origin','insertion','nerve','action'].map(f=>[f,[...ids]]));

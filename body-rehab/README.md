@@ -4,7 +4,7 @@
 
 ## 全身互動地圖
 
-- 同時顯示正反面，也可切為單一視角。639 個來源模型含 424 個有側別肌肉／分部／肌群物件、203 個骨骼及 12 個結締組織背景；共 219 種肌肉、分部或肌群名稱，不能視為人體肌肉總數。
+- 同時顯示正反面，也可切為單一視角。644 個來源模型含 424 個有側別肌肉／分部／肌群物件、203 個骨骼及 17 個結締組織背景；共 219 種肌肉、分部或肌群名稱，不能視為人體肌肉總數。
 - 表層／深層顯露、逐條隱藏與復原、單獨定位、骨骼背景開關。深層預設只是一組明列的移除清單，不假裝全身具有同一剝離平面。
 - 左側支援按鈕、滾輪、雙指縮放、拖曳、放大所選與回到全身；鍵盤 `+`、`-`、方向鍵、`0` 也可操作。
 - 右側局部以來源幾何在獨立相機與離屏 framebuffer 重新渲染，至少 600 像素寬；不是放大全身截圖。局部也可縮放。兩處點選都以相同可見物件、相機和深度緩衝判定，沒有手繪命中區域。
@@ -22,6 +22,7 @@
 node scripts/preview.mjs
 node scripts/check-body-map.mjs
 node scripts/check-content-review.mjs
+node scripts/check-attachment-injury.mjs
 node scripts/check-anatomy.mjs
 node scripts/check-thigh-source.mjs
 ```
@@ -38,6 +39,9 @@ node scripts/fetch-review-sources.mjs
 node scripts/build-body-model.mjs
 node scripts/build-muscle-knowledge.mjs
 node scripts/build-movement-data.mjs
+node scripts/render-attachment-sheets.mjs
+node scripts/render-attachment-sheets.mjs --left
+node scripts/build-attachment-review.mjs
 ```
 
 原始 archive、名稱對照與解剖表版本以 SHA-256 鎖定。來源若更改必須先重新審查。`check-body-map.mjs` 逐頂點、逐索引與官方 OBJ 比對，並驗證每個肌肉／分部的資料、引用、側別及容易漏列的主要肌肉；程式檢查不能取代解剖教師審校。
@@ -53,7 +57,7 @@ node scripts/build-movement-data.mjs
 - 原 SVG 僅為可點擊的部位定位圖，不可用來測量附著點、肌肉邊界、角度、比例或推論完整剝離層次。深部定位逐一顯示所選構造相對骨骼的投影。
 - 圖譜上的切除、剝離側與觀察方向須依標籤判讀。圖譜不提供逐肌自動高亮；搜尋成員名稱會找到所屬肌群，不代表該成員已在 SVG 上獨立分割。
 - 大腿原圖的膝上肌腱括註含容易混淆的 “patellar tendon”；頁面附註區分股四頭肌腱與膝下的髕韌帶／髕腱，並指出股中間肌未在該圖單獨展示。
-- 復健動作的肌肉顏色是概略參與分類，不是肌電量測或個人處方。原有骨骼與運動傷害內容仍屬概略衛教，尚未完成相同範圍的逐條文獻審核。
+- 復健動作的肌肉顏色是概略參與分類，不是肌電量測或個人處方。28 個運動傷害情境已完成機轉、相關構造、建議及證據限制的逐條核對。骨骼介紹與動作參與顏色不等於個人診斷或量化風險。
 
 ## 核對與維護
 
@@ -64,3 +68,11 @@ node scripts/build-movement-data.mjs
 `check-anatomy.mjs` 檢查 JavaScript 語法、肌肉資料覆蓋、運動引用、來源鍵、幾個重要例外的資料完整性，以及九張圖的授權對應及 SHA-256；這些檢查不能證明醫學內容全部正確。
 
 重新取得圖檔可執行 `node scripts/fetch-anatomy-atlas.mjs`（需網路）。程式核對逐圖授權、略過已校驗的檔案、記錄來源與縮放情況；若服務回傳 429，依 Retry-After 等待後再執行。不要直接用現行 OpenStax 網站圖片替換，現行版本的授權可能不同。
+
+## 2026-11-27 附著與傷害內容續核對
+
+`evidence-review.html` 提供 219 個名稱、424 個側別物件的三向附著區域紀錄，以及 28 個運動傷害情境的來源、證據限制與前後修訂。可旋轉、透視查看相關骨骼、腱與肌頭；不把共用肌腱的分割邊界當成解剖止點。補入同版甲狀軟骨及雙側二腹肌區域中間腱，修正三條旋轉肌袖資料的「關節面」用語及足印過度簡化。
+
+文獻與逐側模型檢視是本次內容審查；自動測試另外防止欄位、來源、顯示及互動回歸。來源缺少的皮膚、纖維縫、關節盤、韌帶與精確足印逐條列出；沒有虛構座標、移動肌肉去迎合示意圖，亦不宣稱已取得手術級足印分割或教師認證。詳見 `ATTACHMENT-INJURY-REVIEW.md`。
+
+附著背景再補入雙側長蹠韌帶 FMA44249／FMA44250，供足底方肌與小趾對蹠肌核對；它與足底筋膜不同，不用來替代缺少的足底筋膜物件。提肛肌腱弓原已載入，本輪修正其附著核對背景對應。

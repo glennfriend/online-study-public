@@ -181,6 +181,9 @@ export const reviewPositions=Object.fromEntries(positions.split('\n').map(line=>
 // Only fields that need correction / qualification are overridden. Unchanged
 // fields are still compared in the per-entry audit and retain precise citations.
 export const baseCorrections={
+ supraspinatus:{insertion:'肱骨大結節上面前內側的肌腱附著區，與關節囊交織；附著範圍有變異，這是非關節性的肌腱附著面，不是肱骨頭關節面。'},
+ infraspinatus:{insertion:'肱骨大結節中面，亦可向上面外側延伸；與棘上肌的腱性邊界有交織及變異，不是肱骨頭關節面。'},
+ 'teres minor':{insertion:'肱骨大結節下面的肌腱附著區，並與肩關節囊相連；不是肱骨頭關節面。'},
  diaphragm:{origin:'胸骨部：劍突後面；肋部：下六肋及肋軟骨內面；腰部：弓狀韌帶與膈腳，右腳通常至 L1–L3，左腳通常至 L1–L2。'},
  sternothyroid:{action:'降低並穩定甲狀軟骨與喉；它不直接附著舌骨。'},
  thyrohyoid:{nerve:'C1 脊神經前支纖維隨舌下神經行走後形成甲狀舌骨肌神經；不是頸袢，也不是舌下神經本身的運動纖維。'},

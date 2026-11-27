@@ -1,0 +1,82 @@
+{
+  "retrieved": "2026-11-27",
+  "retrieval": "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&retmode=xml&id=35877352,20581720,23640524,3985267,34706617,29234554,12860549,31775556,36453071,10622357,38495011,36825268,27475532,18451386,25914209",
+  "sha256": "19e4df067bbf24bc9eab4516d2d9a38d494e223f4294e4bb31e742c973331751",
+  "records": [
+    {
+      "pmid": "35877352",
+      "title": "Effect of Heel Lift Insoles on Lower Extremity Muscle Activation and Joint Work during Barbell Squats.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/35877352/"
+    },
+    {
+      "pmid": "20581720",
+      "title": "Effects of step rate manipulation on joint mechanics during running.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/20581720/"
+    },
+    {
+      "pmid": "23640524",
+      "title": "The effect of foot strike pattern on achilles tendon load during running.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/23640524/"
+    },
+    {
+      "pmid": "3985267",
+      "title": "Frequency, associated factors, and treatment of breaststroker's knee in competitive swimmers.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/3985267/"
+    },
+    {
+      "pmid": "34706617",
+      "title": "Methods to determine saddle height in cycling and implications of changes in saddle height in performance and injury risk: A systematic review.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/34706617/"
+    },
+    {
+      "pmid": "29234554",
+      "title": "THE INFLUENCE OF EXTRINSIC FACTORS ON KNEE BIOMECHANICS DURING CYCLING: A SYSTEMATIC REVIEW OF THE LITERATURE.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/29234554/"
+    },
+    {
+      "pmid": "12860549",
+      "title": "Ulnar and median nerve palsy in long-distance cyclists. A prospective study.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/12860549/"
+    },
+    {
+      "pmid": "31775556",
+      "title": "To Flex or Not to Flex? Is There a Relationship Between Lumbar Spine Flexion During Lifting and Low Back Pain? A Systematic Review With Meta-analysis.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/31775556/"
+    },
+    {
+      "pmid": "36453071",
+      "title": "Lateral Elbow Pain and Muscle Function Impairments.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36453071/"
+    },
+    {
+      "pmid": "10622357",
+      "title": "Knee joint forces during downhill walking with hiking poles.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/10622357/"
+    },
+    {
+      "pmid": "38495011",
+      "title": "Coupled effect of load weights and belt use on male shoulder pressure redistribution.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/38495011/"
+    },
+    {
+      "pmid": "36825268",
+      "title": "Is Neck Pain Related to Sagittal Head and Neck Posture?: A Systematic Review and Meta-analysis.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/36825268/"
+    },
+    {
+      "pmid": "27475532",
+      "title": "Is thoracic spine posture associated with shoulder pain, range of motion and function? A systematic review.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/27475532/"
+    },
+    {
+      "pmid": "18451386",
+      "title": "Humeral insertion of the supraspinatus and infraspinatus. New anatomical findings regarding the footprint of the rotator cuff.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/18451386/"
+    },
+    {
+      "pmid": "25914209",
+      "title": "Morphology of the humeral insertion of the supraspinatus and infraspinatus tendons: Application to rotator cuff repair.",
+      "url": "https://pubmed.ncbi.nlm.nih.gov/25914209/"
+    }
+  ]
+}

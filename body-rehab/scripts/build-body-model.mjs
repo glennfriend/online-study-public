@@ -33,7 +33,8 @@ for(const id of ['FMA7486','FMA7487','FMA7488'])boneConcepts.add(id);
 const tableNames=new Set((await readMuscleTable(new URL('.anatomy-cache/knowledge/ttuhsc.html',root))).map(row=>row.name));
 // Several standalone source objects (e.g. rectus abdominis) are absent from
 // composite relationships. Include exact, explicitly aliased muscle names too.
-const items=[...zip3.values()].flatMap(e=>{const id=e.name.match(/((?:FMA|BP)\d+)\.obj$/)?.[1],name=names3.get(id),kind=boneConcepts.has(id)?'bone':['BP24','BP28'].includes(id)?'context':name&&(muscleConcepts.has(id)||tableNames.has(identify(name).base))?(/\b(tendon|aponeurosis|fascia|retinaculum|iliotibial|ligament|tendinous)\b|linea alba/.test(name)?'context':'muscle'):null;const genericPart={BP24:'FMA7591',BP28:'FMA7591',BP44:'FMA77260',BP45:'FMA77260',BP46:'FMA77261',BP47:'FMA77261'}[id];return name&&kind?[{id,c:{fma:genericPart||id,name},bytes:unzipEntry(archive3,e),release:'3.0',kind,genericPart}]:[];}).sort((a,b)=>Number(a.id.startsWith('BP'))-Number(b.id.startsWith('BP')));
+const attachmentContext=new Set(['BP24','BP28','FMA55099','FMA258850','FMA264840','FMA44249','FMA44250']);
+const items=[...zip3.values()].flatMap(e=>{const id=e.name.match(/((?:FMA|BP)\d+)\.obj$/)?.[1],name=names3.get(id),kind=boneConcepts.has(id)?'bone':attachmentContext.has(id)?'context':name&&(muscleConcepts.has(id)||tableNames.has(identify(name).base))?(/\b(tendon|aponeurosis|fascia|retinaculum|iliotibial|ligament|tendinous)\b|linea alba/.test(name)?'context':'muscle'):null;const genericPart={BP24:'FMA7591',BP28:'FMA7591',BP44:'FMA77260',BP45:'FMA77260',BP46:'FMA77261',BP47:'FMA77261'}[id];return name&&kind?[{id,c:{fma:genericPart||id,name},bytes:unzipEntry(archive3,e),release:'3.0',kind,genericPart}]:[];}).sort((a,b)=>Number(a.id.startsWith('BP'))-Number(b.id.startsWith('BP')));
 let offset=0,maxRounding=0,totalTriangles=0;
 for(const [i,item]of items.entries()){
   const {id,release}=item;

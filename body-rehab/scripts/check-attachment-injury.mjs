@@ -1,0 +1,19 @@
+// Regression and provenance checks. Anatomical/clinical findings come from
+// the separately recorded literature and visual review, not these assertions.
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import vm from 'node:vm';
+const root=new URL('../',import.meta.url),json=async f=>JSON.parse(await readFile(new URL('assets/body-model/'+f+'.json',root))),[model,knowledge,attachments,injuries,movement]=await Promise.all(['manifest','knowledge','attachment-review','injury-review-log','movement'].map(json));
+assert.equal(attachments.entries.length,219);assert.equal(attachments.sourceGeometrySha256,model.sha256);const objects=attachments.entries.flatMap(e=>e.meshes);assert.equal(objects.length,424);assert.equal(new Set(objects.map(r=>r.mesh)).size,424);
+for(const row of attachments.entries){for(const end of ['origin','insertion']){assert.equal(row[end].anatomy,knowledge.entries[row.key][end]);assert(row[end].sourceIds.length);for(const id of row[end].sourceIds)assert(attachments.sources[id]?.[1].startsWith('https://'));}assert(row.observations.length);for(const r of row.meshes){const original=model.records.find(x=>x.mesh===r.mesh);assert.equal(r.sha256,original.sha256);assert.equal(r.side,original.side);assert.deepEqual(r.views,['anterior','profile-90','posterior']);assert(attachments.sheets.some(s=>s.file===r.sheet&&s.objects.includes(r.mesh)));}}
+for(const id of ['FMA55099','FMA258850','FMA264840'])assert.equal(model.records.find(r=>r.mesh===id)?.kind,'context');
+assert(!attachments.entries.find(e=>e.key==='short head of biceps brachii').origin.targets.some(t=>t.name.includes('labrum')));
+assert(attachments.entries.find(e=>e.key==='iliococcygeus').origin.targets.some(t=>t.name==='tendinous arch of levator ani'&&t.representation==='context-surface-present'));
+for(const id of ['FMA44249','FMA44250'])assert.equal(model.records.find(r=>r.mesh===id)?.kind,'context');
+assert(!knowledge.entries.supraspinatus.insertion.includes('上方關節面'));assert(knowledge.entries['infraspinatus muscle'].insertion.includes('向上面外側'));assert(attachments.entries.find(e=>e.key==='short head of biceps brachii').sharedMuscleMeshes.length);
+assert(attachments.entries.find(e=>e.key==='omohyoid').insertion.targets.some(t=>t.name==='~omohyoid intermediate tendon'&&t.representation==='no-independent-surface'));
+assert.equal(injuries.entries.length,28);assert.equal(new Set(injuries.entries.map(e=>e.id)).size,28);const ids=new Set(movement.structures.map(s=>s.id));
+for(const e of injuries.entries){assert(e.changes.length);assert(e.after.references.length);assert(e.after.evidence&&e.after.correction);for(const id of e.after.references)assert(injuries.sources[id]?.[1].startsWith('https://'));for(const id of e.after.areas)assert(ids.has(id));const [sport,index]=e.id.split(':');assert.deepEqual(movement.sports.find(s=>s.id===sport).problems[Number(index)],e.after);}
+assert(!injuries.entries.find(e=>e.id==='squat:0').after.areas.includes('knee-mcl'));assert(injuries.entries.find(e=>e.id==='racket:3').after.fix.includes('停止運動'));assert(injuries.entries.find(e=>e.id==='bike:0').after.why.includes('並非一對一'));assert(injuries.entries.find(e=>e.id==='squat:2').after.references.includes('squatHeel'));
+const html=await readFile(new URL('movement-reference.html',root),'utf8'),script=html.match(/<script>([\s\S]*?)<\/script>/)[1],context=vm.createContext({});vm.runInContext(await readFile(new URL('anatomy-data.js',root),'utf8')+'\n'+script.slice(0,script.indexOf('const SVGNS =')),context);const legacy=vm.runInContext('JSON.stringify(SPORTS)',context);assert.deepEqual(JSON.parse(legacy),movement.sports);
+console.log('Passed: 219 attachment records / 424 source objects in three views; 28 referenced injury revisions; current and legacy content agree. These are provenance/regression checks, not medical certification.');
