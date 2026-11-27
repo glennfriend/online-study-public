@@ -1,8 +1,25 @@
-// A folder-scoped worker leaves the parent site's service worker unchanged.
+// Old URL retained for migration only: no new offline installation or downloads.
 (() => {
-  if (!('serviceWorker' in navigator) || !('caches' in window) || !/^https?:$/.test(location.protocol)) return;
-  const base = new URL('.', document.currentScript.src);
-  const registration=navigator.serviceWorker.register(new URL('sw.js',base),{scope:base.pathname});
-  async function report(){try{await registration;await navigator.serviceWorker.ready;const cache=await caches.open('body-rehab-map-v5'),response=await cache.match(new URL('assets/body-model/manifest.json',base));if(!response)return;const manifest=await response.json(),ready=(await Promise.all(manifest.files.map(f=>cache.match(new URL('assets/body-model/'+f.file,base))))).every(Boolean);const status=document.getElementById('offline-status');if(status)status.textContent=ready?'模型與頁面已可離線使用；外部來源需連線':'首次完整載入後可離線使用';}catch{}}
-  registration.then(report).catch(()=>{});window.addEventListener('body-model-ready',()=>{report();setTimeout(report,2000);});
+ const base=new URL('.',document.currentScript.src),workerURL=new URL('sw.js',base).href;
+ const status=text=>{const el=document.getElementById('offline-status');if(el)el.textContent=text;};
+ const check=worker=>new Promise(resolve=>{if(!worker){resolve(false);return;}const channel=new MessageChannel(),timer=setTimeout(()=>{channel.port1.close();resolve(false);},800);channel.port1.onmessage=e=>{clearTimeout(timer);channel.port1.close();resolve(e.data?.onlineOnly===true);};worker.postMessage({type:'body-rehab-retirement-check'},[channel.port2]);});
+ globalThis.bodyRehabOnlineReady=(async()=>{
+  if(!/^https?:$/.test(location.protocol))return;
+  await import(new URL('cache-retirement.js',base));let removed=0;
+  if('serviceWorker' in navigator){
+   const container=navigator.serviceWorker,own=r=>r.scope===base.href&&[r.active,r.waiting,r.installing].some(w=>w?.scriptURL===workerURL),registrations=(await container.getRegistrations()).filter(own);
+   for(const registration of registrations){
+    if(await check(registration.active)){await registration.unregister();continue;}
+    const activated=new Promise((resolve,reject)=>{const timer=setTimeout(()=>{container.removeEventListener('message',message);reject(Error('舊離線服務尚未停止，請連網重新整理。'));},15000);function message(e){if(e.data?.type==='body-rehab-online-only'&&e.source?.scriptURL===workerURL){clearTimeout(timer);container.removeEventListener('message',message);resolve();}}container.addEventListener('message',message);});
+    activated.catch(()=>{});
+    // Replace ONLY an existing project registration to stop its active caching
+    // clients, then the retirement worker unregisters itself. New visitors skip.
+    await container.register(workerURL,{scope:base.pathname,updateViaCache:'none'});await activated;
+   }
+   if(container.controller?.scriptURL===workerURL&&!(await check(container.controller)))throw Error('舊離線服務尚未停止，請連網重新整理。');
+  }
+  if('caches' in globalThis)removed=await clearBodyRehabCaches(caches,base);
+  status(removed?'已清除本專案離線快取；模型依需求連線載入':'線上按需載入；不儲存離線模型');
+ })().catch(error=>{status(error.message);throw error;});
+ globalThis.bodyRehabOnlineReady.catch(()=>{});
 })();

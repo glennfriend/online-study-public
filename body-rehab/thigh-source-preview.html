@@ -138,5 +138,5 @@ $('layer-toggle').addEventListener('click',()=>{state.layer=state.layer==='surfa
 renderControls();
 Promise.all(THIGH_MODEL.frames.map(loadFrame)).then(loaded=>{for(const frame of loaded)frames.set(frame.view+'-'+frame.layer,frame);state.ready=true;render();}).catch(error=>{$('load-error').hidden=false;$('hover-label').textContent='模型載入未完成';console.error(error);});
 </script>
-</body>
+<script src="offline-cache.js"></script></body>
 </html>

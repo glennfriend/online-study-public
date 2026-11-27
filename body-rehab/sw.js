@@ -1,7 +1,10 @@
-const CACHE='body-rehab-map-v5';
-const SHELL=['./','index.html','2026-11-26-body-map.html','body-map.css','body-map.js','body-renderer.js','muscle-catalogue.mjs','movement-ui.js','movement-mapping.mjs','evidence-review.html','evidence-review-page.js','attachment-targets.mjs','attachment-geometry.mjs','assets/body-model/regional-review.json','assets/body-model/attachment-review.json','assets/body-model/injury-review-log.json','assets/body-model/evidence-source-versions.json','anatomy-review.html','anatomy-review-page.js','anatomy-data.js','offline-cache.js','movement-reference.html','assets/body-model/manifest.json','assets/body-model/knowledge.json','assets/body-model/movement.json','assets/body-model/anatomy-review-log.json',...['front','back','neck','scapula','shoulder','arm','abdomen','hip','leg'].map(id=>`assets/anatomy/${id}.jpg`)];
-self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL)).then(()=>self.skipWaiting())));
-self.addEventListener('activate',event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>(k.startsWith('body-rehab-map-')&&k!==CACHE)||k==='body-rehab-anatomy-v1').map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
-self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(event.request.method!=='GET'||url.origin!==location.origin||!url.pathname.startsWith(new URL('./',self.location.href).pathname))return;
- event.respondWith(fetch(event.request).then(response=>{if(response.ok){const copy=response.clone();event.waitUntil(caches.open(CACHE).then(cache=>cache.put(event.request,copy)).catch(()=>{}));}return response;}).catch(async()=>await (await caches.open(CACHE)).match(event.request,{ignoreSearch:true})||new Response('這個檔案尚未下載；請連線後重新開啟。',{status:503,headers:{'Content-Type':'text/plain;charset=utf-8'}})));
-});
+// Retirement at the OLD worker URL. No fetch listener, prefetch or cache writes.
+importScripts('./cache-retirement.js');
+self.addEventListener('install',event=>event.waitUntil(self.skipWaiting()));
+self.addEventListener('activate',event=>event.waitUntil((async()=>{
+ await self.clients.claim();
+ const removed=await clearBodyRehabCaches(caches,new URL('./',self.location.href));
+ await self.registration.unregister();
+ for(const client of await self.clients.matchAll())client.postMessage({type:'body-rehab-online-only',removed});
+})()));
+self.addEventListener('message',event=>{if(event.data?.type==='body-rehab-retirement-check')event.ports[0]?.postMessage({onlineOnly:true});});

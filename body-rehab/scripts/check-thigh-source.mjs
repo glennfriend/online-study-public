@@ -49,5 +49,7 @@ assert(observations['front-deep']['vastus-lateralis']>0&&observations['front-dee
 const html=await readFile(new URL('thigh-source-preview.html',root),'utf8');
 for(const match of html.matchAll(/<script>([\s\S]*?)<\/script>/g))new vm.Script(match[1]);
 new vm.Script(await readFile(new URL('model-data.js',out),'utf8'));
-assert(!html.includes('offline-cache.js'),'The independent pilot must not install or update the production cache');
+assert(html.includes('src="offline-cache.js"'),'The pilot also retires old project caches when opened directly');
+const worker=await readFile(new URL('sw.js',root),'utf8');
+assert(!worker.includes("addEventListener('fetch'")&&!worker.includes('.addAll(')&&!worker.includes('.put('),'The shared retirement helper must not install or update an offline cache');
 console.log(`Passed: ${records.size} source meshes, 8 sided quadriceps structures, 4 image/mask pairs; all visible pixels agree with source object IDs; side orientation, deep occlusion, checksums and script syntax verified.`);

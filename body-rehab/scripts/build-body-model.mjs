@@ -59,3 +59,5 @@ manifest.files=files;
 await writeFile(new URL('manifest.json',out),JSON.stringify(manifest));
 console.log(JSON.stringify({meshes:records.length,muscles:records.filter(r=>r.kind==='muscle').length,bytes:packed.length,maxRounding,triangles:totalTriangles}));
 await writeFile(new URL('.anatomy-cache/modeled-names.json',root),JSON.stringify([...new Set(records.filter(r=>r.kind==='muscle').map(r=>r.name.replace(/\b(right|left)\s*/g,'').trim()))].sort(),null,2));
+await import('./build-stream-geometry.mjs');
+await import('./build-body-overview.mjs');

@@ -6,7 +6,11 @@ BodyParts3D, © The Database Center for Life Science licensed under CC Attributi
 
 本目錄幾何及二進位衍生資產依原始版本的 [CC BY-SA 2.1 Japan](https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en) 散布。來源各肌肉的 FMA、原始名稱、OBJ hash、邊界、頂點及索引偏移皆見 `manifest.json`。原始座標無平移、縮放、擬合或鏡射；除兩個白名單錯側碎片清理外，保留三角形的拓撲不變；`geometryCorrection` 保存完整原索引對照。轉 float32 的最大座標差異見 `format.maxCoordinateRounding`。顯示法線重新計算並以 int8 儲存，只用於光影，不能據此推論肌束方向。
 
-四個 `.gzpart` 必須按 manifest 順序連接，然後 gzip 解壓；不是四個各自獨立的 gzip 檔。各片及完整串流均附 SHA-256。來源原本已是 OBJ 99% 簡化版，本專案未作額外視覺簡化；已移除經分區交叉覆核的 18 張錯側退化面。
+執行時由 `meshes/` 按物件下載獨立 gzip，`manifest.records[].stream` 保存長度、SHA-256 與路徑。每個檔案保留同一物件的全部 16-byte 頂點資料及局部 uint32 索引，沒有額外減面或移動頂點。`loadingBounds` 是包住原三角形的保守載入判定範圍，只供遮擋查詢，從不顯示或用作點選。
+
+`overview-*-color.png` 與 `overview-*-ids.png` 是同一來源幾何在正反面相機下的深度投影，供首次全身導覽；ID 圖逐像素記錄可見來源物件，不是手繪肌肉輪廓。選取、運動參與著色與點選使用這份 ID 圖；細節、放大及剝離改用完整來源網格。`manifest.overview` 保存投影範圍、原生比例、來源幾何 SHA-256 與四圖的校驗資料。衍生圖像亦依上述 CC BY-SA 2.1 Japan 散布。
+
+四個 `.gzpart` 保留作建置與完整來源校驗，主地圖及附著核對頁不再下載整包。進行校驗時必須按 manifest 順序連接，然後 gzip 解壓；不是四個各自獨立的 gzip 檔。各片及完整串流均附 SHA-256。來源原本已是 OBJ 99% 簡化版，本專案未作額外視覺簡化；已移除經分區交叉覆核的 18 張錯側退化面。`scripts/build-body-model.mjs` 會連同獨立物件及全身導覽一起重建；只重建載入資產可執行 `build-stream-geometry.mjs` 及 `build-body-overview.mjs`。
 
 `knowledge.json` 是可追溯的解剖事實整理，引用各條目所列醫學院教學表、研究及補充資料，不以模型形狀推測神經或作用。只整理附著、動作與神經等事實，不收錄來源表的教學備註、圖片或血管欄；手工整理的中文摘要與分部資料保留在原始碼。原始解剖表內容 hash、精確條目名稱與引用一併記錄。
 
