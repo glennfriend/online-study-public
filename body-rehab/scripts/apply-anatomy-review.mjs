@@ -3,6 +3,7 @@ import {reviewPositions,baseCorrections,partCorrections,reviewNotes} from '../an
 import {matchingReferences} from './review-reference-map.mjs';
 import {execFileSync} from 'node:child_process';
 import {correctionEvidence} from '../model-concept-corrections.mjs';
+import {attachmentLiterature,attachmentFieldEvidence} from '../attachment-literature.mjs';
 const root=new URL('../',import.meta.url),date='2026-11-27';
 const extras={
  cuff2008:['屍體解剖・棘上／棘下肌足印（2008）','https://pubmed.ncbi.nlm.nih.gov/18451386/'],
@@ -26,6 +27,7 @@ const extraByBase={supraspinatus:['cuff2008','cuff2015'],infraspinatus:['cuff200
 export async function applyReview(content){
  const references=JSON.parse(await readFile(new URL('.anatomy-cache/review/references.json',root))),baseline=await readFile(new URL('.anatomy-cache/review/before-knowledge.json',root),'utf8').catch(()=>execFileSync('git',['show','dc93f41:body-rehab/assets/body-model/knowledge.json'],{cwd:root,encoding:'utf8'})),before=JSON.parse(baseline),audit=[];
  for(const [id,ref]of Object.entries(extras))content.sources['review-'+id]=ref;
+ for(const [id,ref]of Object.entries(attachmentLiterature))content.sources['attachment-'+id]=ref;
  correctionEvidence.forEach((r,i)=>content.sources['review-eye-concept-'+i]=r);
  for(const e of Object.values(content.entries)){
   const localization=reviewPositions[e.base];if(!localization)throw Error(`Unreviewed position ${e.key}`);
@@ -48,10 +50,12 @@ export async function applyReview(content){
   if(e.base==='occipitalis'){const r=references.find(r=>r.file==='lumen-fron.htm');content.sources['review-occipitalis-lumen']=[r.publisher+'・Frontalis/Occipitalis',r.url];ids.push('review-occipitalis-lumen');}
   if(!ids.length&&e.base==='opponens digiti minimi of foot')ids.push('foot','footVariant');
   if(!ids.length)throw Error(`No cross-check source ${e.key}`);
-  e.sources=[...new Set([...ids,...e.sources])].filter((id,index,all)=>all.findIndex(other=>content.sources[other][1]===content.sources[id][1])===index);
+  const attachmentEvidence=attachmentFieldEvidence(e);
+  e.sources=[...new Set([...ids,...e.sources,...Object.values(attachmentEvidence).flat().map(id=>'attachment-'+id)])].filter((id,index,all)=>all.findIndex(other=>content.sources[other][1]===content.sources[id][1])===index);
   const old=before.entries[e.key],changes=[];for(const f of ['origin','insertion','nerve','action']){const oldValue=old?(old.scope==='part'?old['part'+f[0].toUpperCase()+f.slice(1)]:old[f]):null;if(oldValue!==e[f])changes.push({field:f,before:oldValue,after:e[f]});}
   const limitations=e.base==='adductor minimus'||e.base==='opponens digiti minimi of foot'||e.base==='temporoparietalis'?'存在／分部變異；不能把模型視為每人的固定形態。':'此為文獻位置核對；尚未完成模型每一附著面的專業審定。';
   e.fieldSources=Object.fromEntries(['position','origin','insertion','nerve','action'].map(f=>[f,[...ids]]));
+  for(const [field,keys]of Object.entries(attachmentEvidence))e.fieldSources[field].push(...keys.map(id=>'attachment-'+id));
   // A university name alone does not make a copied/mislabelled cell evidence.
   const excluded={ 'obturator externus':{nerve:'review-uw-obturator-externus'},'adductor pollicis':{action:'review-uw-adductor-pollicis'},'pectoralis minor':{nerve:'review-uw-pectoralis-minor'},'extensor pollicis brevis':{action:'review-uw-extensor-pollicis-brevis'}}[e.base]||{};
   for(const [field,id]of Object.entries(excluded))e.fieldSources[field]=e.fieldSources[field].filter(s=>s!==id);

@@ -4,7 +4,7 @@
 
 ## 全身互動地圖
 
-- 同時顯示正反面，也可切為單一視角。644 個來源模型含 424 個有側別肌肉／分部／肌群物件、203 個骨骼及 17 個結締組織背景；共 219 種肌肉、分部或肌群名稱，不能視為人體肌肉總數。
+- 同時顯示正反面，也可切為單一視角。650 個來源模型含 424 個有側別肌肉／分部／肌群物件、203 個骨骼及 23 個解剖背景（含腱、膜及直腸）；共 219 種肌肉、分部或肌群名稱，不能視為人體肌肉總數。
 - 表層／深層顯露、逐條隱藏與復原、單獨定位、骨骼背景開關。深層預設只是一組明列的移除清單，不假裝全身具有同一剝離平面。
 - 左側支援按鈕、滾輪、雙指縮放、拖曳、放大所選與回到全身；鍵盤 `+`、`-`、方向鍵、`0` 也可操作。
 - 右側局部以來源幾何在獨立相機與離屏 framebuffer 重新渲染，至少 600 像素寬；不是放大全身截圖。局部也可縮放。兩處點選都以相同可見物件、相機和深度緩衝判定，沒有手繪命中區域。
@@ -12,9 +12,9 @@
 - 「復健動作」24 項及「運動與影響構造」9 項直接連動全身地圖。主要／協同／控制／伸展與所選負荷情境以顏色區分；點選構造名稱可開啟肌肉資料。模型沒有的 ACL、MCL 等明確標示，不以鄰近骨骼假裝定位。
 - `anatomy-review.html` 提供 219 個名稱的文獻核對與修訂前後紀錄；完整紀錄及引用版本在 `assets/body-model/anatomy-review-log.json`。核對方法、具體發現及模型限制見 [ANATOMY-REVIEW.md](ANATOMY-REVIEW.md)。
 
-全身採用官方 **BodyParts3D 3.0、OBJ 99%** 的一致座標與拓撲。已接受的大腿試作使用 4.0；4.0 缺少腹直肌、闊背肌等構造，而且兩版骨骼位置不同，因此全身版沒有把兩版肌肉混貼。原始版本本身已是簡化模型，不代表 MRI 的原始解析度，亦不呈現真實肌纖維紋理。模型仍為單一成年男性參考，並不含全部人體構造與變異。
+全身採用官方 **BodyParts3D 3.0、OBJ 99%** 的一致座標與可追溯拓撲。已接受的大腿試作使用 4.0；4.0 缺少腹直肌、闊背肌等構造，而且兩版骨骼位置不同，因此全身版沒有把兩版肌肉混貼。原始版本本身已是簡化模型，不代表 MRI 的原始解析度，亦不呈現真實肌纖維紋理。模型仍為單一成年男性參考，並不含全部人體構造與變異。
 
-`body-renderer.js` 處理幾何與 picking；`body-map.js` 處理操作；`muscle-catalogue.mjs` 是明確的名稱對照；`part-anatomy.mjs` 是分部事實；`anatomy-review.mjs` 保留此次位置與內容修訂；`assets/body-model/knowledge.json` 含 219 個條目與逐條來源。模型分四片供應，合計約 54 MB gzip；位置轉 float32 的最大差異小於 0.00006 個來源座標單位，沒有額外減面或調整解剖位置。眼輪匝肌眶部／瞼部的來源標籤對調另有明示修正；原始識別碼、名稱、幾何 hash 與座標均保留。
+`body-renderer.js` 處理幾何與 picking；`body-map.js` 處理操作；`muscle-catalogue.mjs` 是明確的名稱對照；`part-anatomy.mjs` 是分部事實；`anatomy-review.mjs` 保留此次位置與內容修訂；`assets/body-model/knowledge.json` 含 219 個條目與逐條來源。模型分四片供應，合計約 54 MB gzip；位置轉 float32 的最大差異小於 0.00006 個來源座標單位，除兩個經交叉覆核的錯側游離碎片清理外，沒有額外減面或調整保留頂點的位置。眼輪匝肌眶部／瞼部的來源標籤對調另有明示修正；原始識別碼、名稱、幾何 hash 與座標均保留。
 
 ## 本機預覽與檢查
 
@@ -23,6 +23,7 @@ node scripts/preview.mjs
 node scripts/check-body-map.mjs
 node scripts/check-content-review.mjs
 node scripts/check-attachment-injury.mjs
+node scripts/check-regional-review.mjs
 node scripts/check-anatomy.mjs
 node scripts/check-thigh-source.mjs
 ```
@@ -42,6 +43,7 @@ node scripts/build-movement-data.mjs
 node scripts/render-attachment-sheets.mjs
 node scripts/render-attachment-sheets.mjs --left
 node scripts/build-attachment-review.mjs
+node scripts/build-regional-review.mjs
 ```
 
 原始 archive、名稱對照與解剖表版本以 SHA-256 鎖定。來源若更改必須先重新審查。`check-body-map.mjs` 逐頂點、逐索引與官方 OBJ 比對，並驗證每個肌肉／分部的資料、引用、側別及容易漏列的主要肌肉；程式檢查不能取代解剖教師審校。
@@ -76,3 +78,7 @@ node scripts/build-attachment-review.mjs
 文獻與逐側模型檢視是本次內容審查；自動測試另外防止欄位、來源、顯示及互動回歸。來源缺少的皮膚、纖維縫、關節盤、韌帶與精確足印逐條列出；沒有虛構座標、移動肌肉去迎合示意圖，亦不宣稱已取得手術級足印分割或教師認證。詳見 `ATTACHMENT-INJURY-REVIEW.md`。
 
 附著背景再補入雙側長蹠韌帶 FMA44249／FMA44250，供足底方肌與小趾對蹠肌核對；它與足底筋膜不同，不用來替代缺少的足底筋膜物件。提肛肌腱弓原已載入，本輪修正其附著核對背景對應。
+
+## 分區交叉覆核與幾何修正
+
+本輪由 3 位 agent 分區查閱 120 + 40 + 59 個名稱的起止資料，針對疑點查原始研究並交叉覆核。已實際清理右翼內肌及左腰方肌的 18 張錯側退化面片（54 個獨用頂點），補入白線、雙側前臂／小腿骨間膜及直腸。修正薦尾合併物件對應，新增足底視角與既有肌腱連接背景。逐點修改與可靠文獻見 [REGIONAL-ATTACHMENT-REVIEW.md](REGIONAL-ATTACHMENT-REVIEW.md)；原始調查、閱讀層級和全部 219 名稱分區記錄見 `assets/body-model/regional-review.json`。

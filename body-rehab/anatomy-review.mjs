@@ -181,6 +181,8 @@ export const reviewPositions=Object.fromEntries(positions.split('\n').map(line=>
 // Only fields that need correction / qualification are overridden. Unchanged
 // fields are still compared in the per-entry audit and retain precise citations.
 export const baseCorrections={
+ 'tibialis anterior':{insertion:'內側楔骨與第一蹠骨基底的內側至蹠側；肌腱分束、附著範圍與形態有變異。'},
+ 'tibialis posterior':{insertion:'以舟骨粗隆為主要附著，並向楔骨與蹠骨底等足底構造分束擴展；外側楔骨、骰骨及各蹠骨附著的組合與範圍有個體差異。'},
  supraspinatus:{insertion:'肱骨大結節上面前內側的肌腱附著區，與關節囊交織；附著範圍有變異，這是非關節性的肌腱附著面，不是肱骨頭關節面。'},
  infraspinatus:{insertion:'肱骨大結節中面，亦可向上面外側延伸；與棘上肌的腱性邊界有交織及變異，不是肱骨頭關節面。'},
  'teres minor':{insertion:'肱骨大結節下面的肌腱附著區，並與肩關節囊相連；不是肱骨頭關節面。'},

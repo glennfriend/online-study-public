@@ -3,7 +3,7 @@
 // ~ identifies a soft-tissue attachment with no separate source surface.
 const rows=`
 diaphragm|sternum,rib,costal cartilage,lumbar|~central tendon
-external abdominal oblique|rib|hip bone,~linea alba
+external abdominal oblique|rib|hip bone,linea alba
 sternohyoid|manubrium,clavicle|hyoid bone
 omohyoid|scapula,~omohyoid intermediate tendon|hyoid bone,~omohyoid intermediate tendon
 sternothyroid|manubrium|thyroid cartilage
@@ -22,12 +22,12 @@ serratus posterior inferior|thoracic,lumbar,~thoracolumbar fascia|rib
 sternocleidomastoid|manubrium,clavicle|temporal bone,occipital bone
 subclavius|rib,costal cartilage|clavicle
 subscapularis|scapula|humerus,~capsule
-internal abdominal oblique|hip bone,inguinal ligament,~thoracolumbar fascia|rib,hip bone,~linea alba
-anal sphincter, external|~perineal body|~anal canal,~coccyx
+internal abdominal oblique|hip bone,inguinal ligament,~thoracolumbar fascia|rib,hip bone,linea alba
+anal sphincter, external|~perineal body|~anal canal,coccyx
 iliacus|hip bone,sacrum|femur
 obturator internus|hip bone,~obturator membrane|femur
 obturator externus|hip bone,~obturator membrane|femur
-gluteus maximus|hip bone,sacrum,~coccyx,~sacrotuberous ligament|femur,iliotibial tract
+gluteus maximus|hip bone,sacrum,coccyx,~sacrotuberous ligament|femur,iliotibial tract
 gluteus medius|hip bone|femur
 gluteus minimus|hip bone|femur
 superior gemellus|hip bone|~obturator internus tendon,femur
@@ -35,8 +35,8 @@ inferior gemellus|hip bone|~obturator internus tendon,femur
 quadratus femoris|hip bone|femur
 piriformis|sacrum|femur
 psoas major|thoracic,lumbar|femur
-transversus abdominis|costal cartilage,hip bone,inguinal ligament,~thoracolumbar fascia|~linea alba,hip bone
-pyramidalis|hip bone|~linea alba
+transversus abdominis|costal cartilage,hip bone,inguinal ligament,~thoracolumbar fascia|linea alba,hip bone
+pyramidalis|hip bone|linea alba
 quadratus lumborum|hip bone,~iliolumbar ligament|rib,lumbar
 sartorius|hip bone|tibia
 semitendinosus|hip bone|tibia
@@ -46,9 +46,9 @@ pectineus|hip bone|femur
 adductor brevis|hip bone|femur
 adductor longus|hip bone|femur
 adductor magnus|hip bone|femur
-tibialis anterior|tibia,~interosseous membrane|medial cuneiform bone,first metatarsal bone
-extensor hallucis longus|fibula,~interosseous membrane|distal phalanx of big toe
-extensor digitorum longus|tibia,fibula,~interosseous membrane|~toe extensor expansions,toe middle,toe distal
+tibialis anterior|tibia,interosseous membrane of leg|medial cuneiform bone,first metatarsal bone
+extensor hallucis longus|fibula,interosseous membrane of leg|distal phalanx of big toe
+extensor digitorum longus|tibia,fibula,interosseous membrane of leg|~toe extensor expansions,toe middle,toe distal
 fibularis (peroneus) tertius|fibula|fifth metatarsal bone
 fibularis (peroneus) longus|fibula|medial cuneiform bone,first metatarsal bone
 fibularis (peroneus) brevis|fibula|fifth metatarsal bone
@@ -95,18 +95,18 @@ plantar interosseous|metatarsal|toe proximal,~toe extensor expansions
 pronator quadratus|ulna|radius
 flexor carpi radialis|humerus|second metacarpal bone,third metacarpal bone
 palmaris longus|humerus|~palmar aponeurosis,flexor retinaculum
-flexor digitorum profundus|ulna,~interosseous membrane|finger distal
-flexor pollicis longus|radius,~interosseous membrane|distal phalanx of thumb
+flexor digitorum profundus|ulna,interosseous membrane of forearm|finger distal
+flexor pollicis longus|radius,interosseous membrane of forearm|distal phalanx of thumb
 brachioradialis|humerus|radius
 extensor carpi radialis longus|humerus|second metacarpal bone
 extensor carpi radialis brevis|humerus|third metacarpal bone
 extensor digitorum|humerus|~finger extensor expansions,finger middle,finger distal
 extensor digiti minimi|humerus|~finger extensor expansions
 supinator|humerus,ulna,~annular ligament,~radial collateral ligament|radius
-abductor pollicis longus|radius,ulna,~interosseous membrane|first metacarpal bone
-extensor pollicis brevis|radius,~interosseous membrane|proximal phalanx of thumb
-extensor pollicis longus|ulna,~interosseous membrane|distal phalanx of thumb
-extensor indicis|ulna,~interosseous membrane|~finger extensor expansions
+abductor pollicis longus|radius,ulna,interosseous membrane of forearm|first metacarpal bone
+extensor pollicis brevis|radius,interosseous membrane of forearm|proximal phalanx of thumb
+extensor pollicis longus|ulna,interosseous membrane of forearm|distal phalanx of thumb
+extensor indicis|ulna,interosseous membrane of forearm|~finger extensor expansions
 pronator teres|humerus,ulna|radius
 flexor carpi ulnaris|humerus,ulna|pisiform,hamate,fifth metacarpal bone
 flexor digitorum superficialis|humerus,ulna,radius,~ulnar collateral ligament|finger middle
@@ -121,9 +121,9 @@ gracilis|hip bone|tibia
 adductor minimus|hip bone|femur
 platysma|~pectoral deltoid fascia|mandible,~skin
 stylohyoid|temporal bone|hyoid bone
-pubococcygeus|hip bone|~perineal body,~anococcygeal raphe,~coccyx
+pubococcygeus|hip bone|~perineal body,~anococcygeal raphe,coccyx
 puborectalis|hip bone|~anorectal sling
-iliococcygeus|hip bone,tendinous arch of levator ani|~anococcygeal raphe,~coccyx
+iliococcygeus|hip bone,tendinous arch of levator ani|~anococcygeal raphe,coccyx
 biceps femoris|hip bone,femur|fibula,tibia
 gastrocnemius|femur|calcaneal tendon,calcaneus
 flexor hallucis brevis|cuboid bone,lateral cuneiform bone,~tibialis posterior tendon|sesamoid bone of foot,proximal phalanx of big toe
@@ -137,7 +137,7 @@ rectus capitis anterior|atlas|occipital bone
 rectus capitis lateralis|atlas|occipital bone
 mylohyoid|mandible|hyoid bone,~mylohyoid raphe
 geniohyoid|mandible|hyoid bone
-coccygeus|hip bone|sacrum,~coccyx
+coccygeus|hip bone|sacrum,coccyx
 frontalis|aponeurosis of epicranius|~skin
 occipitalis|occipital bone,temporal bone|aponeurosis of epicranius
 temporoparietalis|~temporal fascia|aponeurosis of epicranius
@@ -165,7 +165,7 @@ depressor septi|maxilla|~nasal septum
 procerus|nasal bone|~skin
 flexor hallucis longus|fibula|distal phalanx of big toe
 flexor digitorum longus|tibia|toe distal
-tibialis posterior|tibia,fibula,~interosseous membrane|navicular bone of foot,medial cuneiform bone,intermediate cuneiform bone,lateral cuneiform bone,metatarsal
+tibialis posterior|tibia,fibula,interosseous membrane of leg|navicular bone of foot,medial cuneiform bone,intermediate cuneiform bone,lateral cuneiform bone,metatarsal
 interspinales|cervical,thoracic,lumbar|cervical,thoracic,lumbar
 intertransversarii|cervical,lumbar|cervical,lumbar
 levatores costarum|cervical,thoracic|rib
@@ -217,6 +217,7 @@ export function targetsFor(e){
 }
 export function matchesTarget(target,r,side){
  if(target.startsWith('~')||r.kind==='muscle'||(side!=='midline'&&r.side!=='midline'&&r.side!==side))return false;
+ if(r.anatomicalComponents?.includes(target))return true;
  const n=r.name.replace(/\b(left|right)\s*/g,'').trim();
  if(target==='cervical')return /cervical vertebra|^atlas$|^axis$/.test(n);
  if(target==='thoracic'||target==='lumbar')return n.includes(target+' vertebra');

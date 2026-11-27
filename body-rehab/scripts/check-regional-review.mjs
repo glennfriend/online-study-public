@@ -1,0 +1,16 @@
+// Provenance and regression checks, not an automatic anatomy certificate.
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {attachmentScene} from '../attachment-geometry.mjs';
+const dir=new URL('../assets/body-model/',import.meta.url),read=async name=>JSON.parse(await readFile(new URL(name+'.json',dir))),[m,k,a,r]=await Promise.all(['manifest','knowledge','attachment-review','regional-review'].map(read));
+assert.equal(r.entries.length,219);assert.equal(new Set(r.entries.map(e=>e.key)).size,219);assert.deepEqual(r.regions.map(x=>(x.report.coveredNamedRelations||x.report.entries).length),[120,40,59]);assert.equal(r.sourceGeometrySha256,m.sha256);
+for(const e of Object.values(k.entries))assert(r.entries.some(x=>x.key===e.key));
+const fixes=m.records.filter(x=>x.geometryCorrection);assert.deepEqual(fixes.map(x=>x.mesh).sort(),['FMA22349','FMA49012']);assert.equal(fixes.reduce((n,x)=>n+x.geometryCorrection.removeFaceIndices.length,0),18);assert.equal(fixes.reduce((n,x)=>n+x.geometryCorrection.removedVertexIndices.length,0),54);assert(m.records.find(x=>x.mesh==='FMA49012').bounds[1][0]<0);assert(m.records.find(x=>x.mesh==='FMA22349').bounds[0][0]>0);
+for(const id of ['FMA11336','FMA23707','FMA23708','FMA35192','FMA35193','FMA14544'])assert.equal(m.records.find(x=>x.mesh===id)?.kind,'context');
+for(const key of ['flexor pollicis longus','flexor digitorum profundus','abductor pollicis longus','extensor pollicis longus','extensor pollicis brevis','extensor indicis']){const e=a.entries.find(x=>x.key===key),t=e.origin.targets.find(x=>x.name==='interosseous membrane of forearm');assert.equal(t?.representation,'context-surface-present');assert(e.origin.sourceIds.includes('attachment-forearm2008'));assert(!k.entries[key].fieldSources.nerve.includes('attachment-forearm2008'));}
+for(const key of ['coccygeus','iliococcygeus','pubococcygeus','gluteus maximus'])assert.equal(a.entries.find(x=>x.key===key).origin.targets.concat(a.entries.find(x=>x.key===key).insertion.targets).find(t=>t.name==='coccyx')?.representation,'combined-source-surface');
+for(const side of ['right','left']){const e=a.entries.find(x=>x.key==='flexor accessorius'),scene=attachmentScene(e,m.records,side),fdl=scene.context.find(x=>x.name===side+' flexor digitorum longus');assert(fdl);assert.equal(fdl.kind,'muscle');assert(scene.context.every(x=>x.side===side||x.side==='midline'));assert(k.entries[e.key].attachmentReview.supportingMuscleMeshes.includes(fdl.mesh));}
+for(const key of ['rectus femoris','vastus lateralis','vastus medialis','vastus intermedius'])assert.equal(a.entries.find(x=>x.key===key).insertion.targets.find(t=>t.name==='~patellar ligament').representation,'embedded-in-source-object');
+assert(k.entries['tibialis anterior'].insertion.includes('蹠側'));assert(k.entries['tibialis posterior'].insertion.includes('骰骨'));assert(k.entries['deep head of flexor pollicis brevis'].insertion.includes('尺側'));
+assert.equal(m.records.length,650);assert.equal(m.triangles,4300556);
+console.log('Passed: 3 regional records cover all 219 names; 2 corrected meshes retain traceable source maps; 6 source backgrounds restored; sided tendon/context relationships and field-specific evidence preserved.');

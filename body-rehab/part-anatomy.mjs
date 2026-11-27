@@ -23,7 +23,7 @@ export const parts={
  'oblique head of adductor hallucis':['第二至第四蹠骨底與腓骨長肌腱鞘。','拇趾近節趾骨底外側，與外側籽骨相關。','外側足底神經深支。','內收拇趾並協助足弓穩定。'],
  'transverse head of adductor hallucis':['第三至第五蹠趾關節蹠側韌帶與蹠深橫韌帶。','拇趾近節趾骨底外側，與外側籽骨相關。','外側足底神經深支。','內收拇趾並協助橫弓穩定。'],
  'superficial head of flexor pollicis brevis':['屈肌支持帶與大多角骨。','拇指近節指骨底橈側，經橈側籽骨。','正中神經返支。','屈拇指掌指關節。'],
- 'deep head of flexor pollicis brevis':['小多角骨與頭狀骨附近。','拇指近節指骨底橈側，經籽骨相關附著。','通常為尺神經深支；雙重支配及分部有變異。','屈拇指掌指關節。'],
+ 'deep head of flexor pollicis brevis':['小多角骨與頭狀骨附近。','經橈側或尺側籽骨相關腱性附著至拇指近節指骨底；深頭可分束至兩側，分型有變異。','通常為尺神經深支；雙重支配及分部有變異。','屈拇指掌指關節。'],
  'oblique head of adductor pollicis':['頭狀骨、第二及第三掌骨底。','拇指近節指骨底尺側，經尺側籽骨。','尺神經深支。','內收拇指，協助捏握。'],
  'transverse head of adductor pollicis':['第三掌骨掌側骨幹。','拇指近節指骨底尺側，經尺側籽骨。','尺神經深支。','內收拇指，協助捏握。'],
  'superior oblique part of longus colli':['第三至第五頸椎橫突前結節。','寰椎前結節。','頸脊神經前支。','屈頸與頸椎節段穩定。'],

@@ -8,13 +8,13 @@ export class BodyRenderer {
   const compile=(type,code)=>{const s=gl.createShader(type);gl.shaderSource(s,code);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(s));return s;};
   const program=this.program=gl.createProgram();
   gl.attachShader(program,compile(gl.VERTEX_SHADER,`#version 300 es
-   in vec3 position;in vec3 normal;uniform vec2 center;uniform vec2 scale;uniform vec2 rotation;out float light;
-   void main(){float x=rotation.x*position.x+rotation.y*position.y;float y=-rotation.y*position.x+rotation.x*position.y;vec3 n=vec3(rotation.x*normal.x+rotation.y*normal.y,-rotation.y*normal.x+rotation.x*normal.y,normal.z);gl_Position=vec4((x-center.x)*scale.x,(position.z-center.y)*scale.y,y/600.,1.);light=.55+.45*max(0.,dot(normalize(n),normalize(vec3(-.22,-.88,.42))));}`));
+   in vec3 position;in vec3 normal;uniform vec2 center;uniform vec2 scale;uniform vec2 rotation;uniform vec2 pitch;out float light;
+   void main(){float x=rotation.x*position.x+rotation.y*position.y;float y0=-rotation.y*position.x+rotation.x*position.y;float z=pitch.x*position.z+pitch.y*y0;float y=pitch.x*y0-pitch.y*position.z;float ny=-rotation.y*normal.x+rotation.x*normal.y;vec3 n=vec3(rotation.x*normal.x+rotation.y*normal.y,pitch.x*ny-pitch.y*normal.z,pitch.x*normal.z+pitch.y*ny);gl_Position=vec4((x-center.x)*scale.x,(z-center.y)*scale.y,y/2000.,1.);light=.55+.45*max(0.,dot(normalize(n),normalize(vec3(-.22,-.88,.42))));}`));
   gl.attachShader(program,compile(gl.FRAGMENT_SHADER,`#version 300 es
    precision highp float;uniform vec3 color;uniform bool picking;uniform float opacity;in float light;out vec4 outputColor;
    void main(){outputColor=vec4(color*(picking?1.:light),opacity);}`));
   gl.linkProgram(program);if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(program));gl.useProgram(program);
-  this.u=Object.fromEntries(['center','scale','rotation','color','picking','opacity'].map(n=>[n,gl.getUniformLocation(program,n)]));
+  this.u=Object.fromEntries(['center','scale','rotation','pitch','color','picking','opacity'].map(n=>[n,gl.getUniformLocation(program,n)]));
   this.p=gl.getAttribLocation(program,'position');this.n=gl.getAttribLocation(program,'normal');
   this.buffer=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,this.buffer);gl.bufferData(gl.ARRAY_BUFFER,this.records.reduce((n,r)=>n+r.vertexCount*16,0),gl.STATIC_DRAW);
   this.indices=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,this.indices);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,this.records.reduce((n,r)=>n+r.indexCount*4,0),gl.STATIC_DRAW);
@@ -38,10 +38,10 @@ export class BodyRenderer {
  visible(r){return (this.showBones||r.kind==='muscle')&&(!this.contextIds||r.kind==='muscle'||this.contextIds.has(r.id))&&!this.hidden.has(r.id)&&(!this.focusIds||r.kind!=='muscle'||this.focusIds.has(r.id));}
  scene(frames,width,height,picking,offscreen){const gl=this.gl;gl.useProgram(this.program);offscreen?this.target(width,height):gl.bindFramebuffer(gl.FRAMEBUFFER,null);gl.viewport(0,0,width,height);gl.clearColor(...(picking?[0,0,0,1]:[1,.992,.973,1]));gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);gl.disable(gl.BLEND);picking?gl.disable(gl.DITHER):gl.enable(gl.DITHER);gl.uniform1i(this.u.picking,picking);
   for(const {p,side,offset=0}of frames){
-   gl.viewport(offset,0,p.width,height);gl.uniform2f(this.u.center,p.yaw===undefined&&side==='back'?-p.cx:p.cx,p.cz);gl.uniform2f(this.u.scale,2*p.s/p.width,2*p.s/height);const yaw=p.yaw??(side==='front'?0:Math.PI);gl.uniform2f(this.u.rotation,Math.cos(yaw),Math.sin(yaw));
+   gl.viewport(offset,0,p.width,height);gl.uniform2f(this.u.center,p.yaw===undefined&&side==='back'?-p.cx:p.cx,p.cz);gl.uniform2f(this.u.scale,2*p.s/p.width,2*p.s/height);const yaw=p.yaw??(side==='front'?0:Math.PI),pitch=p.pitch||0;gl.uniform2f(this.u.rotation,Math.cos(yaw),Math.sin(yaw));gl.uniform2f(this.u.pitch,Math.cos(pitch),Math.sin(pitch));
    const xray=this.reviewXray&&!picking,passes=xray?[false,true]:[null];
    for(const musclePass of passes){if(xray&&musclePass===false){gl.disable(gl.DEPTH_TEST);gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.SRC_ALPHA,gl.ONE_MINUS_SRC_ALPHA);gl.uniform1f(this.u.opacity,.24);}else{gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);gl.uniform1f(this.u.opacity,1);}
-   for(const r of this.records){if(!this.visible(r)||(musclePass!==null&&(r.kind==='muscle')!==musclePass))continue;
+   for(const r of this.records){if(!this.visible(r)||(musclePass!==null&&(r.kind==='muscle'&&!this.contextMuscleIds?.has(r.id))!==musclePass))continue;
     gl.vertexAttribPointer(this.p,3,gl.FLOAT,false,16,r.gpuVertexOffset);gl.vertexAttribPointer(this.n,3,gl.BYTE,true,16,r.gpuVertexOffset+12);
     const selected=this.selected.has(r.id),shade=((r.id*17)%13)/160;
     gl.uniform3fv(this.u.color,picking?[(r.id&255)/255,(r.id>>8)/255,0]:selected?[.91,.43,.13]:this.emphasis?.get(r.id)||(r.kind==='bone'?[.90,.88,.81]:r.kind==='context'?[.86,.83,.71]:[.75+shade,.47+shade,.40+shade]));

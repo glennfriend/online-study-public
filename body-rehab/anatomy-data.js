@@ -1,6 +1,7 @@
 // Educational summaries, checked against the linked regional anatomy tables.
 // Motor nerves are named without asserting a single universal spinal-root range.
 const ANATOMY_SOURCES = {
+ tibialisFootprint2017: ['原始屍體研究・脛前肌足印（41足，2017）', 'https://pmc.ncbi.nlm.nih.gov/articles/PMC5474259/'],
  cuff2008: ['屍體解剖・旋轉肌袖足印（2008）', 'https://pubmed.ncbi.nlm.nih.gov/18451386/'],
  cuff2015: ['屍體解剖・旋轉肌袖附著面（2015）', 'https://pubmed.ncbi.nlm.nih.gov/25914209/'],
   upper: ['UAMS 醫學院・上肢肌肉表', 'https://medicine.uams.edu/neuroscience/education/medical-school-courses/human-structure-module/anatomy-tables/muscle-tables/muscles-of-the-upper-limb/'],
@@ -202,8 +203,8 @@ const ANATOMY = {
     '各頭有不同羽狀排列；股直肌常用雙羽狀作入門描述，不能把四頭都畫成同方向直線。',
     '大腿前側；股中間肌在股直肌深面。', '四頭皆伸膝；股直肌另跨髖關節並參與屈髖。',
     '「股中間肌」是深層一頭；膝內上方可見的是股內側肌，兩者不同。', ['股直肌 Rectus femoris', '股外側肌 Vastus lateralis', '股內側肌 Vastus medialis', '股中間肌 Vastus intermedius']),
-  'tibialis-ant': anatomy('leg', ['tibialis'],
-    '脛骨外側髁、近端外側面及骨間膜。', '內側楔骨與第 1 蹠骨基底內側。', '深腓神經。',
+  'tibialis-ant': anatomy('leg', ['tibialis','tibialisFootprint2017'],
+    '脛骨外側髁、近端外側面及骨間膜。', '內側楔骨與第 1 蹠骨基底的內側至蹠側；肌腱分束及附著形態有變異。', '深腓神經。',
     '肌腹與內部腱膜形成羽狀排列，遠端變成長肌腱。', '小腿前肌區，緊鄰脛骨外側；肌腱跨踝前方至足內側。',
     '踝背屈與足內翻；走路時也控制足部落下。', '腓骨長、短肌的肌腱繞外踝後方，與脛前肌跨踝前方不同。'),
   peroneals: anatomy('leg', ['lower'],

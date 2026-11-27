@@ -12,7 +12,7 @@ export function matchesStructure(id,r){if(r.kind==='muscle')return muscleLinks[i
  const name=r.name.replace(/\b(left|right)\s*/g,'').trim();
  if(id==='sternum')return ['sternum','manubrium','body of sternum','xiphoid process'].includes(name);
  const exact={sternum:'sternum',clavicle:'clavicle',scapula:'scapula',humerus:'humerus',sacrum:'sacrum',femur:'femur',patella:'patella',tibia:'tibia',fibula:'fibula',calcaneus:'calcaneus',achilles:'calcaneal tendon','it-band':'iliotibial tract'};
- if(exact[id])return name===exact[id];
+ if(exact[id])return name===exact[id]||r.anatomicalComponents?.includes(exact[id])||false;
  if(id==='forearm-bones')return ['ulna','radius'].includes(name);
  if(id==='ribs')return /\brib$/.test(name);
  if(id==='pelvis')return name==='hip bone';
@@ -21,4 +21,4 @@ export function matchesStructure(id,r){if(r.kind==='muscle')return muscleLinks[i
  if(id==='lumbar')return /lumbar vertebra/.test(name);
  return false;
 }
-export const mappingNotes={acromion:'肩峰是肩胛骨的一部分；目前沒有獨立肩峰模型。',acl:'目前來源未納入可獨立點選的前十字韌帶。','knee-mcl':'目前來源未納入可獨立點選的膝內側副韌帶。','ankle-lat-lig':'目前來源未納入可獨立點選的踝外側韌帶群。','patellar-tendon':'目前來源未納入可獨立點選的髕韌帶／髕腱。','plantar-fascia':'目前來源未納入可獨立點選的足底腱膜。'};
+export const mappingNotes={acromion:'肩峰是肩胛骨的一部分；目前沒有獨立肩峰模型。',acl:'目前來源未納入可獨立點選的前十字韌帶。','knee-mcl':'目前來源未納入可獨立點選的膝內側副韌帶。','ankle-lat-lig':'目前來源未納入可獨立點選的踝外側韌帶群。','patellar-tendon':'髕韌帶／髕腱未獨立分割；股四頭肌來源物件已含膝下伸膝裝置連續段，可由附著核對頁合看，不以整塊骨或肌肉冒充獨立韌帶。','plantar-fascia':'目前來源未納入可獨立點選的足底腱膜。'};

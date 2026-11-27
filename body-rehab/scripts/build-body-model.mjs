@@ -6,6 +6,7 @@ import { zipEntries, unzipEntry, parseOBJ } from './bp3d-utils.mjs';
 import { identify } from '../muscle-catalogue.mjs';
 import { readMuscleTable } from './read-muscle-table.mjs';
 import {modelConceptCorrections,correctionEvidence} from '../model-concept-corrections.mjs';
+import {applyGeometryCorrection} from '../model-geometry-corrections.mjs';
 const root=new URL('../',import.meta.url), cache=new URL('.anatomy-cache/bp3d/',root), out=new URL('assets/body-model/',root);
 await mkdir(out,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
@@ -33,25 +34,27 @@ for(const id of ['FMA7486','FMA7487','FMA7488'])boneConcepts.add(id);
 const tableNames=new Set((await readMuscleTable(new URL('.anatomy-cache/knowledge/ttuhsc.html',root))).map(row=>row.name));
 // Several standalone source objects (e.g. rectus abdominis) are absent from
 // composite relationships. Include exact, explicitly aliased muscle names too.
-const attachmentContext=new Set(['BP24','BP28','FMA55099','FMA258850','FMA264840','FMA44249','FMA44250']);
+const attachmentContext=new Set(['BP24','BP28','FMA55099','FMA258850','FMA264840','FMA44249','FMA44250','FMA11336','FMA23707','FMA23708','FMA35192','FMA35193','FMA14544']);
 const items=[...zip3.values()].flatMap(e=>{const id=e.name.match(/((?:FMA|BP)\d+)\.obj$/)?.[1],name=names3.get(id),kind=boneConcepts.has(id)?'bone':attachmentContext.has(id)?'context':name&&(muscleConcepts.has(id)||tableNames.has(identify(name).base))?(/\b(tendon|aponeurosis|fascia|retinaculum|iliotibial|ligament|tendinous)\b|linea alba/.test(name)?'context':'muscle'):null;const genericPart={BP24:'FMA7591',BP28:'FMA7591',BP44:'FMA77260',BP45:'FMA77260',BP46:'FMA77261',BP47:'FMA77261'}[id];return name&&kind?[{id,c:{fma:genericPart||id,name},bytes:unzipEntry(archive3,e),release:'3.0',kind,genericPart}]:[];}).sort((a,b)=>Number(a.id.startsWith('BP'))-Number(b.id.startsWith('BP')));
 let offset=0,maxRounding=0,totalTriangles=0;
 for(const [i,item]of items.entries()){
   const {id,release}=item;
-  const bytes=item.bytes,m=parseOBJ(bytes.toString('utf8')),c=item.c;
+  const bytes=item.bytes,m=applyGeometryCorrection(id,parseOBJ(bytes.toString('utf8')),sha(bytes)),c=item.c;
   const normals=new Float64Array(m.vertices.length),v=m.vertices;
   for(let f=0;f<m.faces.length;f+=3){const a=m.faces[f]*3,b=m.faces[f+1]*3,d=m.faces[f+2]*3;const u=[v[b]-v[a],v[b+1]-v[a+1],v[b+2]-v[a+2]],w=[v[d]-v[a],v[d+1]-v[a+1],v[d+2]-v[a+2]];const n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];for(const p of[a,b,d])for(let j=0;j<3;j++)normals[p+j]+=n[j];}
   const vb=Buffer.alloc(v.length/3*16),ib=Buffer.from(m.faces.buffer);
   for(let p=0;p<v.length;p+=3){const length=Math.hypot(...normals.subarray(p,p+3))||1;for(let j=0;j<3;j++){vb.writeFloatLE(v[p+j],p/3*16+j*4);vb.writeInt8(Math.round(normals[p+j]/length*127),p/3*16+12+j);maxRounding=Math.max(maxRounding,Math.abs(v[p+j]-vb.readFloatLE(p/3*16+j*4)));}}
   const r={id:i+1,mesh:id,fma:c.fma,name:c.name,release,kind:item.kind,side:/\bright\b/.test(c.name)?'right':/\bleft\b/.test(c.name)?'left':'midline',bounds:[m.min,m.max],vertexOffset:offset,vertexCount:v.length/3,indexOffset:offset+vb.length,indexCount:m.faces.length,sha256:sha(bytes)};
   if(item.genericPart)r.conceptMapping='Official source leaf uses BP ID; FMA is the name-matched, non-sided generic anatomical concept, not a claimed sided FMA leaf.';
+  if(m.geometryCorrection)r.geometryCorrection=m.geometryCorrection;
+  if(id==='FMA16202'){r.sourceName=r.name;r.name='sacrum and coccyx (combined source mesh)';r.anatomicalComponents=['sacrum','coccyx'];r.componentAssignment='Original sacrum-labelled mesh includes the coccygeal tail; selecting either component uses this combined original surface, not a separately segmented footprint.';}
   if(modelConceptCorrections[id]){r.sourceFma=r.fma;r.sourceName=r.name;Object.assign(r,modelConceptCorrections[id]);r.conceptCorrection={reason:'Corrected reversed orbital/palpebral concept assignment after spatial/literature review; vertices unchanged.',evidence:correctionEvidence};}
   records.push(r);chunks.push(vb,ib);offset+=vb.length+ib.length;totalTriangles+=m.faces.length/3;
 }
 const binary=Buffer.concat(chunks),packed=gzipSync(binary,{level:9});
 const files=[];for(let start=0;start<packed.length;start+=14_000_000){const bytes=packed.subarray(start,start+14_000_000),file=`geometry-${files.length}.gzpart`;await writeFile(new URL(file,out),bytes);files.push({file,bytes:bytes.length,sha256:sha(bytes)});}
 const manifest={version:1,format:{stride:16,position:'float32 xyz',normal:'normalized int8 xyz + padding',indices:'uint32, mesh-local',byteOrder:'little-endian',maxCoordinateRounding:maxRounding},bytes:binary.length,packedBytes:packed.length,sha256:sha(packed),triangles:totalTriangles,records};
-manifest.source={title:'BodyParts3D 3.0 (OBJ 99%)',url:'https://dbarchive.biosciencedbc.jp/data/bodyparts3d/20110915/',archive:'BodyParts3D_3.0_obj_99.zip',archiveSha256:sha(archive3),license:'CC BY-SA 2.1 Japan',licenseUrl:'https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en',credit:'BodyParts3D, © The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan',transform:'Identity: original source coordinates; no fitting, mirroring or re-positioning'};
+manifest.source={title:'BodyParts3D 3.0 (OBJ 99%) with documented mesh corrections',url:'https://dbarchive.biosciencedbc.jp/data/bodyparts3d/20110915/',archive:'BodyParts3D_3.0_obj_99.zip',archiveSha256:sha(archive3),license:'CC BY-SA 2.1 Japan',licenseUrl:'https://creativecommons.org/licenses/by-sa/2.1/jp/deed.en',credit:'BodyParts3D, © The Database Center for Life Science licensed under CC Attribution-Share Alike 2.1 Japan',transform:'Original coordinates retained; whitelisted, cross-reviewed stray faces removed with original vertex/face maps. No nearest-bone fitting, mirroring or invented attachment coordinates.'};
 manifest.files=files;
 await writeFile(new URL('manifest.json',out),JSON.stringify(manifest));
 console.log(JSON.stringify({meshes:records.length,muscles:records.filter(r=>r.kind==='muscle').length,bytes:packed.length,maxRounding,triangles:totalTriangles}));
