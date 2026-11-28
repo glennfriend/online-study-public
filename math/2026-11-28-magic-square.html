@@ -24,7 +24,7 @@
     /* 上方標題、兩排按鈕和方陣同寬、左邊對齊。 */
     .col { width: min(100%, max(320px, calc(100dvh - var(--top, 170px)))); margin: 0 auto; }
 
-    header { display: flex; align-items: baseline; gap: 12px; margin-bottom: 10px; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
     .back { color: var(--muted); text-decoration: none; font-size: .95rem; white-space: nowrap; }
     .back:hover { color: var(--green); }
     h1 { margin: 0; font-size: 1.4rem; }
@@ -96,8 +96,8 @@
     <div class="col">
     <div id="top">
       <header>
-        <a class="back" href="index.html">← 數學</a>
         <h1>魔方陣</h1>
+        <a class="back" href="index.html">← 數學</a>
       </header>
       <noscript><p>請啟用 JavaScript 才能玩。</p></noscript>
       <div class="bar">
