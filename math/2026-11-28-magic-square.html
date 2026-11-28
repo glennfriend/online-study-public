@@ -33,12 +33,7 @@
     .seg button[aria-pressed="true"] { background: var(--paper); color: var(--green); box-shadow: 0 1px 4px #2a3d3524; }
     .seg.modes button { min-width: 72px; }
     .seg.modes button[data-mode="swap"][aria-pressed="true"] { color: var(--main); }
-    .seg.modes button[data-mode="erase"][aria-pressed="true"] { color: var(--bad); }
 
-    .info { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin: 6px 2px 10px; font-size: 14px; color: var(--muted); }
-    .info b { color: var(--ink); font-size: 16px; }
-    .next { display: inline-flex; align-items: center; justify-content: center; min-width: 2.1em; height: 2.1em; padding: 0 6px; border-radius: 999px; background: var(--green); color: #fff; font-weight: 700; font-size: 15px; }
-    .next.done { background: #9aa8a2; }
     .status { min-height: 1.6em; margin: 0 2px 10px; font-size: 14px; color: var(--ink); }
     .status.win { color: var(--ok); font-weight: 700; }
 
@@ -76,8 +71,10 @@
     .cell.picked { outline: 3px solid var(--main); outline-offset: -3px; z-index: 1; transform: scale(.94); }
     .cell.pop { animation: pop .25s ease-out; }
     @keyframes pop { from { transform: scale(.7); } to { transform: scale(1); } }
-    .mode-fill .cell.filled, .mode-erase .cell:not(.filled) { cursor: default; }
-    .mode-erase .cell.filled:hover { background: var(--bad-bg); color: var(--bad); }
+    .mode-fill .cell.filled { cursor: default; }
+    /* 手機長按要拿來清除，不要跳出系統的選單或選字。 */
+    .cell { -webkit-touch-callout: none; }
+    .cell.erasing { background: var(--bad-bg) !important; color: var(--bad); }
     .mode-fill .cell:not(.filled):hover::before { content: attr(data-next); color: #23695c66; }
 
     .tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
@@ -121,15 +118,9 @@
       <div class="seg modes" id="modes" role="group" aria-label="功能">
         <button type="button" data-mode="fill">填數字</button>
         <button type="button" data-mode="swap">交換</button>
-        <button type="button" data-mode="erase">清除</button>
       </div>
     </div>
 
-    <div class="info">
-      <span>下一個數字 <span class="next" id="next">1</span></span>
-      <span>目標和 <b id="target">175</b></span>
-      <span>已填 <b id="filled">0</b> / <span id="total">49</span></span>
-    </div>
     <p class="status" id="status" role="status" aria-live="polite"></p>
 
     <div class="wrap">
@@ -159,7 +150,7 @@
       <ul>
         <li><b>填數字</b>：點空格就會填入「下一個數字」，從 1 開始往上數。中間清掉的數字會先補回來，例如填了 1～7 再清掉 3，下一格會先填 3，再接著填 8。</li>
         <li><b>交換</b>：先點一個數字，再點另一格，兩格就會對調；第二下點空格就是把數字搬過去。再點同一格可以取消。</li>
-        <li><b>清除</b>：點數字就把它拿掉。</li>
+        <li><b>清除</b>：在數字上按滑鼠右鍵；手機上是長按數字。任何模式都可以用。</li>
         <li>右邊是每一橫列的總和，下面是每一直行的總和。整條填滿且剛好等於目標和會變綠色，不對或已經超過會變紅色。</li>
         <li>紅圈是最後一次放下的數字。「依數字分組上色」會把 1～n、n+1～2n…各用一種顏色，方便看出數字排列的規律。</li>
       </ul>
@@ -204,7 +195,7 @@
         const data = JSON.parse(localStorage.getItem(STORE) || 'null');
         if (!data) return;
         if (data.n >= MIN && data.n <= MAX) n = data.n;
-        if (['fill', 'swap', 'erase'].includes(data.mode)) mode = data.mode;
+        if (['fill', 'swap'].includes(data.mode)) mode = data.mode;
         if (data.opts) opts = { ...opts, ...data.opts };
         for (const [k, b] of Object.entries(data.boards || {})) {
           const size = Number(k);
@@ -262,8 +253,6 @@
       $('sums-bottom').innerHTML = Array.from({ length: n }, () => '<div class="sum"></div>').join('');
       rowEls = [...$('sums-right').children];
       colEls = [...$('sums-bottom').children];
-      $('target').textContent = target(n);
-      $('total').textContent = n * n;
       [...$('sizes').children].forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === n)));
       update();
     }
@@ -303,9 +292,6 @@
       for (let r = 0; r < n; r++) { const st = lineState(range(j => r * n + j), b.cells, goal); paintSum(rowEls[r], st, ''); states.push(st); }
       for (let c = 0; c < n; c++) { const st = lineState(range(j => j * n + c), b.cells, goal); paintSum(colEls[c], st, ''); states.push(st); }
 
-      $('next').textContent = next ?? '✓';
-      $('next').classList.toggle('done', next == null);
-      $('filled').textContent = filled;
       $('undo').disabled = b.history.length === 0;
       $('clear').disabled = filled === 0;
       board.className = `board mode-${mode}`;
@@ -324,18 +310,56 @@
         }
       } else if (mode === 'swap') {
         status.textContent = picked >= 0 ? `已選 ${b.cells[picked]}，再點另一格來交換（點同一格取消）。` : '點一個數字，再點另一格，兩格就會對調。';
-      } else if (mode === 'erase') {
-        status.textContent = '點數字就會把它清掉。';
       } else {
-        status.textContent = n === 2 ? '2×2 怎麼排都沒辦法讓每列、每行都一樣，試試看就知道為什麼。' : '點空格填入下一個數字。';
+        status.textContent = n === 2 ? '2×2 怎麼排都沒辦法讓每列、每行都一樣，試試看就知道為什麼。' : '點空格填入下一個數字；在數字上按右鍵（手機長按）可以清除。';
       }
       save();
     }
 
     // ── 操作 ──
+    function erase(i) {
+      const b = cur();
+      if (b.cells[i] == null) return;
+      snapshot();
+      b.cells[i] = null;
+      if (b.last === i) b.last = -1;
+      if (picked === i) picked = -1;
+      update();
+    }
+
+    // 滑鼠右鍵清除。
+    board.addEventListener('contextmenu', e => {
+      const el = e.target.closest('.cell');
+      if (!el) return;
+      e.preventDefault();
+      if (Date.now() - longPressAt < 800) return;   // 長按已經清過了（Android 長按也會觸發 contextmenu）
+      erase(Number(el.dataset.i));
+    });
+
+    // 手機長按清除：按住 0.5 秒，手指移動或放開就取消。
+    let pressTimer = 0, showTimer = 0, pressEl = null, pressX = 0, pressY = 0, longPressAt = 0;
+    const cancelPress = () => { clearTimeout(pressTimer); clearTimeout(showTimer); pressEl?.classList.remove('erasing'); pressEl = null; };
+    board.addEventListener('pointerdown', e => {
+      if (e.pointerType === 'mouse') return;
+      const el = e.target.closest('.cell');
+      if (!el || cur().cells[Number(el.dataset.i)] == null) return;
+      cancelPress();
+      pressEl = el; pressX = e.clientX; pressY = e.clientY;
+      showTimer = setTimeout(() => el.classList.add('erasing'), 150);   // 按久一點才變紅，快速點一下不會閃
+      pressTimer = setTimeout(() => {
+        longPressAt = Date.now();
+        const i = Number(pressEl.dataset.i);
+        cancelPress();
+        erase(i);
+      }, 500);
+    });
+    board.addEventListener('pointermove', e => { if (pressEl && Math.hypot(e.clientX - pressX, e.clientY - pressY) > 10) cancelPress(); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(t => board.addEventListener(t, cancelPress));
+
     board.addEventListener('click', e => {
       const el = e.target.closest('.cell');
       if (!el) return;
+      if (Date.now() - longPressAt < 800) return;   // 長按放開後的那一下 click 不算
       const i = Number(el.dataset.i);
       const b = cur();
       if (mode === 'fill') {
@@ -346,12 +370,6 @@
         b.cells[i] = v;
         b.last = i;
         update(i);
-      } else if (mode === 'erase') {
-        if (b.cells[i] == null) return;
-        snapshot();
-        b.cells[i] = null;
-        if (b.last === i) b.last = -1;
-        update();
       } else {
         if (picked < 0) {
           if (b.cells[i] == null) return;
