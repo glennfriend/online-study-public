@@ -67,7 +67,8 @@
     .sum.anti.bad, .sum.main.bad { color: var(--bad); }
     .sum.anti.ok, .sum.main.ok { color: var(--ok); border-style: solid; }
 
-    .board { position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); aspect-ratio: 1;
+    /* 列也要固定成 n 等分，否則空的列會被有數字的列擠小。 */
+    .board { position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); grid-template-rows: repeat(var(--n), minmax(0, 1fr)); aspect-ratio: 1;
       border: 3px solid var(--frame); background: var(--paper); user-select: none; -webkit-user-select: none; }
     .cell { position: relative; display: flex; align-items: center; justify-content: center; padding: 0; border: 0;
       border-right: 1px solid #2633311f; border-bottom: 1px solid #2633311f; background: var(--paper);
