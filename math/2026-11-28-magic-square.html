@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#23695c">
+  <link rel="manifest" href="../manifest.webmanifest">
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <title>魔方陣</title>
+  <style>
+    :root {
+      --ink: #253e3b; --muted: #64756f; --green: #23695c; --paper: #fffdf8; --line: #e2e7dc; --hi: #d48b38;
+      --ok: #23874f; --ok-bg: #e2f3e6; --bad: #b4462a; --bad-bg: #fbe6df;
+      --anti: #3b8f4e; --main: #3567b0; --frame: #263331;
+    }
+    * { box-sizing: border-box; }
+    /* 連點時不會雙擊放大；橫向時 iOS 不會自動放大字。 */
+    html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans TC", sans-serif; line-height: 1.6; }
+    button { font: inherit; color: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    button:focus-visible { outline: 3px solid var(--hi); outline-offset: 2px; }
+    main { max-width: 600px; margin: 0 auto; padding: 20px 16px 48px; }
+    .back { display: inline-block; padding: 4px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    .back:hover { color: var(--green); }
+    h1 { margin: 4px 0 2px; font-size: 1.6rem; }
+    .lead { margin: 0 0 14px; color: var(--muted); font-size: .95rem; }
+
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .row > .label { font-size: 14px; color: var(--muted); min-width: 3em; }
+    .seg { display: inline-flex; flex-wrap: wrap; gap: 4px; padding: 4px; background: #e9ece3; border-radius: 12px; }
+    .seg button { min-width: 44px; min-height: 40px; padding: 4px 10px; border: 0; border-radius: 9px; background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); }
+    .seg button[aria-pressed="true"] { background: var(--paper); color: var(--green); box-shadow: 0 1px 4px #2a3d3524; }
+    .seg.modes button { min-width: 72px; }
+    .seg.modes button[data-mode="swap"][aria-pressed="true"] { color: var(--main); }
+    .seg.modes button[data-mode="erase"][aria-pressed="true"] { color: var(--bad); }
+
+    .info { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: baseline; margin: 6px 2px 10px; font-size: 14px; color: var(--muted); }
+    .info b { color: var(--ink); font-size: 16px; }
+    .next { display: inline-flex; align-items: center; justify-content: center; min-width: 2.1em; height: 2.1em; padding: 0 6px; border-radius: 999px; background: var(--green); color: #fff; font-weight: 700; font-size: 15px; }
+    .next.done { background: #9aa8a2; }
+    .status { min-height: 1.6em; margin: 0 2px 10px; font-size: 14px; color: var(--ink); }
+    .status.win { color: var(--ok); font-weight: 700; }
+
+    /* ── 方陣 ─────────────────────────────── */
+    .wrap { container-type: inline-size; }
+    .square {
+      --label: 22px; --sum: 50px;
+      display: grid; grid-template-columns: var(--label) minmax(0, 1fr) var(--sum); grid-template-rows: auto auto auto;
+      gap: 6px 6px; align-items: stretch;
+      /* 一格的寬度：整個方陣寬扣掉左邊標號、右邊總和與間距，再除以 n。 */
+      --cell: calc((100cqi - var(--label) - var(--sum) - 12px) / var(--n));
+    }
+    .labels-top, .sums-bottom { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); }
+    .labels-left, .sums-right { display: grid; grid-template-rows: repeat(var(--n), minmax(0, 1fr)); }
+    .labels-top span, .labels-left span { display: flex; align-items: center; justify-content: center; font-size: 12px; color: #9aa59f; }
+    .sum { display: flex; align-items: center; justify-content: center; font-weight: 700; font-variant-numeric: tabular-nums; color: #9aa59f;
+      font-size: clamp(12px, calc(var(--cell) * .34), 19px); border-radius: 8px; transition: background .2s, color .2s; }
+    .sums-right .sum { margin: 2px 0; }
+    .sums-bottom .sum { margin: 0 2px; min-height: 2em; }
+    .sum.part { color: var(--ink); }
+    .sum.ok { color: var(--ok); background: var(--ok-bg); }
+    .sum.bad { color: var(--bad); background: var(--bad-bg); }
+    .sum.diag { min-height: 2em; border: 1.5px dashed currentColor; }
+    .sum.anti { color: var(--anti); }
+    .sum.main { color: var(--main); }
+    .sum.anti.bad, .sum.main.bad { color: var(--bad); }
+    .sum.anti.ok, .sum.main.ok { color: var(--ok); border-style: solid; }
+
+    .board { position: relative; display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); aspect-ratio: 1;
+      border: 3px solid var(--frame); background: var(--paper); user-select: none; -webkit-user-select: none; }
+    .cell { position: relative; display: flex; align-items: center; justify-content: center; padding: 0; border: 0;
+      border-right: 1px solid #2633311f; border-bottom: 1px solid #2633311f; background: var(--paper);
+      font-weight: 700; font-variant-numeric: tabular-nums; font-size: clamp(13px, calc(var(--cell) * .42), 34px); color: var(--ink);
+      transition: background .18s, transform .12s; }
+    .cell:hover { background: #f1f5ec; }
+    .cell.filled.g0 { background: #d9efe6; } .cell.filled.g1 { background: #dde6f3; } .cell.filled.g2 { background: #e8e0f1; }
+    .cell.filled.g3 { background: #fbe3dc; } .cell.filled.g4 { background: #fdf1cc; } .cell.filled.g5 { background: #f9e0e6; }
+    .cell.filled.g6 { background: #e3eed8; }
+    .plain .cell.filled { background: var(--paper); }
+    .cell.last::after { content: ""; position: absolute; inset: 9%; border: 2.5px solid #d6453a; border-radius: 50%; pointer-events: none; }
+    .cell.picked { outline: 3px solid var(--main); outline-offset: -3px; z-index: 1; transform: scale(.94); }
+    .cell.pop { animation: pop .25s ease-out; }
+    @keyframes pop { from { transform: scale(.7); } to { transform: scale(1); } }
+    .mode-fill .cell.filled, .mode-erase .cell:not(.filled) { cursor: default; }
+    .mode-erase .cell.filled:hover { background: var(--bad-bg); color: var(--bad); }
+    .mode-fill .cell:not(.filled):hover::before { content: attr(data-next); color: #23695c66; }
+    .diag-lines { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 2; }
+    .diag-lines line { stroke-width: 1.6; vector-effect: non-scaling-stroke; opacity: .75; }
+    .no-diag .diag-lines { display: none; }
+
+    .tools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+    .tools button { min-height: 42px; padding: 6px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); font-size: 15px; }
+    .tools button:hover:not(:disabled) { border-color: var(--green); color: var(--green); }
+    .tools button:disabled { opacity: .45; cursor: default; }
+    .toggles { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 12px; font-size: 14px; color: var(--muted); }
+    .toggles label { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+    .toggles input { width: 18px; height: 18px; accent-color: var(--green); }
+
+    details { margin-top: 22px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 14px; background: var(--paper); font-size: 15px; }
+    summary { cursor: pointer; font-weight: 700; color: var(--green); }
+    details p, details ol, details ul { margin: 8px 0; }
+    details ol, details ul { padding-left: 1.3em; }
+    .formula { display: inline-block; padding: 2px 10px; border-radius: 8px; background: #eef3ea; font-family: ui-monospace, Menlo, Consolas, monospace; }
+    table.targets { border-collapse: collapse; margin: 6px 0; font-variant-numeric: tabular-nums; }
+    table.targets td, table.targets th { padding: 2px 12px; border-bottom: 1px solid var(--line); text-align: center; }
+    [hidden] { display: none !important; }
+    @media (max-width: 420px) {
+      .square { --label: 16px; --sum: 42px; gap: 5px 4px; --cell: calc((100cqi - var(--label) - var(--sum) - 8px) / var(--n)); }
+      .seg.modes button { min-width: 64px; padding: 4px 8px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <a class="back" href="index.html">← 數學</a>
+    <h1>魔方陣</h1>
+    <p class="lead">把 1 到 n² 填進方格，讓每一橫列、每一直行、兩條對角線的總和都一樣。</p>
+    <noscript><p>請啟用 JavaScript 才能玩。</p></noscript>
+
+    <div class="row">
+      <span class="label">大小</span>
+      <div class="seg" id="sizes" role="group" aria-label="方陣大小"></div>
+    </div>
+    <div class="row">
+      <span class="label">功能</span>
+      <div class="seg modes" id="modes" role="group" aria-label="功能">
+        <button type="button" data-mode="fill">填數字</button>
+        <button type="button" data-mode="swap">交換</button>
+        <button type="button" data-mode="erase">清除</button>
+      </div>
+    </div>
+
+    <div class="info">
+      <span>下一個數字 <span class="next" id="next">1</span></span>
+      <span>目標和 <b id="target">175</b></span>
+      <span>已填 <b id="filled">0</b> / <span id="total">49</span></span>
+    </div>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+
+    <div class="wrap">
+      <div class="square" id="square">
+        <span></span>
+        <div class="labels-top" id="labels-top" aria-hidden="true"></div>
+        <div class="sum diag anti" id="sum-anti" title="斜線 ↙（右上到左下）的總和"></div>
+        <div class="labels-left" id="labels-left" aria-hidden="true"></div>
+        <div class="board" id="board" role="grid" aria-label="魔方陣格子"></div>
+        <div class="sums-right" id="sums-right" aria-label="每一橫列的總和"></div>
+        <span></span>
+        <div class="sums-bottom" id="sums-bottom" aria-label="每一直行的總和"></div>
+        <div class="sum diag main" id="sum-main" title="斜線 ↘（左上到右下）的總和"></div>
+      </div>
+    </div>
+
+    <div class="tools">
+      <button type="button" id="undo">↶ 復原</button>
+      <button type="button" id="clear">清空全部</button>
+      <button type="button" id="answer">看一個答案</button>
+    </div>
+    <div class="toggles">
+      <label><input type="checkbox" id="opt-color" checked> 依數字分組上色</label>
+      <label><input type="checkbox" id="opt-diag" checked> 顯示對角線</label>
+    </div>
+
+    <details>
+      <summary>玩法</summary>
+      <ul>
+        <li><b>填數字</b>：點空格就會填入「下一個數字」，從 1 開始往上數。中間清掉的數字會先補回來，例如填了 1～7 再清掉 3，下一格會先填 3，再接著填 8。</li>
+        <li><b>交換</b>：先點一個數字，再點另一格，兩格就會對調；第二下點空格就是把數字搬過去。再點同一格可以取消。</li>
+        <li><b>清除</b>：點數字就把它拿掉。</li>
+        <li>右邊是每一橫列的總和，下面是每一直行的總和；右上、右下角是兩條斜線的總和。整條填滿且剛好等於目標和會變綠色，不對或已經超過會變紅色。</li>
+        <li>紅圈是最後一次放下的數字。「依數字分組上色」會把 1～n、n+1～2n…各用一種顏色，方便看出數字排列的規律。</li>
+      </ul>
+    </details>
+
+    <details>
+      <summary>目標和怎麼算？</summary>
+      <p>1 到 n² 全部加起來是 n²(n²+1)/2，平均分給 n 列，每一列就是：</p>
+      <p><span class="formula">n(n² + 1) / 2</span></p>
+      <table class="targets">
+        <tr><th>大小</th><th>數字</th><th>每列總和</th></tr>
+        <tr><td>3×3</td><td>1～9</td><td>15</td></tr>
+        <tr><td>4×4</td><td>1～16</td><td>34</td></tr>
+        <tr><td>5×5</td><td>1～25</td><td>65</td></tr>
+        <tr><td>6×6</td><td>1～36</td><td>111</td></tr>
+        <tr><td>7×7</td><td>1～49</td><td>175</td></tr>
+      </table>
+      <p>2×2 的目標和是 5，但只有 1、2、3、4 四個數字，怎麼排都做不到——它是唯一沒有魔方陣的大小（1×1 不算）。</p>
+    </details>
+
+    <details>
+      <summary>奇數方陣的走法（3×3、5×5、7×7）</summary>
+      <ol>
+        <li>把 1 放在<b>第一列正中間</b>。</li>
+        <li>下一個數字往<b>右上</b>走一格。</li>
+        <li>走出上面，就從同一行的最下面出來；走出右邊，就從同一列的最左邊出來。</li>
+        <li>如果右上那格已經有數字（或走出右上角），就改放在<b>目前這格的正下方</b>。</li>
+      </ol>
+      <p>用「填數字」模式從 1 照規則一路走到 n²，就會得到一個魔方陣。開著「依數字分組上色」，可以看到每 n 個數字排成一條斜線。</p>
+    </details>
+  </main>
+
+  <script>
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const MIN = 2, MAX = 7;
+    const STORE = 'magic-square-v1';
+
+    // ── 狀態：每種大小各留一份盤面，切換大小不會弄丟 ──
+    const boards = {};          // n → { cells: (number|null)[], last: index|-1, history: [] }
+    let n = 7;
+    let mode = 'fill';
+    let picked = -1;            // 交換模式第一下選到的格子
+    let opts = { color: true, diag: true };
+
+    const blank = size => ({ cells: Array(size * size).fill(null), last: -1, history: [] });
+    const cur = () => boards[n];
+    const target = size => size * (size * size + 1) / 2;
+
+    function load() {
+      try {
+        const data = JSON.parse(localStorage.getItem(STORE) || 'null');
+        if (!data) return;
+        if (data.n >= MIN && data.n <= MAX) n = data.n;
+        if (['fill', 'swap', 'erase'].includes(data.mode)) mode = data.mode;
+        if (data.opts) opts = { ...opts, ...data.opts };
+        for (const [k, b] of Object.entries(data.boards || {})) {
+          const size = Number(k);
+          if (size >= MIN && size <= MAX && Array.isArray(b.cells) && b.cells.length === size * size) {
+            boards[size] = { cells: b.cells.map(v => Number.isInteger(v) && v >= 1 && v <= size * size ? v : null), last: Number.isInteger(b.last) ? b.last : -1, history: [] };
+          }
+        }
+      } catch (e) { /* 私密模式或資料壞了就從空白開始 */ }
+    }
+    function save() {
+      try {
+        const out = {};
+        for (const [k, b] of Object.entries(boards)) out[k] = { cells: b.cells, last: b.last };
+        localStorage.setItem(STORE, JSON.stringify({ n, mode, opts, boards: out }));
+      } catch (e) { /* 存不了也沒關係 */ }
+    }
+
+    // 下一個要填的數字：1～n² 裡最小還沒出現的。
+    function nextNumber(b) {
+      const used = new Set(b.cells);
+      for (let v = 1; v <= n * n; v++) if (!used.has(v)) return v;
+      return null;
+    }
+
+    function snapshot() {
+      const b = cur();
+      b.history.push({ cells: b.cells.slice(), last: b.last });
+      if (b.history.length > 300) b.history.shift();
+    }
+
+    // ── 畫面骨架：換大小時重建 ──
+    const board = $('board');
+    let cellEls = [], rowEls = [], colEls = [];
+
+    function build() {
+      if (!boards[n]) boards[n] = blank(n);
+      picked = -1;
+      $('square').style.setProperty('--n', n);
+      board.innerHTML = '';
+      cellEls = [];
+      for (let i = 0; i < n * n; i++) {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'cell';
+        btn.dataset.i = i;
+        btn.setAttribute('role', 'gridcell');
+        board.appendChild(btn);
+        cellEls.push(btn);
+      }
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'diag-lines');
+      svg.setAttribute('viewBox', '0 0 100 100');
+      svg.setAttribute('preserveAspectRatio', 'none');
+      svg.innerHTML = '<line x1="0" y1="0" x2="100" y2="100" stroke="var(--main)"/><line x1="100" y1="0" x2="0" y2="100" stroke="var(--anti)"/>';
+      board.appendChild(svg);
+
+      const nums = Array.from({ length: n }, (_, i) => `<span>${i + 1}</span>`).join('');
+      $('labels-top').innerHTML = nums;
+      $('labels-left').innerHTML = nums;
+      $('sums-right').innerHTML = Array.from({ length: n }, () => '<div class="sum"></div>').join('');
+      $('sums-bottom').innerHTML = Array.from({ length: n }, () => '<div class="sum"></div>').join('');
+      rowEls = [...$('sums-right').children];
+      colEls = [...$('sums-bottom').children];
+      $('target').textContent = target(n);
+      $('total').textContent = n * n;
+      [...$('sizes').children].forEach(b => b.setAttribute('aria-pressed', String(Number(b.dataset.n) === n)));
+      update();
+    }
+
+    // 一條線的狀態：part＝還沒填滿；ok＝填滿且等於目標；bad＝填滿但不對，或已經超過目標。
+    function lineState(indices, cells, goal) {
+      let sum = 0, count = 0;
+      for (const i of indices) if (cells[i] != null) { sum += cells[i]; count++; }
+      const full = count === indices.length;
+      const cls = count === 0 ? '' : full ? (sum === goal ? 'ok' : 'bad') : (sum >= goal ? 'bad' : 'part');
+      return { sum, count, cls };
+    }
+    function paintSum(el, st, extra) {
+      el.className = `sum ${extra} ${st.cls}`.trim();
+      el.textContent = st.count ? st.sum : '0';
+    }
+
+    function update(popIndex = -1) {
+      const b = cur();
+      const goal = target(n);
+      const next = nextNumber(b);
+      const range = k => Array.from({ length: n }, (_, j) => k(j));
+      let filled = 0;
+
+      b.cells.forEach((v, i) => {
+        const el = cellEls[i];
+        const has = v != null;
+        if (has) filled++;
+        el.textContent = has ? v : '';
+        el.className = 'cell' + (has ? ` filled g${Math.floor((v - 1) / n) % 7}` : '') + (i === b.last && has ? ' last' : '') + (i === picked ? ' picked' : '') + (i === popIndex ? ' pop' : '');
+        el.dataset.next = next ?? '';
+        const r = Math.floor(i / n) + 1, c = i % n + 1;
+        el.setAttribute('aria-label', `第 ${r} 列第 ${c} 行：${has ? v : '空格'}`);
+      });
+
+      const states = [];
+      for (let r = 0; r < n; r++) { const st = lineState(range(j => r * n + j), b.cells, goal); paintSum(rowEls[r], st, ''); states.push(st); }
+      for (let c = 0; c < n; c++) { const st = lineState(range(j => j * n + c), b.cells, goal); paintSum(colEls[c], st, ''); states.push(st); }
+      const main = lineState(range(j => j * n + j), b.cells, goal);
+      const anti = lineState(range(j => j * n + (n - 1 - j)), b.cells, goal);
+      paintSum($('sum-main'), main, 'diag main');
+      paintSum($('sum-anti'), anti, 'diag anti');
+      states.push(main, anti);
+
+      $('next').textContent = next ?? '✓';
+      $('next').classList.toggle('done', next == null);
+      $('filled').textContent = filled;
+      $('undo').disabled = b.history.length === 0;
+      $('clear').disabled = filled === 0;
+      $('answer').disabled = n < 3;
+      board.className = `board mode-${mode}`;
+      $('square').classList.toggle('plain', !opts.color);
+      $('square').classList.toggle('no-diag', !opts.diag);
+      [...$('modes').children].forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.mode === mode)));
+
+      const status = $('status');
+      status.className = 'status';
+      const okCount = states.filter(s => s.cls === 'ok').length;
+      if (filled === n * n) {
+        if (okCount === states.length) {
+          status.textContent = `完成了！這是一個 ${n}×${n} 魔方陣，${states.length} 條線的總和都是 ${goal}。`;
+          status.classList.add('win');
+        } else {
+          status.textContent = `全部填完了，${states.length} 條線裡有 ${okCount} 條是 ${goal}。用「交換」調整看看。`;
+        }
+      } else if (mode === 'swap') {
+        status.textContent = picked >= 0 ? `已選 ${b.cells[picked]}，再點另一格來交換（點同一格取消）。` : '點一個數字，再點另一格，兩格就會對調。';
+      } else if (mode === 'erase') {
+        status.textContent = '點數字就會把它清掉。';
+      } else {
+        status.textContent = n === 2 ? '2×2 其實做不出魔方陣，試試看就知道為什麼。' : '點空格填入下一個數字。';
+      }
+      save();
+    }
+
+    // ── 操作 ──
+    board.addEventListener('click', e => {
+      const el = e.target.closest('.cell');
+      if (!el) return;
+      const i = Number(el.dataset.i);
+      const b = cur();
+      if (mode === 'fill') {
+        if (b.cells[i] != null) return;
+        const v = nextNumber(b);
+        if (v == null) return;
+        snapshot();
+        b.cells[i] = v;
+        b.last = i;
+        update(i);
+      } else if (mode === 'erase') {
+        if (b.cells[i] == null) return;
+        snapshot();
+        b.cells[i] = null;
+        if (b.last === i) b.last = -1;
+        update();
+      } else {
+        if (picked < 0) {
+          if (b.cells[i] == null) return;
+          picked = i;
+          update();
+        } else if (picked === i) {
+          picked = -1;
+          update();
+        } else {
+          snapshot();
+          const a = picked;
+          [b.cells[a], b.cells[i]] = [b.cells[i], b.cells[a]];
+          if (b.last === a) b.last = i; else if (b.last === i) b.last = a;
+          picked = -1;
+          update(i);
+          cellEls[a].classList.add('pop');
+        }
+      }
+    });
+
+    $('modes').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      mode = btn.dataset.mode;
+      picked = -1;
+      update();
+    });
+
+    $('sizes').innerHTML = Array.from({ length: MAX - MIN + 1 }, (_, k) => `<button type="button" data-n="${k + MIN}">${k + MIN}×${k + MIN}</button>`).join('');
+    $('sizes').addEventListener('click', e => {
+      const btn = e.target.closest('button');
+      if (!btn) return;
+      n = Number(btn.dataset.n);
+      build();
+    });
+
+    $('undo').addEventListener('click', () => {
+      const b = cur();
+      const prev = b.history.pop();
+      if (!prev) return;
+      b.cells = prev.cells;
+      b.last = prev.last;
+      picked = -1;
+      update();
+    });
+    $('clear').addEventListener('click', () => {
+      const b = cur();
+      snapshot();
+      b.cells = Array(n * n).fill(null);
+      b.last = -1;
+      picked = -1;
+      update();
+    });
+    $('answer').addEventListener('click', () => {
+      const b = cur();
+      snapshot();
+      b.cells = magicSquare(n);
+      b.last = b.cells.indexOf(1);
+      picked = -1;
+      update();
+    });
+
+    $('opt-color').checked = opts.color;
+    $('opt-diag').checked = opts.diag;
+    $('opt-color').addEventListener('change', e => { opts.color = e.target.checked; update(); });
+    $('opt-diag').addEventListener('change', e => { opts.diag = e.target.checked; update(); });
+
+    // ── 產生一個答案 ──
+    // 奇數：從第一列中間放 1，往右上走，撞到就往下（Siamese method）。
+    function oddSquare(m) {
+      const g = Array(m * m).fill(0);
+      let r = 0, c = (m - 1) / 2;
+      for (let v = 1; v <= m * m; v++) {
+        g[r * m + c] = v;
+        const nr = (r - 1 + m) % m, nc = (c + 1) % m;
+        if (g[nr * m + nc]) r = (r + 1) % m; else { r = nr; c = nc; }
+      }
+      return g;
+    }
+    function magicSquare(size) {
+      if (size % 2 === 1) return oddSquare(size);
+      const g = Array(size * size).fill(0);
+      if (size % 4 === 0) {
+        // 4 的倍數：依序填 1～n²，再把對角線圖樣上的格子換成 n²+1−v。
+        for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+          const v = r * size + c + 1;
+          const onDiag = (r % 4 === c % 4) || ((r % 4) + (c % 4) === 3);
+          g[r * size + c] = onDiag ? size * size + 1 - v : v;
+        }
+        return g;
+      }
+      // 6、10…（4k+2）：Strachey 法，四塊奇數方陣再交換左右幾行。
+      const m = size / 2, k = (m - 1) / 2, a = oddSquare(m), add = [0, 2 * m * m, 3 * m * m, m * m];
+      for (let r = 0; r < m; r++) for (let c = 0; c < m; c++) {
+        const v = a[r * m + c];
+        g[r * size + c] = v + add[0];                       // 左上
+        g[r * size + c + m] = v + add[1];                   // 右上
+        g[(r + m) * size + c] = v + add[2];                 // 左下
+        g[(r + m) * size + c + m] = v + add[3];             // 右下
+      }
+      const swap = (r, c) => { const x = r * size + c, y = (r + m) * size + c; [g[x], g[y]] = [g[y], g[x]]; };
+      for (let r = 0; r < m; r++) {
+        const shift = r === k ? 1 : 0;                       // 中間那一列往右挪一格
+        for (let c = 0; c < k; c++) swap(r, c + shift);
+        for (let c = size - k + 1; c < size; c++) swap(r, c);
+      }
+      return g;
+    }
+
+    load();
+    if (!boards[n]) boards[n] = blank(n);
+    build();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('../sw.js', { scope: '../' }).catch(() => {});
+  </script>
+</body>
+</html>

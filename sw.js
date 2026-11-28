@@ -1,7 +1,7 @@
 // 離線快取：首次開啟後把所有頁面存進快取，之後沒有網路也能閱讀。
 // 有網路時一律先抓最新版（network-first），抓不到才用快取，所以內容更新不需要改版號；
 // 新增或移除頁面時，記得同步更新 PAGES 並調高 VERSION。
-const VERSION = 'v14';
+const VERSION = 'v15';
 // 這些資料夾有自己的 sw.js（scope 更精確），離線由它們自己負責，這裡完全不碰。
 const SELF_MANAGED = ['./math/curvelab/'];
 const CACHE = `online-study-${VERSION}`;
@@ -27,6 +27,7 @@ const PAGES = [
   './body-rehab/2026-11-26-body-map.html',
   './math/',
   './math/index.html',
+  './math/2026-11-28-magic-square.html',
 ];
 // 五十音、片假名小學堂的發音檔（tools/generate-kana-audio.mjs 產生），一起預先快取，離線也能播。
 const KANA_AUDIO = ('a i u e o ka ki ku ke ko sa shi su se so ta chi tsu te to na ni nu ne no '
