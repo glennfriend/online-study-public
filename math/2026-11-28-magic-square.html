@@ -168,7 +168,7 @@
         <tr><td>6×6</td><td>1～36</td><td>111</td></tr>
         <tr><td>7×7</td><td>1～49</td><td>175</td></tr>
       </table>
-      <p>2×2 的目標和是 5，但只有 1、2、3、4 四個數字，怎麼排都做不到——任何排法都至少有一條總和不是 5。</p>
+      <p>為什麼沒有 2×2？四格叫 a、b／c、d，每列每行都要是 5：a+b=5、a+c=5，相減得到 b=c，但數字不能重複，所以 2×2 一定排不出來。3×3 以上每一種大小都排得出來。</p>
     </details>
 
   </main>
@@ -176,7 +176,7 @@
   <script>
     'use strict';
     const $ = id => document.getElementById(id);
-    const MIN = 2, MAX = 7;
+    const MIN = 3, MAX = 7;
     const STORE = 'magic-square-v1';
 
     // ── 狀態：每種大小各留一份盤面，切換大小不會弄丟 ──
@@ -311,7 +311,7 @@
       } else if (mode === 'swap') {
         status.textContent = picked >= 0 ? `已選 ${b.cells[picked]}，再點另一格來交換（點同一格取消）。` : '點一個數字，再點另一格，兩格就會對調。';
       } else {
-        status.textContent = n === 2 ? '2×2 怎麼排都沒辦法讓每列、每行都一樣，試試看就知道為什麼。' : '點空格填入下一個數字；在數字上按右鍵（手機長按）可以清除。';
+        status.textContent = '點空格填入下一個數字；在數字上按右鍵（手機長按）可以清除。';
       }
       save();
     }
