@@ -14,8 +14,9 @@
     html { touch-action: manipulation; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
     body { margin: 0; background: #f5f3eb; color: var(--ink); font-family: system-ui, -apple-system, "Noto Sans JP", "Noto Sans TC", sans-serif; line-height: 1.7; }
     main { max-width: 720px; margin: 0 auto; padding: 32px 16px; }
-    h1 { margin: 0 0 4px; font-size: 1.8rem; }
-    .back { display: inline-block; padding: 8px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
+    header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    h1 { margin: 0; font-size: 1.8rem; }
+    .back { flex-shrink: 0; padding: 8px 0; color: var(--muted); text-decoration: none; font-size: .95rem; }
     .back:hover { color: var(--green); }
     ul { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 12px; }
     a.item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 20px; background: var(--paper); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); text-decoration: none; }
@@ -27,8 +28,10 @@
 </head>
 <body>
   <main>
-    <a class="back" href="../index.html">← トップへ戻る</a>
-    <h1>日本語の基礎</h1>
+    <header>
+      <h1>日本語の基礎</h1>
+      <a class="back" href="../index.html">← トップへ戻る</a>
+    </header>
     <ul>
       <li>
         <a class="item" href="2026-10-05-hiragana-practice.html">
